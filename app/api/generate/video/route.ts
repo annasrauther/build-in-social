@@ -1,8 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createVideo, createRenderJob } from "@/lib/services/db";
 import { requireAuth } from "@/lib/auth";
+import { z } from "zod";
 import type { Platform, FacelessStyle } from "@/lib/types/user";
-import type { ContentType, VideoStatus } from "@/lib/types/video";
+import type { Video, ContentType, VideoStatus } from "@/lib/types/video";
+
+const generateVideoSchema = z.object({
+  scriptOutput: z.object({
+    script: z.object({ hook: z.string(), body: z.string(), cta: z.string() }),
+    estimatedDurationSeconds: z.number().optional(),
+    topicLabel: z.string().optional(),
+    hookType: z.string().optional(),
+    sentiment: z.string().optional(),
+  }),
+  videoInput: z.object({
+    platform: z.string().optional(),
+    platforms: z.array(z.string()).optional(),
+    dayOfWeek: z.string().optional(),
+    facelessStyle: z.string().optional(),
+    contentType: z.string().optional(),
+  }),
+  title: z.string().max(500).optional(),
+  weekId: z.string().optional(),
+});
 
 /**
  * Generate video route — stubbed for Sprint 1.
@@ -16,8 +36,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   try {
-    const body = await req.json();
-    const { scriptOutput, videoInput, title, weekId } = body;
+    const raw = await req.json();
+    const parsed = generateVideoSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid input", details: parsed.error.flatten() }, { status: 400 });
+    }
+    const { scriptOutput, videoInput, title, weekId } = parsed.data;
 
     const video = await createVideo({
       userId,
@@ -25,14 +49,14 @@ export async function POST(req: NextRequest) {
       title: title ?? "Untitled video",
       scriptJson: scriptOutput.script,
       platform: (videoInput.platform ?? videoInput.platforms?.[0] ?? "youtube") as Platform,
-      dayOfWeek: videoInput.dayOfWeek ?? "mon",
+      dayOfWeek: (videoInput.dayOfWeek ?? "mon") as Video["dayOfWeek"],
       facelessStyle: (videoInput.facelessStyle ?? "dev-log") as FacelessStyle,
       durationSeconds: scriptOutput.estimatedDurationSeconds ?? 38,
       contentType: (videoInput.contentType ?? "founder-story") as ContentType,
       status: "draft" as VideoStatus,
-      topicLabel: scriptOutput.topicLabel,
-      hookType: scriptOutput.hookType,
-      sentiment: scriptOutput.sentiment,
+      topicLabel: scriptOutput.topicLabel as Video["topicLabel"],
+      hookType: scriptOutput.hookType as Video["hookType"],
+      sentiment: scriptOutput.sentiment as Video["sentiment"],
     });
 
     const renderJob = await createRenderJob({

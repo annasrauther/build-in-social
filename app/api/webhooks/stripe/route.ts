@@ -21,8 +21,11 @@ export async function POST(req: NextRequest) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!stripeKey || !webhookSecret) {
-    console.warn("[stripe-webhook] Stripe not configured — skipping");
-    return NextResponse.json({ ok: true });
+    console.error("[stripe-webhook] Stripe not configured");
+    return NextResponse.json(
+      { error: "Webhook not configured" },
+      { status: 503 }
+    );
   }
 
   const stripe = new Stripe(stripeKey);

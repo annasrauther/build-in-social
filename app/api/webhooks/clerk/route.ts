@@ -23,8 +23,11 @@ interface ClerkUserEvent {
 export async function POST(req: NextRequest) {
   const secret = process.env.CLERK_WEBHOOK_SECRET;
   if (!secret) {
-    console.warn("[clerk-webhook] CLERK_WEBHOOK_SECRET not set");
-    return NextResponse.json({ ok: true });
+    console.error("[clerk-webhook] CLERK_WEBHOOK_SECRET not configured");
+    return NextResponse.json(
+      { error: "Webhook not configured" },
+      { status: 503 }
+    );
   }
 
   const payload = await req.text();

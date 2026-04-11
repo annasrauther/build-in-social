@@ -108,8 +108,8 @@ export function Sidebar(): React.ReactElement {
           {platformItems.map((item) => (
             <li key={item.label}>
               <div
-                className="flex items-center gap-2.5 px-2 py-2 text-[13px]"
-                style={{ color: "var(--text-secondary)" }}
+                className="flex items-center gap-2.5 px-2 py-2.5 text-[13px]"
+                style={{ color: "var(--text-secondary)", minHeight: 44 }}
               >
                 <span
                   className="w-3.5 h-3.5 rounded-sm flex items-center justify-center text-[9px] font-medium"

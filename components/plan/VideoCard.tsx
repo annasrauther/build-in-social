@@ -232,7 +232,7 @@ export function VideoCard({ video, index, onApprove, onEdit }: VideoCardProps) {
         <div className="flex items-center gap-2 mt-3">
           <Button
             kind={KIND.tertiary}
-            size={SIZE.compact}
+            size={SIZE.default}
             onClick={() => onEdit(video)}
             aria-label="Edit video"
           >
@@ -245,7 +245,7 @@ export function VideoCard({ video, index, onApprove, onEdit }: VideoCardProps) {
           {isDraft && (
             <Button
               ref={approveRef}
-              size={SIZE.compact}
+              size={SIZE.default}
               onClick={handleApprove}
               disabled={approving}
               overrides={{
@@ -304,7 +304,7 @@ export function VideoCard({ video, index, onApprove, onEdit }: VideoCardProps) {
 
           {video.status === "ready" && video.outputUrl && (
             <Button
-              size={SIZE.compact}
+              size={SIZE.default}
               onClick={(e) => {
                 e.stopPropagation();
                 window.open(video.outputUrl, "_blank");

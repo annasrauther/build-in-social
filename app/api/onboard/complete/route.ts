@@ -7,7 +7,19 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { getUserByClerkId, updateUser, createVoiceProfile } from "@/lib/services/db";
-import type { ContentTone } from "@/lib/types/user";
+import { z } from "zod";
+
+const onboardCompleteSchema = z.object({
+  niche: z.string().max(500).optional(),
+  tone: z.enum(["professional", "casual", "nerdy-warm", "fun-energetic"]).optional(),
+  platforms: z.array(z.enum(["youtube", "instagram", "linkedin", "x"])).optional(),
+  voiceChoice: z.enum(["library", "clone"]).optional(),
+  libraryVoiceId: z.string().optional(),
+  selectedTier: z.enum(["solo", "creator", "studio"]).optional(),
+  productName: z.string().max(200).optional(),
+  productDescription: z.string().max(1000).optional(),
+  voiceConsentAt: z.string().optional(),
+});
 
 export async function POST(request: Request) {
   let userId: string;
@@ -18,7 +30,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const body = await request.json();
+    const raw = await request.json();
+    const parsed = onboardCompleteSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid input", details: parsed.error.flatten() }, { status: 400 });
+    }
     const {
       niche,
       tone,
@@ -27,9 +43,8 @@ export async function POST(request: Request) {
       libraryVoiceId,
       selectedTier,
       productName,
-      productDescription,
       voiceConsentAt,
-    } = body as Record<string, unknown>;
+    } = parsed.data;
 
     // Find the user in DB
     const user = await getUserByClerkId(userId);
@@ -51,12 +66,12 @@ export async function POST(request: Request) {
 
     // Persist all onboarding data to user record
     await updateUser(user.id, {
-      niche: niche ? String(niche) : undefined,
-      tone: tone ? String(tone) as ContentTone : undefined,
-      platforms: Array.isArray(platforms) ? platforms : undefined,
-      brandName: productName ? String(productName) : undefined,
+      niche: niche ?? undefined,
+      tone: tone ?? undefined,
+      platforms: platforms ?? undefined,
+      brandName: productName ?? undefined,
       onboardingComplete: true,
-      subscriptionTier: selectedTier ? String(selectedTier) as "solo" | "creator" | "studio" : "creator",
+      subscriptionTier: selectedTier ?? "creator",
       voiceProfileId,
     });
 

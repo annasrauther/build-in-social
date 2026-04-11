@@ -57,8 +57,8 @@ export function IconRail(): React.ReactElement {
                   item.locked && "pointer-events-none"
                 )}
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 44,
+                  height: 44,
                   color: isActive
                     ? "var(--accent)"
                     : item.locked
