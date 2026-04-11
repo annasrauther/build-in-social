@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createSubscriptionCheckout } from "@/lib/services/stripe";
 import { requireAuth } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/services/rate-limit";
 import { PACKAGES } from "@/lib/types/billing";
 
 const validPackageIds = Object.keys(PACKAGES) as [
@@ -47,6 +48,9 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
+
+  const limited = await checkRateLimit(userId, "billing/checkout", 3, "1 m");
+  if (limited) return limited;
 
   try {
     const { sessionUrl } = await createSubscriptionCheckout({

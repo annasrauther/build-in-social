@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateScript, checkQualityGate } from "@/lib/services/claude";
 import { requireAuth } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/services/rate-limit";
 import type { Platform, FacelessStyle } from "@/lib/types/user";
 import type { ContentMode } from "@/lib/types/video";
 
@@ -11,6 +12,9 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const limited = await checkRateLimit(userId, "generate/script", 10, "1 m");
+  if (limited) return limited;
+
   try {
     const body = await req.json();
     const mode: ContentMode = body.mode ?? "manual";

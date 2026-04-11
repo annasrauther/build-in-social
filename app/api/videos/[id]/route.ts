@@ -16,6 +16,7 @@ export async function GET(
     const { id } = await params;
     const video = await getVideo(id);
     if (!video) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (video.userId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     return NextResponse.json(video);
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch video" }, { status: 500 });

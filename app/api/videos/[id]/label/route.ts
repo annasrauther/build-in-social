@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getVideo, updateVideo } from "@/lib/services/db";
 import { labelVideo } from "@/lib/services/claude";
 import { requireAuth } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/services/rate-limit";
 
 export async function POST(
   _req: NextRequest,
@@ -13,10 +14,14 @@ export async function POST(
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const limited = await checkRateLimit(userId, "videos/label", 10, "1 m");
+  if (limited) return limited;
+
   try {
     const { id: videoId } = await params;
     const video = await getVideo(videoId);
     if (!video) return NextResponse.json({ error: "Video not found" }, { status: 404 });
+    if (video.userId !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     const fullScript = `${video.scriptJson.hook} ${video.scriptJson.body} ${video.scriptJson.cta}`;
 

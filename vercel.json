@@ -4,5 +4,31 @@
       "path": "/api/cron/series",
       "schedule": "0 9 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "app/api/plan/generate/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/pseo/generate/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/generate/script/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/generate/hooks/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/render/faceless/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/render/complete/route.ts": {
+      "maxDuration": 30
+    },
+    "app/api/cron/series/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/videos/[id]/label/route.ts": {
+      "maxDuration": 30
+    }
+  }
 }

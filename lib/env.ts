@@ -57,6 +57,7 @@ export const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000
 
 // ── Internal ──
 export const INTERNAL_SECRET = envOptional("INTERNAL_SECRET");
+export const CRON_SECRET = envOptional("CRON_SECRET");
 
 // ── Feature flags (server-side only) ──
 export const BYPASS_AUTH =

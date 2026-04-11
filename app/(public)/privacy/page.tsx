@@ -200,14 +200,8 @@ export default function PrivacyPage() {
               Questions about this policy? Email us at{" "}
               <a
                 href="mailto:privacy@buildinsocial.app"
-                className="transition-colors duration-150"
+                className="transition-colors duration-150 hover:opacity-70"
                 style={{ color: "var(--accent)" }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLAnchorElement).style.color = "var(--accent-hover)")
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLAnchorElement).style.color = "var(--accent)")
-                }
               >
                 privacy@buildinsocial.app
               </a>

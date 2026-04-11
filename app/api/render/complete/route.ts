@@ -87,10 +87,12 @@ export async function POST(req: NextRequest) {
         });
 
         // ── Send video-complete email ─────────────────────────────────────
-        // User email is not on Video; send to a placeholder or skip gracefully
-        // when no email is available. Sprint 9 (Clerk) will provide the email.
+        // Look up user email from DB; skip if not available
+        const { getUserByClerkId: lookupUser } = await import("@/lib/services/db");
+        const videoOwner = await lookupUser(video.userId).catch(() => null);
+        const toEmail = videoOwner?.email || `${video.userId}@placeholder.buildinsocial.com`;
         await sendEmail({
-          to: `${video.userId}@placeholder.buildinsocial.com`,
+          to: toEmail,
           template: "video-complete",
           data: {
             displayName: "there",

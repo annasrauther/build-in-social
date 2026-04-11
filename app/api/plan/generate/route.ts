@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateWeeklyPlan } from "@/lib/services/claude";
 import { requireAuth } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/services/rate-limit";
 import type { ContentMode } from "@/lib/types/video";
 import type { Platform } from "@/lib/types/user";
 
@@ -11,6 +12,9 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  const limited = await checkRateLimit(userId, "plan/generate", 10, "1 m");
+  if (limited) return limited;
+
   try {
     const body = await request.json();
     const { mode, platforms, niche, tone, qualityGateAnswers } = body as {

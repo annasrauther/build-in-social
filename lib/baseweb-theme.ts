@@ -91,7 +91,7 @@ export const theme: Theme = {
     borderOpaque: "rgba(0, 0, 0, 0.10)",
     borderTransparent: "rgba(0, 0, 0, 0.06)",
     borderSelected: "rgb(36, 36, 36)",
-    borderFocus: "rgb(36, 36, 36)",
+    // borderFocus is set via inputFill/inputBorder overrides in component theme
 
   },
 
