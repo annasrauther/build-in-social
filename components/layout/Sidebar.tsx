@@ -11,10 +11,14 @@ import {
   BarChart3,
   Settings,
   Lock,
+  LogOut,
 } from "lucide-react";
+import { SignOutButton } from "@clerk/nextjs";
 import { Badge } from "@/components/ui/Badge";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { navPillTransition } from "@/lib/motion";
+
+const hasClerk = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -147,6 +151,17 @@ export function Sidebar(): React.ReactElement {
         <div className="px-2 mt-3">
           <Badge variant="accent">Creator Plan</Badge>
         </div>
+        {hasClerk && (
+          <SignOutButton redirectUrl="/">
+            <button
+              className="flex items-center gap-2.5 px-2 py-2 rounded-[var(--radius-sm)] text-[13px] transition-colors hover:bg-[var(--bg-elevated)] w-full mt-1"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              <LogOut size={16} />
+              <span>Sign out</span>
+            </button>
+          </SignOutButton>
+        )}
       </div>
     </aside>
   );

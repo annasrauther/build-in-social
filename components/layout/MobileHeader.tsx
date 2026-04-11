@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { UserButton } from "@clerk/nextjs";
+
+const hasClerk = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 export function MobileHeader(): React.ReactElement {
   return (
@@ -17,17 +20,28 @@ export function MobileHeader(): React.ReactElement {
         <Wordmark size={18} />
       </Link>
 
-      <Link
-        href="/settings/profile"
-        className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-medium transition-opacity hover:opacity-80"
-        style={{
-          backgroundColor: "var(--bg-elevated)",
-          color: "var(--text-secondary)",
-        }}
-        aria-label="Profile settings"
-      >
-        U
-      </Link>
+      {hasClerk ? (
+        <UserButton
+          afterSignOutUrl="/"
+          appearance={{
+            elements: {
+              avatarBox: "w-9 h-9",
+            },
+          }}
+        />
+      ) : (
+        <Link
+          href="/settings/profile"
+          className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-medium transition-opacity hover:opacity-80"
+          style={{
+            backgroundColor: "var(--bg-elevated)",
+            color: "var(--text-secondary)",
+          }}
+          aria-label="Profile settings"
+        >
+          U
+        </Link>
+      )}
     </header>
   );
 }

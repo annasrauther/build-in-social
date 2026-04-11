@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { UserButton } from "@clerk/nextjs";
+
+const hasClerk = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -37,18 +40,29 @@ export function TopNav(): React.ReactElement {
       </h1>
 
       <div className="flex items-center gap-3">
-        <Link
-          href="/settings/profile"
-          className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-medium transition-opacity hover:opacity-80"
-          style={{
-            backgroundColor: "var(--bg-elevated)",
-            color: "var(--text-secondary)",
-          }}
-          aria-label="Profile settings"
-          title="Profile settings"
-        >
-          U
-        </Link>
+        {hasClerk ? (
+          <UserButton
+            afterSignOutUrl="/"
+            appearance={{
+              elements: {
+                avatarBox: "w-9 h-9",
+              },
+            }}
+          />
+        ) : (
+          <Link
+            href="/settings/profile"
+            className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-medium transition-opacity hover:opacity-80"
+            style={{
+              backgroundColor: "var(--bg-elevated)",
+              color: "var(--text-secondary)",
+            }}
+            aria-label="Profile settings"
+            title="Profile settings"
+          >
+            U
+          </Link>
+        )}
       </div>
     </header>
   );
