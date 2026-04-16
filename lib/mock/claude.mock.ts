@@ -12,6 +12,12 @@ const delay = (ms = MOCK_DELAY_MS) => new Promise((r) => setTimeout(r, ms));
 
 // ─── checkQualityGate ─────────────────────────────────────────────────────────
 
+// Mirror canonical pushback from claude.real.ts so mock and real return the same string.
+const QUALITY_GATE_PUSHBACK_MOCK =
+  "This is a bit general — one specific detail makes the content 10× better. " +
+  "What exactly did you launch? What number surprised you? " +
+  "Even one sentence changes everything.";
+
 export async function checkQualityGate(answers: [string, string, string]): Promise<{
   passed: boolean;
   specificityScore: number;
@@ -19,14 +25,17 @@ export async function checkQualityGate(answers: [string, string, string]): Promi
 }> {
   console.log("[MOCK claude] checkQualityGate");
   await delay(800);
-  const avgLength = answers.reduce((sum, a) => sum + a.length, 0) / 3;
-  const passed = avgLength > 30;
+  // Heuristic: long-enough answers with at least one digit/proper noun pass.
+  const text = answers.join(" ");
+  const avgLength = text.length / 3;
+  const hasDigit = /\d/.test(text);
+  const hasProperNoun = /[A-Z][a-z]{2,}/.test(text);
+  const passed = avgLength > 40 && (hasDigit || hasProperNoun);
+  const score = passed ? 7 : 3;
   return {
     passed,
-    specificityScore: passed ? 7 : 3,
-    pushback: passed
-      ? undefined
-      : "Your answers need more specificity. Try adding concrete numbers, outcomes, or a specific user problem you're solving.",
+    specificityScore: score,
+    pushback: passed ? undefined : QUALITY_GATE_PUSHBACK_MOCK,
   };
 }
 

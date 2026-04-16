@@ -25,7 +25,6 @@ export function SelectionCard({
   const controls = useAnimationControls();
   const prevSelected = useRef(selected);
 
-  // Scale pulse on selection
   useEffect(() => {
     if (selected && !prevSelected.current) {
       controls.start({
@@ -37,97 +36,93 @@ export function SelectionCard({
   }, [selected, controls]);
 
   return (
-    <motion.button
-      type="button"
-      onClick={onSelect}
-      className="relative w-full text-left"
+    <div
+      className="relative overflow-hidden p-[1.5px] rounded-[calc(var(--radius-lg)+1.5px)] transition-shadow duration-150"
       style={{
-        minHeight: 44,
-        padding: "16px 20px",
-        borderRadius: "var(--radius-lg)",
-        border: "none",
-        backgroundColor: selected ? "var(--accent-subtle)" : "var(--bg-elevated)",
-        cursor: "pointer",
-        outline: "none",
+        boxShadow: selected ? "0 0 0 3px rgba(217,119,87,0.16)" : "none",
+        backgroundColor: selected ? "transparent" : "var(--bg-elevated)",
       }}
-      animate={controls}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.15 }}
     >
-      <div className="flex items-start gap-3">
-        {/* Icon */}
-        {icon && (
-          <div
-            className="shrink-0 mt-0.5"
-            style={{ color: "var(--text-primary)" }}
-          >
-            {icon}
-          </div>
-        )}
+      {/* Spinning conic-gradient border — fades in when selected */}
+      <motion.div
+        animate={{ opacity: selected ? 1 : 0 }}
+        transition={{ duration: 0.2 }}
+        className="absolute left-1/2 top-1/2 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2"
+        style={{
+          background:
+            "conic-gradient(from 0deg, transparent 0%, transparent 65%, var(--accent) 78%, #F0A875 85%, var(--accent) 93%, transparent 100%)",
+          animation: "spin-gradient 5s linear infinite",
+        }}
+      />
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <p
-            style={{
-              fontSize: "var(--type-body-mobile)",
-              fontWeight: 500,
-              color: "var(--text-primary)",
-              lineHeight: 1.4,
-            }}
-          >
-            {title}
-          </p>
-          {description && (
+      <motion.button
+        type="button"
+        onClick={onSelect}
+        className="relative w-full text-left min-h-[44px] px-5 py-4 border-none cursor-pointer outline-none z-[1] rounded-[var(--radius-lg)]"
+        style={{
+          backgroundColor: "var(--bg-elevated)",
+        }}
+        animate={controls}
+        whileTap={{ scale: 0.98 }}
+        transition={{ duration: 0.15 }}
+      >
+        <div className="flex items-start gap-3">
+          {/* Icon */}
+          {icon && (
+            <div className="shrink-0 mt-0.5" style={{ color: "var(--text-primary)" }}>
+              {icon}
+            </div>
+          )}
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
             <p
-              className="mt-1"
+              className="font-medium leading-snug"
               style={{
-                fontSize: "var(--type-supporting-mobile)",
-                color: "var(--text-secondary)",
-                lineHeight: 1.5,
+                fontSize: "var(--type-body-mobile)",
+                color: "var(--text-primary)",
               }}
             >
-              {description}
+              {title}
             </p>
-          )}
+            {description && (
+              <p
+                className="mt-1 leading-normal"
+                style={{
+                  fontSize: "var(--type-supporting-mobile)",
+                  color: "var(--text-secondary)",
+                }}
+              >
+                {description}
+              </p>
+            )}
+          </div>
+
+          {/* Trailing */}
+          {trailing && <div className="shrink-0">{trailing}</div>}
         </div>
 
-        {/* Trailing */}
-        {trailing && <div className="shrink-0">{trailing}</div>}
-      </div>
-
-      {/* Checkmark badge */}
-      <motion.div
-        className="absolute flex items-center justify-center"
-        style={{
-          top: 12,
-          right: 12,
-          width: 24,
-          height: 24,
-          borderRadius: "50%",
-          backgroundColor: selected ? "var(--accent)" : "var(--bg-overlay)",
-          border: "none",
-        }}
-        initial={false}
-        animate={{
-          scale: selected ? 1 : 0.85,
-          opacity: 1,
-        }}
-        transition={{
-          type: "spring",
-          stiffness: 500,
-          damping: 25,
-        }}
-      >
-        {selected && (
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 25 }}
-          >
-            <Check size={14} color="var(--text-inverse)" strokeWidth={2.5} />
-          </motion.div>
-        )}
-      </motion.div>
-    </motion.button>
+        {/* Checkmark badge */}
+        <motion.div
+          className="absolute top-3 right-3 w-6 h-6 rounded-full flex items-center justify-center border-none"
+          style={{
+            backgroundColor: selected ? "var(--accent)" : "var(--bg-overlay)",
+          }}
+          initial={false}
+          animate={{ scale: selected ? 1 : 0.85, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 500, damping: 25 }}
+        >
+          {selected && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 25 }}
+            >
+              <Check size={14} color="var(--text-inverse)" strokeWidth={2.5} />
+            </motion.div>
+          )}
+        </motion.div>
+      </motion.button>
+    </div>
   );
 }

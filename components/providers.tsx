@@ -2,14 +2,12 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { Provider as StyletronProvider } from "styletron-react";
-import { BaseProvider } from "baseui";
+import { ThemeProvider } from "next-themes";
 import { ClerkProvider } from "@clerk/nextjs";
 import { useState } from "react";
-import { styletron } from "@/lib/styletron";
-import { theme } from "@/lib/baseweb-theme";
 
 const hasClerkKey = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+const devAuth = process.env.NEXT_PUBLIC_DEV_AUTH === "1";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -25,20 +23,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   const inner = (
-    <StyletronProvider value={styletron}>
-      <BaseProvider theme={theme}>
-        <QueryClientProvider client={queryClient}>
-          {children}
-          {process.env.NODE_ENV === "development" && (
-            <ReactQueryDevtools initialIsOpen={false} />
-          )}
-        </QueryClientProvider>
-      </BaseProvider>
-    </StyletronProvider>
+    <ThemeProvider defaultTheme="system" attribute="class">
+      <QueryClientProvider client={queryClient}>
+        {children}
+        {process.env.NODE_ENV === "development" && (
+          <ReactQueryDevtools initialIsOpen={false} />
+        )}
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 
-  // Wrap with ClerkProvider only when keys are configured
-  if (hasClerkKey) {
+  // Wrap with ClerkProvider only when keys are configured AND dev-auth bypass
+  // is off. When NEXT_PUBLIC_DEV_AUTH=1, Clerk hooks must not run.
+  if (hasClerkKey && !devAuth) {
     return <ClerkProvider>{inner}</ClerkProvider>;
   }
 

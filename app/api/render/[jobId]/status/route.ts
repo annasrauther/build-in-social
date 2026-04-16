@@ -15,9 +15,9 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ jobId: string }> }
 ) {
-  let userId: string;
+  let _userId: string;
   try {
-    userId = await requireAuth();
+    _userId = await requireAuth();
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

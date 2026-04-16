@@ -2,8 +2,8 @@
  * Unified Build In Social wordmark.
  *
  * Two-weight treatment:
- *   "Build In" — Geist 400, --text-primary
- *   "Social"  — Geist 700, --text-primary
+ *   "Build In" — Poppins 400, --text-primary
+ *   "Social"  — Poppins 700, --text-primary
  *
  * On dark backgrounds, pass variant="inverse" to use --text-inverse for both.
  * This component is the single source of truth for the brand wordmark.

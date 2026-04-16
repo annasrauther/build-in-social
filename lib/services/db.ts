@@ -45,3 +45,13 @@ export const updateRenderJob = useReal ? real.updateRenderJob : mock.updateRende
 export const getPseoPage = useReal ? real.getPseoPage : mock.getPseoPage;
 export const getPseoPageByVideoId = useReal ? real.getPseoPageByVideoId : mock.getPseoPageByVideoId;
 export const createPseoPage = useReal ? real.createPseoPage : mock.createPseoPage;
+
+// ── Stripe webhook idempotency (critical path #2) ──
+export const recordStripeEvent = useReal ? real.recordStripeEvent : mock.recordStripeEvent;
+
+// ── Voice clone consent (critical path #7) ──
+export const recordVoiceConsent = useReal ? real.recordVoiceConsent : mock.recordVoiceConsent;
+export const hasVoiceConsent = useReal ? real.hasVoiceConsent : mock.hasVoiceConsent;
+
+// ── Avatar waitlist (Phase 2 lead capture) ──
+export const addToAvatarWaitlist = useReal ? real.addToAvatarWaitlist : mock.addToAvatarWaitlist;

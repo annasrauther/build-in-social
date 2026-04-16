@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateScript, checkQualityGate } from "@/lib/services/claude";
 import { requireAuth } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/services/rate-limit";
-import type { Platform, FacelessStyle } from "@/lib/types/user";
 import type { ContentMode } from "@/lib/types/video";
 
 export async function POST(req: NextRequest) {
@@ -10,7 +9,7 @@ export async function POST(req: NextRequest) {
   try {
     userId = await requireAuth();
   } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ data: null, error: "Unauthorized" }, { status: 401 });
   }
   const limited = await checkRateLimit(userId, "generate/script", 10, "1 m");
   if (limited) return limited;
@@ -30,7 +29,7 @@ export async function POST(req: NextRequest) {
         answers.some((a: string) => typeof a !== "string" || a.trim().length < 20)
       ) {
         return NextResponse.json(
-          { error: "Manual mode requires 3 quality-gate answers (each ≥ 20 characters)." },
+          { data: null, error: "Manual mode requires 3 quality-gate answers (each ≥ 20 characters)." },
           { status: 422 },
         );
       }
@@ -38,7 +37,7 @@ export async function POST(req: NextRequest) {
       const gate = await checkQualityGate(answers);
       if (!gate.passed) {
         return NextResponse.json(
-          { error: gate.pushback ?? "Quality gate not passed. Add more specific detail.", specificityScore: gate.specificityScore },
+          { data: null, error: gate.pushback ?? "Quality gate not passed. Add more specific detail.", specificityScore: gate.specificityScore },
           { status: 422 },
         );
       }
@@ -51,8 +50,8 @@ export async function POST(req: NextRequest) {
       contentType: body.contentType ?? "founder-story",
       facelessStyle: body.facelessStyle ?? "dev-log",
     });
-    return NextResponse.json(script);
+    return NextResponse.json({ data: script, error: null });
   } catch {
-    return NextResponse.json({ error: "Failed to generate script" }, { status: 500 });
+    return NextResponse.json({ data: null, error: "Failed to generate script" }, { status: 500 });
   }
 }

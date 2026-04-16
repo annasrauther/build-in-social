@@ -47,7 +47,7 @@ export function PageHeader({
           <h1
             className="text-[var(--type-display-mobile)] tablet-sm:text-[var(--type-display-desktop)]"
             style={{
-              fontFamily: "var(--font-heading)",
+              
               fontWeight: 400,
               lineHeight: 1.2,
               letterSpacing: "-0.02em",

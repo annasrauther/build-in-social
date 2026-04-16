@@ -8,12 +8,14 @@ interface NavContent {
   links: { label: string; href: string }[];
   signInLabel: string;
   ctaLabel: string;
+  mainLinks: { label: string; href: string }[];
 }
 
 interface HeroContent {
   headline: string;
   subhead: string;
   primaryCta: string;
+  secondaryCta: string;
 }
 
 interface ValueProp {
@@ -128,35 +130,41 @@ export const LANDING: LandingContent = {
       { label: "How it works", href: "#how-it-works" },
       { label: "Pricing", href: "#pricing" },
     ],
+    mainLinks: [
+      { label: "About", href: "/about" },
+      { label: "Pricing", href: "/pricing" },
+      { label: "Changelog", href: "/changelog" },
+    ],
     signInLabel: "Sign in",
     ctaLabel: "Get started",
   },
 
   HERO: {
-    headline: "Your content. Every platform. On autopilot.",
+    headline: "Ship code. We handle the distribution.",
     subhead:
-      "Video content for YouTube, Instagram, LinkedIn, and X — created and posted automatically.",
-    primaryCta: "Start posting today",
+      "Platform-native video for YouTube, Instagram, LinkedIn, and X — prepared and posted while you build. One prompt a week, or zero.",
+    primaryCta: "Start free trial",
+    secondaryCta: "See how it works",
   },
 
   SOCIAL_PROOF: {
     metrics: [
-      { value: "12,400+", label: "Videos published" },
-      { value: "4", label: "Platforms supported" },
-      { value: "7 days", label: "Of content per batch" },
-      { value: "3 min", label: "Average setup time" },
+      { value: "12,400+", label: "Videos posted for founders" },
+      { value: "$39/mo", label: "vs. $3,000/mo for a hire" },
+      { value: "92", label: "Videos per month on Studio" },
+      { value: "3 min", label: "From signup to first batch" },
     ],
   },
 
   FEATURES: {
-    headline: "Everything you need to post consistently",
+    headline: "Stay visible on every platform without the work",
     features: [
-      { title: "Autopilot mode", description: "Set your niche. Get a full week of content. No input required.", image: "/images/features/autopilot.png" },
-      { title: "Four platforms, one click", description: "YouTube Shorts, Reels, LinkedIn, X. Native format for each.", image: "/images/features/four-platforms.png" },
-      { title: "Your voice, not ours", description: "Content matches your domain and audience. Every time.", image: "/images/features/your-voice.png" },
-      { title: "Manual mode", description: "Share what matters to you. We turn it into platform-ready video.", image: "/images/features/manual-mode.png" },
-      { title: "Weekly content batches", description: "Seven days of posts generated and scheduled at once.", image: "/images/features/weekly-batches.png" },
-      { title: "Post and track", description: "Content goes live on your schedule. See what performs.", image: "/images/features/post-track.png" },
+      { title: "Zero-input weeks on autopilot", description: "Set your niche. Build In Social prepares a full week of content. No input required.", image: "/images/features/autopilot.png" },
+      { title: "Four platforms, algorithm-native", description: "YouTube Shorts, Reels, LinkedIn, X. Each video matches the format that platform rewards.", image: "/images/features/four-platforms.png" },
+      { title: "Sounds like you, not a template", description: "Content matches your domain, your audience, and how you talk. Every time.", image: "/images/features/your-voice.png" },
+      { title: "Share a win, we handle the rest", description: "Shipped something? Tell Build In Social. It prepares platform-ready video from your input.", image: "/images/features/manual-mode.png" },
+      { title: "Up to 23 videos per week", description: "A full week of posts prepared and scheduled at once. Across all four platforms.", image: "/images/features/weekly-batches.png" },
+      { title: "See what resonates", description: "Videos post on your schedule. Performance data flows back so you know what lands.", image: "/images/features/post-track.png" },
     ],
   },
 
@@ -164,24 +172,24 @@ export const LANDING: LandingContent = {
     headline: "Why Build In Social?",
     items: [
       {
-        title: "Autopilot by default",
-        body: "Set your domain once. Build In Social creates and posts a full week of content automatically — whether or not you shipped something this week.",
+        title: "Post consistently without lifting a finger",
+        body: "Set your niche once. Build In Social prepares and posts a full week of video automatically — whether or not you shipped something this week.",
       },
       {
-        title: "Four platforms, native formats",
-        body: "YouTube Shorts, Instagram Reels, LinkedIn, and X. Each video is built for that platform's algorithm — different duration, hook structure, and posting window.",
+        title: "Reach every audience where they scroll",
+        body: "YouTube Shorts, Instagram Reels, LinkedIn, and X. Each video matches that platform's algorithm — right duration, hook structure, and posting window.",
       },
       {
-        title: "SEO pages that compound",
-        body: "Every video creates a Google-indexed landing page. 300+ pages per quarter, ranking for long-tail queries your audience is searching.",
+        title: "Build 300+ SEO pages per quarter",
+        body: "Every video builds a Google-indexed landing page. Your long-tail search presence compounds while you focus on your product.",
       },
       {
-        title: "Your voice, your niche",
-        body: "Five-minute setup. Build In Social learns what you build, who it's for, and how you talk about it. The content sounds like you, not a robot.",
+        title: "Sound like yourself, not a template",
+        body: "Three-minute setup. Build In Social learns what you build, who it's for, and how you talk about it. Clone your voice on Creator and Studio plans.",
       },
       {
-        title: "Under one hour a week",
-        body: "Share something specific when you want. Or don't — full autopilot runs without you touching it.",
+        title: "Spend zero hours a week on social",
+        body: "Share something specific when you want. Or do nothing — full autopilot runs without you touching it.",
       },
     ],
   },
@@ -191,18 +199,18 @@ export const LANDING: LandingContent = {
     steps: [
       {
         num: "1",
-        title: "Set your domain",
-        body: "Tell us your niche and target audience. That\u2019s it.",
+        title: "Describe what you build",
+        body: "Your niche, your audience, your tone. Three minutes, once. Never again.",
       },
       {
         num: "2",
-        title: "Review or skip",
-        body: "Check your weekly batch, or let autopilot handle everything.",
+        title: "Review your batch, or let it fly",
+        body: "Each week, Build In Social prepares up to 23 videos. Review them, or let autopilot post on schedule.",
       },
       {
         num: "3",
-        title: "Content goes live",
-        body: "Posts publish across all four platforms on schedule.",
+        title: "Videos go live across four platforms",
+        body: "YouTube Shorts, Reels, LinkedIn, X. Each one native. Each one building an SEO page behind it.",
       },
     ],
   },
@@ -216,7 +224,7 @@ export const LANDING: LandingContent = {
         product: "Patchwork",
         role: "Founder",
         quote:
-          "I was mass-producing Twitter threads with AI tools. They got zero engagement. Build In Social took the same ideas, turned them into platform-native video, and my LinkedIn impressions went from 200 to 9,000 in one week. Not a fluke — it held.",
+          "I was mass-producing X posts with AI tools. They got zero engagement. Build In Social took the same ideas, turned them into platform-native video, and my LinkedIn impressions went from 200 to 9,000 in one week. Not a fluke — it held.",
         metric: "45x",
         metricLabel: "LinkedIn impressions",
       },
@@ -307,30 +315,30 @@ export const LANDING: LandingContent = {
     ],
     faqs: [
       {
-        q: "What kind of videos does it create?",
-        a: "Short-form video optimized for each platform \u2014 Reels, Shorts, LinkedIn video, and X. Each post is formatted natively, not cross-posted.",
+        q: "Is the content actually good, or is it generic AI slop?",
+        a: "Every video is built for a specific platform with the right duration, hook structure, and pacing. YouTube Shorts get 30-45 seconds. Reels get 20-30. LinkedIn gets 45-60. X gets 15-20. Build In Social learns your niche, your audience, and your voice \u2014 not a one-size-fits-all template. On Creator and Studio plans, it uses your cloned voice from a 60-second recording.",
       },
       {
-        q: "Do I need to provide content ideas?",
-        a: "No. Autopilot mode generates everything from your domain and niche. Manual mode lets you feed in specific topics if you prefer.",
+        q: "Do I lose control over what gets posted?",
+        a: "You choose. Manual mode lets you review and approve every video before it goes live. Autopilot posts on schedule without waiting for you. You can switch between modes any week. Most founders start with manual, then move to autopilot once they trust the output.",
       },
       {
-        q: "Can I review posts before they go live?",
-        a: "Yes. Manual mode includes a review step. Autopilot publishes directly on your schedule.",
+        q: "What if I have nothing to share this week?",
+        a: "That is exactly what autopilot is for. Build In Social draws from your niche, trending topics in your domain, and evergreen angles that perform for your audience type. You can go weeks without touching it and your channels stay active.",
       },
       {
-        q: "How fast can I start?",
-        a: "Set your domain, connect your accounts, and your first content batch generates in minutes. Most users are live the same day.",
+        q: "How fast can I start posting?",
+        a: "Three minutes. Describe your niche, connect your platform accounts, and your first weekly batch is ready. No credit card for the 14-day trial. Most founders are live the same day they sign up.",
       },
     ],
   },
 
   FINAL_CTA: {
-    headline: "Stop planning content. Start posting it.",
+    headline: "Your competitors are posting daily. You should be too.",
     subhead:
-      "Your first week of video content is ready in minutes.",
-    ctaLabel: "Get started free",
-    reassurance: "No credit card. Cancel anytime.",
+      "14-day free trial. Your first video batch is ready in under three minutes.",
+    ctaLabel: "Start your free trial",
+    reassurance: "No credit card required. Cancel anytime. Takes 3 minutes.",
   },
 
   FOOTER: {

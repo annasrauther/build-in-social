@@ -12,20 +12,16 @@ const ease = [...EASE_SPRING] as [number, number, number, number];
 
 export function OnboardingHeading({ title, subtitle }: OnboardingHeadingProps) {
   return (
-    <div className="mb-8">
+    <div className="mb-6">
       <motion.h1
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.12, ease }}
         style={{
-          fontFamily: "var(--font-heading)",
-          fontWeight: 400,
           fontSize: "var(--type-display-mobile)",
-          lineHeight: 1.15,
           letterSpacing: "-0.01em",
-          color: "var(--text-primary)",
         }}
-        className="tablet-sm:text-[length:var(--type-display-desktop)]"
+        className="text-gradient-brand tablet-sm:text-[length:var(--type-display-desktop)] font-bold leading-[1.15]"
       >
         {title}
       </motion.h1>
@@ -35,12 +31,10 @@ export function OnboardingHeading({ title, subtitle }: OnboardingHeadingProps) {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.12, ease, delay: 0.04 }}
-          className="mt-3"
+          className="mt-3 leading-relaxed max-w-[480px]"
           style={{
             fontSize: "var(--type-body-mobile)",
-            lineHeight: 1.6,
             color: "var(--text-secondary)",
-            maxWidth: 480,
           }}
         >
           {subtitle}

@@ -8,7 +8,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import type { PlanVideo } from "@/components/plan/VideoCard";
+import type { PlanVideo } from "@/lib/types/video";
 import type { Platform } from "@/lib/types/user";
 
 type GenerationState = "idle" | "generating" | "ready";
@@ -121,11 +121,11 @@ export function WeekProvider({ children }: { children: ReactNode }) {
           throw new Error(`Generate failed: ${res.status}`);
         }
 
-        const data = (await res.json()) as { videos: PlanVideo[] };
+        const json = (await res.json()) as { data: { videos: PlanVideo[] }; error: string | null };
 
         setState((prev) => ({
           ...prev,
-          videos: data.videos,
+          videos: json.data.videos,
           generationState: "ready",
         }));
       } catch {

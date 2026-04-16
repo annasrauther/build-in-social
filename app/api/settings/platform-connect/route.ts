@@ -6,9 +6,9 @@ import { requireAuth } from "@/lib/auth";
  * Direct platform OAuth will be implemented in Sprint 9.
  */
 export async function POST(_req: NextRequest) {
-  let userId: string;
+  let _userId: string;
   try {
-    userId = await requireAuth();
+    _userId = await requireAuth();
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

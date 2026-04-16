@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { updateRenderJob } from "@/lib/services/queue";
 import { getRenderJob as dbGetRenderJob, updateRenderJob as dbUpdateRenderJob, updateVideo, getVideo } from "@/lib/services/db";
 import { sendEmail } from "@/lib/services/resend";
+import { refundCreditForRender } from "@/lib/services/credits";
 import { APP_URL, INTERNAL_SECRET } from "@/lib/env";
 
 export async function POST(req: NextRequest) {
@@ -32,13 +33,50 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as Record<string, unknown>;
     const jobId = typeof body.jobId === "string" ? body.jobId.trim() : "";
+    const status = typeof body.status === "string" ? body.status.trim() : "complete";
     const outputUrl = typeof body.outputUrl === "string" ? body.outputUrl.trim() : "";
+    const errorMessage = typeof body.errorMessage === "string" ? body.errorMessage.trim() : "";
     const durationSeconds =
       typeof body.durationSeconds === "number" ? body.durationSeconds : 0;
 
-    if (!jobId || !outputUrl) {
+    if (!jobId) {
       return NextResponse.json(
-        { error: "jobId and outputUrl are required" },
+        { error: "jobId is required" },
+        { status: 400 }
+      );
+    }
+
+    // ── Failure path: refund credit, mark video as failed, notify user ─────
+    if (status === "failed") {
+      await updateRenderJob(jobId, {
+        status: "failed",
+        error: errorMessage || "Render failed",
+      }).catch((err) => console.error("[render/complete] queue update failed:", err));
+
+      const dbJobFailed = await dbGetRenderJob(jobId).catch(() => null);
+      if (dbJobFailed) {
+        await dbUpdateRenderJob(jobId, {
+          status: "failed",
+          errorMessage: errorMessage || "Render failed",
+          completedAt: new Date().toISOString(),
+        }).catch((err) => console.error("[render/complete] db update failed:", err));
+
+        const video = await getVideo(dbJobFailed.videoId);
+        if (video) {
+          // Critical path #1: refund the credit so the user isn't charged for a failed render.
+          await refundCreditForRender(video.userId, video.id).catch((err) =>
+            console.error("[render/complete] refund failed:", err)
+          );
+          await updateVideo(video.id, { status: "failed" }).catch(() => undefined);
+        }
+      }
+      return NextResponse.json({ data: { ok: true, refunded: true } });
+    }
+
+    // ── Success path requires outputUrl ────────────────────────────────────
+    if (!outputUrl) {
+      return NextResponse.json(
+        { error: "outputUrl is required for status=complete" },
         { status: 400 }
       );
     }

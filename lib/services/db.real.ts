@@ -10,12 +10,13 @@
 import type { User, VoiceProfile } from "@/lib/types/user";
 import type { Video, RenderJob, ContentWeek } from "@/lib/types/video";
 import type { PseoPage } from "@/lib/types/pseo";
+import { NCB_INSTANCE as ENV_NCB_INSTANCE, NOCODEBACKEND_SECRET_KEY } from "@/lib/env";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
 const NCB_MCP_URL = "https://app.nocodebackend.com/api/mcp";
-const NCB_INSTANCE = process.env.NCB_INSTANCE ?? "55194_buildinsocial";
-const NCB_TOKEN = process.env.NOCODEBACKEND_SECRET_KEY!;
+const NCB_INSTANCE = ENV_NCB_INSTANCE ?? "55194_buildinsocial";
+const NCB_TOKEN = NOCODEBACKEND_SECRET_KEY!;
 
 // ─── Core SQL helpers ─────────────────────────────────────────────────────────
 
@@ -518,4 +519,131 @@ export async function createPseoPage(
              ${esc(data.videoObjectJsonLd ?? null)}, ${esc(data.canonicalUrl)}, 0, 0, ${esc(nowSql())})`
   );
   return { ...data, id: String(id), indexed: false, viewCount: 0, createdAt: new Date().toISOString() };
+}
+
+// ─── Stripe webhook idempotency (critical path #2) ────────────────────────────
+
+/**
+ * Insert-once for Stripe event IDs. Returns true if this is the first time the
+ * event was seen, false if it was already processed.
+ *
+ * REQUIRED TABLE (run once in NCB):
+ *   CREATE TABLE processed_stripe_events (
+ *     event_id   VARCHAR(255) NOT NULL PRIMARY KEY,
+ *     event_type VARCHAR(100) NOT NULL,
+ *     processed_at DATETIME    NOT NULL
+ *   );
+ *
+ * Implementation strategy: SELECT-then-INSERT. NCB MCP doesn't expose
+ * INSERT IGNORE return values cleanly, so we check first. Race window is small
+ * (Stripe retries are seconds apart, not microseconds) and the worst case is
+ * a duplicate INSERT failing on PRIMARY KEY — caller still sees `false` from
+ * the catch path.
+ */
+export async function recordStripeEvent(eventId: string): Promise<boolean> {
+  const existing = await sql(
+    `SELECT event_id FROM processed_stripe_events WHERE event_id = ${esc(eventId)} LIMIT 1`
+  ).catch(() => [] as NcbRow[]);
+
+  if (existing.length > 0) return false;
+
+  try {
+    await sqlInsert(
+      `INSERT INTO processed_stripe_events (event_id, event_type, processed_at)
+       VALUES (${esc(eventId)}, ${esc("stripe_event")}, ${esc(nowSql())})`
+    );
+    return true;
+  } catch {
+    // Duplicate-key race: someone else inserted between our SELECT and INSERT.
+    return false;
+  }
+}
+
+// ─── Voice clone consent (critical path #7) ───────────────────────────────────
+
+/**
+ * REQUIRED TABLE (run once in NCB):
+ *   CREATE TABLE voice_consent_records (
+ *     user_id      VARCHAR(255) NOT NULL PRIMARY KEY,
+ *     consented_at DATETIME     NOT NULL,
+ *     ip_address   VARCHAR(64),
+ *     user_agent   VARCHAR(500)
+ *   );
+ *
+ * Persist consent BEFORE any ElevenLabs cloneVoice request. Required by
+ * ElevenLabs ToS and most biometric privacy laws (GDPR, CPRA, BIPA).
+ */
+export async function recordVoiceConsent(params: {
+  userId: string;
+  consentedAt: string;
+  ipAddress?: string;
+  userAgent?: string;
+}): Promise<{
+  userId: string;
+  consentedAt: string;
+  ipAddress?: string;
+  userAgent?: string;
+}> {
+  // Upsert: delete any prior record for this user, then insert fresh.
+  await sql(
+    `DELETE FROM voice_consent_records WHERE user_id = ${esc(params.userId)}`
+  ).catch(() => undefined);
+  await sqlInsert(
+    `INSERT INTO voice_consent_records (user_id, consented_at, ip_address, user_agent)
+     VALUES (${esc(params.userId)}, ${esc(params.consentedAt)},
+             ${esc(params.ipAddress ?? null)}, ${esc(params.userAgent ?? null)})`
+  );
+  return params;
+}
+
+export async function hasVoiceConsent(userId: string): Promise<boolean> {
+  const rows = await sql(
+    `SELECT user_id FROM voice_consent_records WHERE user_id = ${esc(userId)} LIMIT 1`
+  ).catch(() => [] as NcbRow[]);
+  return rows.length > 0;
+}
+
+// ─── Avatar waitlist (Phase 2 lead capture) ───────────────────────────────────
+
+/**
+ * REQUIRED TABLE (run once in NCB):
+ *   CREATE TABLE avatar_waitlist (
+ *     email     VARCHAR(255) NOT NULL PRIMARY KEY,
+ *     joined_at DATETIME     NOT NULL
+ *   );
+ */
+export async function addToAvatarWaitlist(email: string): Promise<{
+  added: boolean;
+  position: number;
+}> {
+  const normalized = email.trim().toLowerCase();
+
+  const existing = await sql(
+    `SELECT email FROM avatar_waitlist WHERE email = ${esc(normalized)} LIMIT 1`
+  ).catch(() => [] as NcbRow[]);
+
+  // Compute position by counting earlier rows; if duplicate, return its rank.
+  if (existing.length > 0) {
+    const earlier = await sql(
+      `SELECT COUNT(*) AS c FROM avatar_waitlist
+       WHERE joined_at <= (SELECT joined_at FROM avatar_waitlist WHERE email = ${esc(normalized)})`
+    ).catch(() => [{ c: 0 }] as NcbRow[]);
+    const position = Number((earlier[0]?.c as number | string) ?? 0) || 1;
+    return { added: false, position };
+  }
+
+  try {
+    await sqlInsert(
+      `INSERT INTO avatar_waitlist (email, joined_at)
+       VALUES (${esc(normalized)}, ${esc(nowSql())})`
+    );
+  } catch {
+    // Duplicate-key race: someone else inserted just now. Fall through.
+  }
+
+  const total = await sql(
+    `SELECT COUNT(*) AS c FROM avatar_waitlist`
+  ).catch(() => [{ c: 1 }] as NcbRow[]);
+  const position = Number((total[0]?.c as number | string) ?? 1) || 1;
+  return { added: true, position };
 }

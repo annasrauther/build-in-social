@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import { Button, KIND } from "baseui/button";
+import { Button } from "@/components/tremor/Button";
 
 export default function GlobalError({
   error,
@@ -16,24 +16,17 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center p-6 text-center"
-      style={{ backgroundColor: "var(--bg-page)" }}
-    >
-      <h1 className="text-[18px] mb-2" style={{ color: "var(--text-primary)" }}>
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-white dark:bg-gray-950">
+      <h1 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-50">
         Something went wrong
       </h1>
-      <p className="text-[14px] max-w-xs mb-6" style={{ color: "var(--text-secondary)" }}>
+      <p className="text-sm max-w-xs mb-6 text-gray-500 dark:text-gray-400">
         We hit an unexpected error. This has been logged.
       </p>
       <div className="flex gap-3">
-        <Button onClick={reset}>
-          Try again
-        </Button>
+        <Button onClick={reset}>Try again</Button>
         <Link href="/dashboard">
-          <Button kind={KIND.secondary}>
-            Go to dashboard
-          </Button>
+          <Button variant="secondary">Go to dashboard</Button>
         </Link>
       </div>
     </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Button, KIND } from "baseui/button";
+import { Button } from "@/components/tremor/Button";
 
 export default function OnboardingError({
   error,
@@ -24,7 +24,7 @@ export default function OnboardingError({
       </p>
       <div className="flex gap-3">
         <Button onClick={reset}>Try again</Button>
-        <Button kind={KIND.tertiary} onClick={() => window.location.href = "/"}>
+        <Button variant="ghost" onClick={() => window.location.href = "/"}>
           Back to home
         </Button>
       </div>

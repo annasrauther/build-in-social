@@ -2,27 +2,22 @@
 
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button, KIND, SIZE } from "baseui/button";
+import { Button } from "@/components/tremor/Button";
+import { APP } from "@/content/app";
 
 interface QualityGateProps {
   onSubmit: (answers: [string, string, string]) => void;
   onAutopilot: () => void;
   loading: boolean;
+  /** Optional server-side pushback message when specificityScore < 5. */
+  serverPushback?: string;
 }
 
+// Spec questions — knowledge-center.md §5. Wording is canonical from APP.QUALITY_GATE.
 const QUESTIONS = [
-  {
-    label: "What did you ship or work on?",
-    placeholder: "Be specific — feature name, what it does, who it's for",
-  },
-  {
-    label: "What was hard or surprising?",
-    placeholder: "The thing that took longer, broke, or taught you something",
-  },
-  {
-    label: "What changed or what's the outcome?",
-    placeholder: "Metric, user reaction, personal realisation, next step",
-  },
+  { label: APP.QUALITY_GATE.q1, placeholder: APP.QUALITY_GATE.q1Placeholder },
+  { label: APP.QUALITY_GATE.q2, placeholder: APP.QUALITY_GATE.q2Placeholder },
+  { label: APP.QUALITY_GATE.q3, placeholder: APP.QUALITY_GATE.q3Placeholder },
 ] as const;
 
 function getCharCountColor(len: number): string {
@@ -56,7 +51,7 @@ function scoreSpecificity(answers: string[]): number {
   return Math.min(10, score);
 }
 
-export function QualityGate({ onSubmit, onAutopilot, loading }: QualityGateProps) {
+export function QualityGate({ onSubmit, onAutopilot, loading, serverPushback }: QualityGateProps) {
   const [answers, setAnswers] = useState<[string, string, string]>(["", "", ""]);
   const [error, setError] = useState("");
   const [score, setScore] = useState(0);
@@ -99,37 +94,23 @@ export function QualityGate({ onSubmit, onAutopilot, loading }: QualityGateProps
   const specLabel = getSpecificityLabel(score);
 
   return (
-    <div
-      className="rounded-[var(--radius-lg)] p-8"
-      style={{
-        backgroundColor: "var(--bg-elevated)",
-      }}
-    >
+    <div className="rounded-[var(--radius-lg)] p-8 bg-[color:var(--bg-elevated)]">
       {/* Header */}
       <div className="flex flex-col tablet-sm:flex-row tablet-sm:items-start tablet-sm:justify-between gap-2 mb-6">
         <div>
-          <h3
-            className="text-[20px] mb-1"
-            style={{
-              color: "var(--text-primary)",
-              fontFamily: "var(--font-heading)",
-              fontWeight: 400,
-              letterSpacing: "-0.02em",
-            }}
-          >
+          <h3 className="text-[20px] mb-1 font-normal tracking-[-0.02em] text-[color:var(--text-primary)]">
             What happened this week?
           </h3>
-          <p className="text-[14px]" style={{ color: "var(--text-secondary)" }}>
+          <p className="text-[14px] text-[color:var(--text-secondary)]">
             Three specific questions. The more detail, the better the content.
           </p>
         </div>
         <Button
-          kind={KIND.tertiary}
-          size={SIZE.compact}
+          variant="ghost"
+          className="text-sm shrink-0 self-start"
           onClick={onAutopilot}
-          overrides={{ BaseButton: { style: { flexShrink: 0, alignSelf: "flex-start" } } }}
         >
-          Skip → Autopilot
+          Use autopilot instead
         </Button>
       </div>
 
@@ -139,10 +120,7 @@ export function QualityGate({ onSubmit, onAutopilot, loading }: QualityGateProps
           const isValid = val.trim().length >= 20;
           return (
             <div key={q.label}>
-              <label
-                className="block text-[14px] font-medium mb-2"
-                style={{ color: "var(--text-primary)" }}
-              >
+              <label className="block text-[14px] font-medium mb-2 text-[color:var(--text-primary)]">
                 {q.label}
               </label>
               <textarea
@@ -151,15 +129,7 @@ export function QualityGate({ onSubmit, onAutopilot, loading }: QualityGateProps
                 onInput={handleAutoExpand}
                 placeholder={q.placeholder}
                 maxLength={280}
-                className="w-full px-4 py-3 text-[15px] rounded-[var(--radius-md)] overflow-hidden resize-none transition-all duration-[120ms]"
-                style={{
-                  border: "1px solid var(--border-default)",
-                  backgroundColor: "var(--bg-page)",
-                  color: "var(--text-primary)",
-                  outline: "none",
-                  minHeight: 80,
-                  lineHeight: 1.6,
-                }}
+                className="w-full px-4 py-3 text-[15px] leading-[1.6] min-h-[80px] rounded-[var(--radius-md)] overflow-hidden resize-none outline-none transition-all duration-[120ms] border border-[color:var(--border-default)] bg-[color:var(--bg-page)] text-[color:var(--text-primary)]"
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = "var(--accent)";
                   e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-subtle)";
@@ -209,10 +179,7 @@ export function QualityGate({ onSubmit, onAutopilot, loading }: QualityGateProps
           animate={{ opacity: 1, height: "auto" }}
           className="mt-6 space-y-2"
         >
-          <div
-            className="h-1.5 rounded-full overflow-hidden"
-            style={{ backgroundColor: "var(--bg-elevated)" }}
-          >
+          <div className="h-1.5 rounded-full overflow-hidden bg-[color:var(--bg-elevated)]">
             <motion.div
               className="h-full rounded-full"
               style={{ backgroundColor: specLabel.color }}
@@ -238,30 +205,22 @@ export function QualityGate({ onSubmit, onAutopilot, loading }: QualityGateProps
         </motion.div>
       )}
 
-      {error && (
+      {(error || serverPushback) && (
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-[13px] mt-4 px-4 py-3"
+          className="text-[13px] mt-4 px-4 py-3 rounded-[var(--radius-md)]"
           style={{ color: "var(--danger)", backgroundColor: "var(--danger-subtle)" }}
         >
-          {error}
+          {serverPushback ?? error}
         </motion.p>
       )}
 
-      <div style={{ marginTop: 24 }}>
+      <div className="mt-6">
         <Button
           onClick={handleSubmit}
           disabled={loading || !isReady}
-          overrides={{
-            BaseButton: {
-              style: {
-                width: "100%",
-                opacity: loading || !isReady ? 0.4 : 1,
-                cursor: loading || !isReady ? "not-allowed" : "pointer",
-              },
-            },
-          }}
+          className={`w-full ${loading || !isReady ? "opacity-40 cursor-not-allowed" : ""}`}
         >
           {loading ? "Building your plan..." : "Build this week\u2019s plan →"}
         </Button>

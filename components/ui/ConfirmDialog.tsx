@@ -1,7 +1,6 @@
 "use client";
 
-import { ResponsiveDialog } from "@/components/ui/Dialog";
-import { Button, KIND, SIZE } from "baseui/button";
+import { Button } from "@/components/tremor/Button";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -24,51 +23,36 @@ export function ConfirmDialog({
   onConfirm,
   destructive = false,
 }: ConfirmDialogProps) {
-  return (
-    <ResponsiveDialog
-      open={open}
-      onClose={() => onOpenChange(false)}
-      title={title}
-    >
-      <p
-        className="text-[var(--type-body-mobile)] tablet-sm:text-[var(--type-body-desktop)] mt-2"
-        style={{ color: "var(--text-secondary)" }}
-      >
-        {description}
-      </p>
+  if (!open) return null;
 
-      <div className="flex items-center gap-3 mt-6">
-        <Button
-          kind={KIND.primary}
-          size={SIZE.compact}
-          onClick={() => {
-            onConfirm();
-            onOpenChange(false);
-          }}
-          overrides={
-            destructive
-              ? {
-                  BaseButton: {
-                    style: ({ $theme }) => ({
-                      backgroundColor: $theme.colors.negative,
-                      color: "#FFFFFF",
-                      ":hover": { backgroundColor: $theme.colors.negative400 },
-                    }),
-                  },
-                }
-              : undefined
-          }
-        >
-          {confirmLabel}
-        </Button>
-        <Button
-          kind={KIND.tertiary}
-          size={SIZE.compact}
-          onClick={() => onOpenChange(false)}
-        >
-          {cancelLabel}
-        </Button>
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div
+        className="fixed inset-0 bg-black/50"
+        onClick={() => onOpenChange(false)}
+      />
+      <div className="relative z-10 w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-800 dark:bg-gray-950">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+          {title}
+        </h2>
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          {description}
+        </p>
+        <div className="flex items-center gap-3 mt-6">
+          <Button
+            variant={destructive ? "destructive" : "primary"}
+            onClick={() => {
+              onConfirm();
+              onOpenChange(false);
+            }}
+          >
+            {confirmLabel}
+          </Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {cancelLabel}
+          </Button>
+        </div>
       </div>
-    </ResponsiveDialog>
+    </div>
   );
 }

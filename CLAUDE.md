@@ -8,126 +8,83 @@ what they know. If they have something to share, they share it. If not, Build In
 runs on autopilot using its intelligent content system.
 Platform-native content for YouTube Shorts, Instagram Reels, LinkedIn, and X.
 Posts automatically. Every video generates a pSEO page.
-Full spec: /PRD-v7.md — read it completely before writing any code.
+Full spec: /knowledge-center.md — read it completely before writing any code.
 
 ## The agent system
-9 specialist agents live in .claude/agents/. They are your team.
-Read AGENT-WORKFLOW.md for how to use them and in what order.
-Always invoke @architect before @implementer. Always invoke @tester after @implementer.
-Always invoke @ux-designer before building any new screen or interaction.
+14 specialist agents live in .claude/agents/. @manager is the orchestrator — invoke it first for every task and it routes to the right specialists in the right order.
+Read AGENT-SETUP.md for the full tier map and routing rules.
+Non-negotiables: @architect runs before @implementer, @tester runs after @implementer, @security-auditor runs on any auth/billing/user-data change, @ui-crafter + @ux-critic run on every user-facing feature.
 
-## Design rules (never break these)
-1. WHITE-FIRST. --bg-page = #ffffff. Light mode is default and primary.
-2. ONLY use CSS tokens from globals.css. Never hardcode hex values anywhere.
-3. Single neutral accent --accent = rgb(36, 36, 36) (black) for all interactive states:
-   primary actions, buttons, selected states, progress indicators, active highlights,
-   input focus rings, tab indicators. No secondary accent colour.
-   --accent-subtle = rgba(0, 0, 0, 0.05) for light backgrounds on selected states.
-   --accent-green = #1A8917 for success/connected states.
-   Approved badges use --success / --success-subtle (green).
-4. Font: Source Serif 4 for headings (h1/h2/h3, --font-heading), Geist for body/UI.
-   Heading weight: 400 (light serif). Geist Mono for numbers, timestamps, durations.
-   No Inter, no system fonts.
-5. Base Web (Uber) component library + Styletron CSS-in-JS for ALL visual components:
-   Button, Input, Textarea, Select, Tabs, Modal — all from Base Web, themed via baseweb-theme.ts.
-   No custom CSS for component styling. Styletron handles colors, borders, focus rings, radii.
-   Tailwind for LAYOUT ONLY: flex, grid, gap, padding, margin, responsive breakpoints.
-   Never use Tailwind for colors, borders, typography, or focus states.
-   Framer Motion for page transitions and micro-interactions.
-6. Uber Base surface rule: Cards and selection elements use bg-elevated fill with NO borders.
-   Borders are ONLY for: structural dividers (sidebar, topnav, footer, ListRow separators),
-   form inputs (Input, Textarea, Select), and floating overlays (Dialog, BottomSheet, Dropdown).
-   Shadows only for overlays and modals.
-7. Uber Base design principles: flat surfaces, extreme clarity, zero decoration,
-   generous consistent spacing, every element earns its place.
-8. All spacing: 4px base grid, multiples of 4 only.
-9. Tailwind for layout/spacing ONLY. Never for colours or typography.
-10. Framer Motion for page transitions. Standard easing: [0.16, 1, 0.3, 1].
-    Interactive state changes: 120ms max (--transition-fast, --transition-state).
-11. Mobile-first. Design 375px first. All touch targets ≥ 44px, preferred 48px.
-12. Strict type scale (app pages):
-    Display: 20px mobile / 24px desktop (--type-display-*)
-    Section: 15px mobile / 16px desktop (--type-section-*)
-    Body: 14px mobile / 15px desktop (--type-body-*)
-    Supporting: 12px mobile / 13px desktop (--type-supporting-*)
-    Micro: 11px uppercase tracking 0.07em (--type-micro)
-13. Interactive elements: exactly 4 states — default, hover, active, disabled.
-    No animated idle states. No pulsing except approved loading spinners.
-14. Mobile layout: ListRow (full-width rows) for content items. Cards on desktop only.
-15. All app strings live in /content/app.ts. No hardcoded strings in components.
+## Design system
+The UI is built on two Tremor Raw templates (Tailwind v3 + Radix UI):
+- **Database template** → marketing/landing pages (Navbar, Hero, Pricing, Features, Footer, Changelog)
+- **Dashboard template** → authenticated app shell (Sidebar, DataTable, Charts, Settings)
 
-## Unified component guidelines (must be identical across LP, onboarding, and app)
+Key rules:
+1. Brand palette is the Anthropic warm palette. `brand-500 = #D97757` (Anthropic Orange) with the full 50–950 scale derived in `tailwind.config.ts`. Light bg `#FAF9F5`, dark bg `#141413`. Secondary accents: `#6A9BCC` (blue), `#788C5D` (green). Do not introduce off-palette colors. Tremor `<Button variant="primary">` deliberately stays high-contrast (gray-900 / gray-50) — brand orange is for gradients, accents, focus rings, and selection, not on filled buttons.
+2. Both dark and light modes are supported out of the box via `next-themes`.
+   System preference is auto-detected. User can toggle with ThemeSwitch component.
+3. Fonts: Poppins (headings, `font-sans`) + Lora (body, `font-serif`), loaded via `next/font/google`. No Geist, no Inter, no Source Serif 4.
+4. Tailwind v3 for ALL styling. No CSS-in-JS. No Styletron.
+5. Framer Motion for page transitions and micro-interactions.
+6. Mobile-first. All touch targets ≥ 44px.
+7. All app strings live in /content/app.ts. No hardcoded strings in components.
 
-### Buttons — Base Web Button (used directly)
-- **Import `Button, KIND, SIZE` from `baseui/button`** — no custom wrapper.
-- Use Base Web's default styling (border-radius 8px, default colors from theme primitives).
-- 3 kinds: `KIND.primary`, `KIND.secondary`, `KIND.tertiary` (ghost).
-- 3 sizes: `SIZE.compact` (sm), `SIZE.default` (md), `SIZE.large` (lg).
-- For danger buttons: use `KIND.primary` + negative color overrides via `$theme.colors.negative`.
-- `isLoading` prop for loading state. `type` prop for form buttons.
-- Touch targets: compact=40px, default=44px, large=48px minimum height.
-- Never use bare `<button>` elements — always use Base Web `<Button>`.
-- Never add custom border-radius or font-weight overrides to buttons.
+### Component conventions
+- **Tremor Raw primitives** in `components/tremor/` — Button, Card, Input, Badge, Dialog, etc.
+  These are copied from the official Tremor templates and should not be modified.
+- `components/marketing/` — landing page sections (Hero, Features, Pricing, etc.)
+- `components/dashboard/` — app shell components (Sidebar, DataTable, overview cards, etc.)
+- `components/ui/` — custom composition components (Wordmark, StickyBar, ConfirmDialog, etc.)
+- `components/onboarding/` — onboarding flow components
+- `components/plan/` — weekly plan components
+- Feature components: `components/<feature>/`
+- App strings: `content/app.ts` (single source of truth for all UI copy)
 
-### Typography
-- All headings (h1, h2, h3): `fontFamily: var(--font-heading)`, `fontWeight: 400`.
-- Body/UI text: Geist (var(--font-sans)).
-- Page titles in TopNav and OnboardingShell: 16–20px, serif, weight 400.
-- Never use font-semibold or font-bold on headings — always weight 400 serif.
-
-### Layout
-- Landing page: full-bleed sections, `.lp-container` for max-width content.
-- App pages: `AppShell` with Sidebar + TopNav. No global max-width on main.
-  Per-page max-width based on content density (max-w-2xl to max-w-4xl).
-- Onboarding: full-width edge-to-edge. No maxWidth on content. Generous padding.
-  Buttons constrained to maxWidth: 480px.
-- All horizontal dividers/borders must extend full available width.
-
-### Cards and surfaces
-- Cards (ContentCard): `bg: var(--bg-elevated)`, no border, `border-radius: var(--radius-lg)` (12px).
-  Padding: 16px mobile / 24px desktop. No box-shadow on default.
-- CardHeader: title (font-semibold) + optional action, border-bottom 1px --border-default.
-- Interactive cards: hover `-translate-y-0.5` + subtle shadow on desktop.
-- Cards keep their border-radius (12px). Buttons use Base Web default (8px).
-- ListRow: full-width rows for mobile layouts, 48px min-height, border-bottom.
-- StickyBar: fixed bottom bar on mobile for page-level CTAs.
+### Route groups
+- `app/(marketing)/` — public marketing pages (Database template shell: Navbar + Footer)
+- `app/(dashboard)/` — authenticated app pages (Dashboard template shell: Sidebar)
+- `app/(onboarding)/` — onboarding flow (clean layout, no sidebar)
+- `app/(auth-pages)/` — login, signup, legal pages
+- `app/api/` — all API routes (untouched)
 
 ## Product rules (never break these)
-12. Avatar Mode is DISABLED in Phase 1.
-    Show everywhere with "Coming soon" badge + waitlist CTA.
-    No HeyGen API code whatsoever in Phase 1. Not even installed.
-13. Faceless Mode is the entire product in Phase 1.
-14. **Content model is domain-presence, not ship-announcements.**
-    The product is about establishing the user's authority in their domain, week over week.
-    Users set their niche/domain once during onboarding.
-    Each week they have TWO modes:
-    a) **Manual mode:** They share something specific (shipped feature, lesson learned, opinion,
-       case study, tool review, debugging story). Quality gate validates specificity.
-    b) **Autopilot mode:** They have nothing to share → Build In Social's intelligent system
-       generates a full week of domain-relevant content automatically, drawing from:
-       - Their niche and established voice
-       - Trending topics in their domain (via intelligence patterns)
-       - Evergreen content angles that perform for their audience type
-       - Pre-built content series (e.g. "30 days of React tips", "SaaS metrics explained")
-    Autopilot is a first-class feature, not a fallback. Market it as the core value.
-15. The quality gate (3 specific questions) runs ONLY in manual mode.
-    Never generate a manual script without the quality gate output. Never make it skippable.
-    Autopilot mode bypasses the quality gate — the AI provides its own specificity.
-16. Build In Social sets video duration based on platform. User cannot choose duration.
-    Show the chosen duration in the UI with an optional override that requires a click.
-17. Partner framing always. Never "generate video." Always "Build In Social is creating."
-18. Only 4 platforms: YouTube Shorts, Instagram Reels, LinkedIn, X.
-    Reddit = never. TikTok = never. In Phase 1 or any session unless told otherwise.
-19. Intelligence panel hidden until user has 5+ published videos with metrics.
-20. All Claude API calls: use Haiku for scripts/labelling/quality gate/autopilot suggestions.
-    Use Sonnet only for pSEO articles and intelligence summaries.
+1. Avatar Mode is DISABLED in Phase 1.
+   Show everywhere with "Coming soon" badge + waitlist CTA.
+   No HeyGen API code whatsoever in Phase 1. Not even installed.
+2. Faceless Mode is the entire product in Phase 1.
+3. **Content model is domain-presence, not ship-announcements.**
+   The product is about establishing the user's authority in their domain, week over week.
+   Users set their niche/domain once during onboarding.
+   Each week they have TWO modes:
+   a) **Manual mode:** They share something specific (shipped feature, lesson learned, opinion,
+      case study, tool review, debugging story). Quality gate validates specificity.
+   b) **Autopilot mode:** They have nothing to share → Build In Social's intelligent system
+      generates a full week of domain-relevant content automatically, drawing from:
+      - Their niche and established voice
+      - Trending topics in their domain (via intelligence patterns)
+      - Evergreen content angles that perform for their audience type
+      - Pre-built content series (e.g. "30 days of React tips", "SaaS metrics explained")
+   Autopilot is a first-class feature, not a fallback. Market it as the core value.
+4. The quality gate (3 specific questions) runs ONLY in manual mode.
+   Never generate a manual script without the quality gate output. Never make it skippable.
+   Autopilot mode bypasses the quality gate — the AI provides its own specificity.
+5. Build In Social sets video duration based on platform. User cannot choose duration.
+   Show the chosen duration in the UI with an optional override that requires a click.
+6. Partner framing always. Never "generate video." Always "Build In Social is creating."
+7. Only 4 platforms: YouTube Shorts, Instagram Reels, LinkedIn, X.
+   Reddit = never. TikTok = never. In Phase 1 or any session unless told otherwise.
+8. Intelligence panel hidden until user has 5+ published videos with metrics.
+9. All Claude API calls: use Haiku for scripts/labelling/quality gate/autopilot suggestions.
+   Use Sonnet only for pSEO articles and intelligence summaries.
 
 ## Tech stack
 - **Framework:** Next.js 16 App Router (NOT Pages Router)
 - **Language:** TypeScript 5, strict mode
-- **UI:** React 19, Base Web (Uber) + Styletron, Tailwind CSS v4 (layout only), Framer Motion
-- **Font:** Geist (via `geist` package)
-- **Auth:** Clerk (`@clerk/nextjs` v7) — added LAST, after all pages built
+- **UI:** React 19, Tremor Raw components (Tailwind v3 + Radix UI), Framer Motion
+- **Theme:** next-themes (dark/light mode with system preference detection)
+- **Fonts:** Poppins (headings) + Lora (body) via `next/font/google`. Use Tailwind `font-sans` / `font-serif` utilities — these resolve to the CSS variables wired in `app/layout.tsx`.
+- **Auth:** Clerk (`@clerk/nextjs`) — added LAST, after all pages built
 - **State:** TanStack Query v5
 - **Database:** NoCodeBackend (REST API)
 - **Storage:** Cloudflare R2
@@ -138,6 +95,9 @@ Always invoke @ux-designer before building any new screen or interaction.
 - **Video assembly:** FFmpeg WASM
 - **Email:** Resend
 - **Job queue:** Upstash Redis
+- **Icons:** Remix Icon (@remixicon/react) + Lucide React
+- **Charts:** Recharts
+- **Tables:** TanStack React Table
 
 ## Key conventions
 
@@ -145,24 +105,26 @@ Always invoke @ux-designer before building any new screen or interaction.
 All external integrations live in `lib/services/` with mock fallbacks in `lib/mock/`.
 To wire a real integration, set the API key in `.env.local` — the service auto-switches.
 
-### Component conventions
-- **Use Base Web components directly** (`baseui/button`, `baseui/input`, `baseui/modal`, etc.) — no custom wrappers.
-- `components/ui/` contains composition components (ResponsiveDialog, ConfirmDialog, BottomSheet)
-  and non-Base-Web UI (Skeleton, Badge, Card, ListRow, StickyBar, etc.).
-- Base Web theme: `lib/baseweb-theme.ts` (brand primitives + typography only, no component styling overrides)
-- Styletron engine: `lib/styletron.ts`
-- Feature components: `components/<feature>/`
-- Layouts: `components/layout/`
-- App strings: `content/app.ts` (single source of truth for all UI copy)
-
 ### API route pattern
 - All routes return `{ data, error }` shape
 - Input validation with Zod before any DB operation
 - Environment variables via `lib/env.ts`, never `process.env` directly
 
+### Dev auth bypass
+Set `NEXT_PUBLIC_DEV_AUTH=1` in `.env.local` to enable a one-click "Sign in as Test User" button on `/login` and `/signup`. This:
+  - Skips `ClerkProvider` entirely (no Clerk hooks may run).
+  - Skips `clerkMiddleware` in `proxy.ts`.
+  - `/api/dev/login` sets an httpOnly cookie `dev-auth=1` and redirects to `/dashboard`.
+  - `getAuthUserId()` returns `clerk_mock_01` only when the cookie is set; otherwise throws `UNAUTHORIZED`, so `/login` still works.
+  - Sign-out POSTs to `/api/dev/logout` (clears the cookie) instead of calling Clerk.
+
+Restart `next dev` after toggling — `NEXT_PUBLIC_*` values are build-time inlined and HMR will not pick up changes.
+
+Production builds force the flag off — `DEV_AUTH` (in `lib/env.ts`) gates on `NODE_ENV === "development"`. The `/api/dev/*` routes return 404 in any other environment. This deprecates the older `BYPASS_AUTH` / `NEXT_PUBLIC_BYPASS_AUTH` names (kept for one release).
+
 ## Phase 1 build order — strict sequence, no skipping
-1.  Token system + Geist font + Radix setup + base layout
-2.  Landing page (Linear design, research-driven copy, domain-presence model)
+1.  Token system + Poppins/Lora fonts + Tremor setup + base layout
+2.  Landing page (all template sections, domain-presence copy)
 3.  Onboarding (domain/niche → platforms → voice → plan preview with mode choice)
 4.  Dashboard + Weekly plan generator (manual mode + autopilot mode)
 5.  Video library + individual video page

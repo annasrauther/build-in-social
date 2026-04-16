@@ -20,7 +20,7 @@ export async function createCheckoutSession(params: {
   };
 }
 
-export async function createPortalSession(params: {
+export async function createPortalSession(_params: {
   userId: string;
   customerId: string;
 }): Promise<{ url: string }> {
@@ -29,7 +29,7 @@ export async function createPortalSession(params: {
   return { url: "/settings/billing?mock_portal=true" };
 }
 
-export async function constructWebhookEvent(payload: string, signature: string) {
+export async function constructWebhookEvent(_payload: string, _signature: string) {
   console.log("[MOCK stripe] constructWebhookEvent");
   return {
     type: "checkout.session.completed",

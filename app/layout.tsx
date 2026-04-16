@@ -1,15 +1,21 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
-import { Source_Serif_4 } from "next/font/google";
+import { Poppins, Lora } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
-const sourceSerif = Source_Serif_4({
+const poppins = Poppins({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-poppins",
   display: "swap",
-  variable: "--font-serif",
-  weight: ["300", "400", "600", "700"],
+});
+
+const lora = Lora({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-lora",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -46,6 +52,9 @@ export const metadata: Metadata = {
       "One prompt per week. Platform-native content for 4 platforms. Posts while you build.",
     creator: "@buildinsocial",
   },
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export const viewport = {
@@ -62,9 +71,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${GeistSans.variable} ${GeistMono.variable} ${sourceSerif.variable}`}
+      className={`${poppins.variable} ${lora.variable}`}
+      suppressHydrationWarning
     >
-      <body>
+      <body className="overflow-y-scroll scroll-auto antialiased selection:bg-brand-100 selection:text-brand-900 dark:selection:bg-brand-900 dark:selection:text-brand-100 bg-[#FAF9F5] dark:bg-[#141413]">
         <Providers>{children}</Providers>
       </body>
     </html>

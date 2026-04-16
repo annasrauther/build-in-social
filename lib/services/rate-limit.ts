@@ -4,6 +4,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN } from "@/lib/env";
 
 type RateLimitResult = { success: boolean; remaining: number };
 
@@ -31,8 +32,8 @@ async function getLimiter(
 ): Promise<{ limit: (id: string) => Promise<RateLimitResult> }> {
   if (limiters.has(key)) return limiters.get(key)!;
 
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const url = UPSTASH_REDIS_REST_URL;
+  const token = UPSTASH_REDIS_REST_TOKEN;
 
   if (!url || !token) {
     // No-op limiter for dev without Redis
