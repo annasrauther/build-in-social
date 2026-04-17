@@ -1,4 +1,4 @@
-import type { Appearance } from "@clerk/types";
+import type { Appearance } from "@clerk/shared/types";
 
 /**
  * Shared Clerk theming. Aligns the Clerk-rendered <SignIn>/<SignUp> with
