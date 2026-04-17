@@ -9,6 +9,9 @@
 import { z } from "zod";
 
 const isProduction = process.env.NODE_ENV === "production";
+// next build runs with NODE_ENV=production but secrets aren't present at compile time.
+// Only throw at runtime (server boot), not during the static build phase.
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
 
 /** Required-in-production values: must be present to boot prod, optional in dev. */
 const requiredInProd = (label: string) =>
@@ -73,8 +76,9 @@ const EnvSchema = z.object({
 
 const parsed = EnvSchema.safeParse(process.env);
 
-if (!parsed.success && isProduction) {
-  // Only block boot in production. Dev/test should keep working with mocks.
+if (!parsed.success && isProduction && !isBuildPhase) {
+  // Throw at runtime (server boot), not during `next build` — secrets aren't
+  // present at compile time but must be set before the server accepts traffic.
   console.error(
     "[env] Invalid environment variables:",
     parsed.error.flatten().fieldErrors
