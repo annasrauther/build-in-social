@@ -37,30 +37,35 @@ export function SelectionCard({
 
   return (
     <div
-      className="relative overflow-hidden p-[1.5px] rounded-[calc(var(--radius-lg)+1.5px)] transition-shadow duration-150"
+      className="relative overflow-hidden rounded-[calc(var(--radius-lg)+1.5px)] transition-shadow duration-150"
       style={{
+        padding: selected ? "1.5px" : 0,
         boxShadow: selected ? "0 0 0 3px rgba(217,119,87,0.16)" : "none",
-        backgroundColor: selected ? "transparent" : "var(--bg-elevated)",
+        backgroundColor: selected ? "transparent" : "transparent",
       }}
     >
-      {/* Spinning conic-gradient border — fades in when selected */}
-      <motion.div
-        animate={{ opacity: selected ? 1 : 0 }}
-        transition={{ duration: 0.2 }}
-        className="absolute left-1/2 top-1/2 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2"
-        style={{
-          background:
-            "conic-gradient(from 0deg, transparent 0%, transparent 65%, var(--accent) 78%, #F0A875 85%, var(--accent) 93%, transparent 100%)",
-          animation: "spin-gradient 5s linear infinite",
-        }}
-      />
+      {/* Spinning conic-gradient border — only rendered when selected */}
+      {selected && (
+        <motion.div
+          animate={{ opacity: 1 }}
+          initial={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="absolute left-1/2 top-1/2 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2"
+          style={{
+            background:
+              "conic-gradient(from 0deg, transparent 0%, transparent 65%, var(--accent) 78%, #F0A875 85%, var(--accent) 93%, transparent 100%)",
+            animation: "spin-gradient 5s linear infinite",
+          }}
+        />
+      )}
 
       <motion.button
         type="button"
         onClick={onSelect}
-        className="relative w-full text-left min-h-[44px] px-5 py-4 border-none cursor-pointer outline-none z-[1] rounded-[var(--radius-lg)]"
+        className="relative w-full text-left min-h-[44px] px-5 py-4 cursor-pointer outline-none z-[1] rounded-[var(--radius-lg)]"
         style={{
           backgroundColor: "var(--bg-elevated)",
+          border: selected ? "none" : "1px solid var(--border-default)",
         }}
         animate={controls}
         whileTap={{ scale: 0.98 }}

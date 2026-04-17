@@ -84,7 +84,7 @@ export default function DashboardPage() {
 
   return (
     <Shell title={`${greetingFor()} ${profile!.displayName.split(" ")[0] ?? ""}`.trim()}>
-      <p className="mb-6" style={{ fontSize: "var(--type-supporting-desktop)", color: "var(--text-tertiary)" }}>
+      <p style={{ fontSize: "var(--type-supporting-desktop)", color: "var(--text-tertiary)" }}>
         {APP.DASHBOARD.subtitle}
       </p>
 
@@ -96,7 +96,7 @@ export default function DashboardPage() {
           cta={APP.DASHBOARD.emptyCta}
           ctaHref="/onboarding/start"
           ctaGradient
-          className="mb-8"
+          className=""
         />
       )}
 
@@ -198,10 +198,12 @@ export default function DashboardPage() {
 function Shell({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="px-5 pt-8 pb-14 sm:px-8 sm:pt-10 lg:px-10 lg:pt-8">
-      <h1 className="font-sans text-[24px] font-bold tracking-tight mb-2">
+      <h1 className="font-serif text-[24px] font-bold tracking-tight mb-6">
         {title}
       </h1>
-      {children}
+      <div className="flex flex-col gap-6">
+        {children}
+      </div>
     </div>
   );
 }

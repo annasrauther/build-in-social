@@ -73,8 +73,8 @@ export default function PricingPage() {
   }, [recommendedTier]);
 
   function handleSelect(tier: PricingTier) {
-    update({ selectedTier: tier, paymentComplete: true, currentStep: 6 });
-    goToStep(6);
+    update({ selectedTier: tier, paymentComplete: true, currentStep: 5 });
+    goToStep(5);
   }
 
   return (

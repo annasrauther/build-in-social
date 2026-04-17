@@ -500,6 +500,7 @@ export default function StartPage() {
             value={domainInput}
             onChange={(e) => handleDomainChange(e.target.value)}
             onBlur={handleDomainBlur}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleDomainBlur(); } }}
             placeholder="yourproduct.com"
             autoFocus
           />

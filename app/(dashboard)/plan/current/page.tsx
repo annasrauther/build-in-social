@@ -152,7 +152,7 @@ export default function CurrentPlanPage() {
         {/* Week header */}
         <div className="mb-8 flex flex-col tablet-sm:flex-row tablet-sm:items-end tablet-sm:justify-between gap-4">
           <div>
-            <h2 className="font-sans text-xl font-bold tracking-tight">
+            <h2 className="font-serif text-xl font-bold tracking-tight">
               {APP.PLAN.weeklyPlanLabel}
             </h2>
             <p className="mt-1 text-[13px] text-[color:var(--text-tertiary)]">
@@ -309,7 +309,7 @@ function PlanShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="px-6 pt-8 pb-12 sm:px-8">
       <header className="mb-8">
-        <h1 className="text-gradient-brand font-sans text-[26px] font-extrabold tracking-tight leading-tight mb-1.5">
+        <h1 className="text-gradient-brand font-serif text-[26px] font-extrabold tracking-tight leading-tight mb-1.5">
           This week
         </h1>
         <p className="text-[14px] text-[color:var(--text-tertiary)]">

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Poppins, Lora } from "next/font/google";
+import { Poppins, Montserrat } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 
@@ -10,11 +10,11 @@ const poppins = Poppins({
   display: "swap",
 });
 
-const lora = Lora({
+const montserrat = Montserrat({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
   style: ["normal", "italic"],
-  variable: "--font-lora",
+  variable: "--font-montserrat",
   display: "swap",
 });
 
@@ -71,7 +71,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${poppins.variable} ${lora.variable}`}
+      className={`${poppins.variable} ${montserrat.variable}`}
       suppressHydrationWarning
     >
       <body className="overflow-y-scroll scroll-auto antialiased selection:bg-brand-100 selection:text-brand-900 dark:selection:bg-brand-900 dark:selection:text-brand-100 bg-[#FAF9F5] dark:bg-[#141413]">

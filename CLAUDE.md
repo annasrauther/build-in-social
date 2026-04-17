@@ -12,7 +12,6 @@ Full spec: /knowledge-center.md — read it completely before writing any code.
 
 ## The agent system
 14 specialist agents live in .claude/agents/. @manager is the orchestrator — invoke it first for every task and it routes to the right specialists in the right order.
-Read AGENT-SETUP.md for the full tier map and routing rules.
 Non-negotiables: @architect runs before @implementer, @tester runs after @implementer, @security-auditor runs on any auth/billing/user-data change, @ui-crafter + @ux-critic run on every user-facing feature.
 
 ## Design system
@@ -83,7 +82,7 @@ Key rules:
 - **Language:** TypeScript 5, strict mode
 - **UI:** React 19, Tremor Raw components (Tailwind v3 + Radix UI), Framer Motion
 - **Theme:** next-themes (dark/light mode with system preference detection)
-- **Fonts:** Poppins (headings) + Lora (body) via `next/font/google`. Use Tailwind `font-sans` / `font-serif` utilities — these resolve to the CSS variables wired in `app/layout.tsx`.
+- **Fonts:** Montserrat (headings, `font-serif`) + Poppins (body, `font-sans`) via `next/font/google`. Use Tailwind `font-serif` for titles/headings and `font-sans` for body text.
 - **Auth:** Clerk (`@clerk/nextjs`) — added LAST, after all pages built
 - **State:** TanStack Query v5
 - **Database:** NoCodeBackend (REST API)

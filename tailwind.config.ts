@@ -41,7 +41,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-poppins)", "system-ui", "sans-serif"],
-        serif: ["var(--font-lora)", "Georgia", "serif"],
+        serif: ["var(--font-montserrat)", "system-ui", "sans-serif"],
       },
       screens: {
         "mobile-sm": "375px",

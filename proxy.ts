@@ -20,13 +20,16 @@ const isPublicRoute = createRouteMatcher([
   "/api/infer-product",
 ]);
 
-// When Clerk keys are not configured, OR when NEXT_PUBLIC_DEV_AUTH=1 is set,
-// skip auth middleware entirely. The dev-auth flow uses a cookie checked in
-// lib/auth.ts; the middleware does not need to gate routes in that mode.
+// When Clerk keys are not configured, OR when NEXT_PUBLIC_DEV_AUTH=1 is set
+// AND we're running locally (NODE_ENV=development), skip Clerk middleware.
+// On Vercel (NODE_ENV=production for all deployments), devAuth is always false
+// so Clerk always runs — even if NEXT_PUBLIC_DEV_AUTH=1 is in Vercel env vars.
 const hasClerkKeys =
   !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
   !!process.env.CLERK_SECRET_KEY;
-const devAuth = process.env.NEXT_PUBLIC_DEV_AUTH === "1";
+const devAuth =
+  process.env.NODE_ENV === "development" &&
+  process.env.NEXT_PUBLIC_DEV_AUTH === "1";
 
 function bypassMiddleware(_req: NextRequest) {
   return NextResponse.next();

@@ -3,7 +3,7 @@ import type { Appearance } from "@clerk/types";
 /**
  * Shared Clerk theming. Aligns the Clerk-rendered <SignIn>/<SignUp> with
  * Build In Social's Anthropic-warm palette (brand-500 = #D97757) and
- * Poppins/Lora typography.
+ * Montserrat (headings) + Poppins (body) typography.
  */
 export const clerkAppearance: Appearance = {
   variables: {
@@ -20,7 +20,7 @@ export const clerkAppearance: Appearance = {
     card: "shadow-none border border-[var(--border-default)] rounded-[var(--radius-lg)]",
     formButtonPrimary:
       "bg-[#141413] hover:bg-[#252422] text-white normal-case",
-    headerTitle: "font-sans tracking-tight",
+    headerTitle: "font-serif tracking-tight",
     headerSubtitle: "font-sans",
   },
 };
