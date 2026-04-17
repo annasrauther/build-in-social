@@ -54,35 +54,79 @@ async function callWithTool<T>(
 
 // ─── Quality gate ─────────────────────────────────────────────────────────────
 
+/**
+ * Canonical pushback wording from knowledge-center.md §5.
+ * NEVER let the LLM invent its own. Always return this exact string when
+ * specificityScore < 5.
+ */
+export const QUALITY_GATE_PUSHBACK =
+  "This is a bit general — one specific detail makes the content 10× better. " +
+  "What exactly did you launch? What number surprised you? " +
+  "Even one sentence changes everything.";
+
+/** Specificity score below this threshold rejects the answers. */
+export const QUALITY_GATE_THRESHOLD = 5;
+
 export async function checkQualityGate(answers: [string, string, string]): Promise<{
   passed: boolean;
   specificityScore: number;
   pushback?: string;
 }> {
-  const prompt = `You are evaluating content quality gate answers from an indie developer.
-They answered 3 questions about what they're building this week:
+  const prompt = `You are scoring weekly content-quality-gate answers from an indie developer or SaaS founder.
+They answered 3 questions about their week:
 
-1. "${answers[0]}"
-2. "${answers[1]}"
-3. "${answers[2]}"
+  Q1 (what they shipped/learned/decided): "${answers[0]}"
+  Q2 (what surprised them): "${answers[1]}"
+  Q3 (who needs to hear this and why): "${answers[2]}"
 
-Score the specificity from 1-10. Score < 5 means too vague for good content.
-A score of 5+ means content can be generated. If < 5, provide a pushback message.`;
+Score SPECIFICITY on a 1-10 scale.
 
-  return callWithTool(
+Specificity is HIGH (7-10) when answers contain at least 2 of:
+  - A named feature, product, library, or tool ("Stripe billing", "BullMQ queue", "Supabase RLS")
+  - A concrete number or metric ("dropped p95 from 800ms to 120ms", "$0 to $400 MRR", "8 customers")
+  - A named user, customer, or audience segment ("Series-A B2B SaaS founders", "Bob, our beta tester")
+  - A specific outcome, mistake, or surprise ("the migration locked the table for 14 minutes")
+
+Specificity is LOW (1-4) when answers are generic, abstract, or could apply to any project:
+  - "Worked on my app this week" / "Made some progress"
+  - "Learned a lot about marketing"
+  - "Anyone building a SaaS"
+  - Hedge language: "might", "kind of", "stuff", "things"
+
+Score 5-6 is borderline — passes the gate but content will be mediocre.
+
+Return:
+  - specificityScore: integer 1-10
+  - passed: true if specificityScore >= ${QUALITY_GATE_THRESHOLD}, else false
+  - pushback: ONLY include when passed is false; the server will overwrite it with the canonical message`;
+
+  const result = await callWithTool<{
+    passed: boolean;
+    specificityScore: number;
+    pushback?: string;
+  }>(
     prompt,
     "evaluate_quality_gate",
-    "Evaluate quality gate answers for content specificity",
+    "Score weekly content-gate answers for specificity (1-10)",
     {
       type: "object",
       properties: {
         passed: { type: "boolean" },
-        specificityScore: { type: "number", minimum: 1, maximum: 10 },
-        pushback: { type: "string", description: "Message asking for more detail (only when score < 5)" },
+        specificityScore: { type: "integer", minimum: 1, maximum: 10 },
+        pushback: { type: "string", description: "Only when passed is false" },
       },
       required: ["passed", "specificityScore"],
     }
   );
+
+  // Force-correct the model's outputs against the spec — never trust the LLM
+  // for the canonical pushback string or the threshold boundary.
+  const passed = result.specificityScore >= QUALITY_GATE_THRESHOLD;
+  return {
+    passed,
+    specificityScore: result.specificityScore,
+    pushback: passed ? undefined : QUALITY_GATE_PUSHBACK,
+  };
 }
 
 // ─── generateAutopilotAngles ──────────────────────────────────────────────────

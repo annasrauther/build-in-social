@@ -1,47 +1,26 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { OnboardingHeading } from "@/components/onboarding/OnboardingHeading";
 import { SelectionCard } from "@/components/onboarding/SelectionCard";
 import { TrustLine } from "@/components/onboarding/TrustLine";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
+import { useInteractionFeedback } from "@/lib/hooks/useInteractionFeedback";
 import { STAGGER_CARDS, EASE_SPRING, DURATION_ENTRY } from "@/lib/constants/onboarding";
 import { APP } from "@/content/app";
+import {
+  RiYoutubeLine,
+  RiInstagramLine,
+  RiLinkedinBoxLine,
+  RiTwitterXLine,
+} from "@remixicon/react";
 import type { Platform } from "@/lib/types/user";
 
 /* -------------------------------------------------------------------------- */
 /*  Platform data                                                              */
 /* -------------------------------------------------------------------------- */
-
-const YoutubeIcon = (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.97C18.88 4 12 4 12 4s-6.88 0-8.59.45A2.78 2.78 0 0 0 1.46 6.42 29.94 29.94 0 0 0 1 12a29.94 29.94 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.97C5.12 20 12 20 12 20s6.88 0 8.59-.45a2.78 2.78 0 0 0 1.95-1.97A29.94 29.94 0 0 0 23 12a29.94 29.94 0 0 0-.46-5.58Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M9.75 15.02 15.5 12 9.75 8.98v6.04Z" fill="currentColor" />
-  </svg>
-);
-
-const InstagramIcon = (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="1.5" />
-    <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1.5" />
-    <circle cx="17.5" cy="6.5" r="1.25" fill="currentColor" />
-  </svg>
-);
-
-const LinkedInIcon = (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <rect x="2" y="2" width="20" height="20" rx="3" stroke="currentColor" strokeWidth="1.5" />
-    <path d="M7 10v7M7 7.01V7M11 17v-4.5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5V17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const XIcon = (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.45-6.231Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z" fill="currentColor" />
-  </svg>
-);
 
 interface PlatformDef {
   id: Platform;
@@ -55,25 +34,25 @@ const PLATFORMS: PlatformDef[] = [
     id: "youtube",
     name: "YouTube Shorts",
     signal: "Hook-first — first 3 seconds decide your reach.",
-    icon: YoutubeIcon,
+    icon: <RiYoutubeLine style={{ color: "#FF0000", width: 20, height: 20 }} />,
   },
   {
     id: "instagram",
     name: "Instagram Reels",
     signal: "Shares drive reach — content people forward.",
-    icon: InstagramIcon,
+    icon: <RiInstagramLine style={{ color: "#E1306C", width: 20, height: 20 }} />,
   },
   {
     id: "linkedin",
     name: "LinkedIn",
     signal: "Dwell time + comments — built for professionals.",
-    icon: LinkedInIcon,
+    icon: <RiLinkedinBoxLine style={{ color: "#0A66C2", width: 20, height: 20 }} />,
   },
   {
     id: "x",
     name: "X / Twitter",
     signal: "Engagement velocity — short, sharp, quotable.",
-    icon: XIcon,
+    icon: <RiTwitterXLine style={{ color: "var(--text-primary)", width: 20, height: 20 }} />,
   },
 ];
 
@@ -83,16 +62,23 @@ const PLATFORMS: PlatformDef[] = [
 
 export default function PlatformsPage() {
   const { data, update, goToStep } = useOnboarding();
+  const { playSelect, playDeselect, playNavigation, vibrate } = useInteractionFeedback();
   const [selected, setSelected] = useState<Platform[]>(
     data.platforms.length >= 2 ? data.platforms : [],
   );
 
   function toggle(platform: Platform) {
+    const isSelected = selected.includes(platform);
     setSelected((prev) =>
-      prev.includes(platform)
-        ? prev.filter((p) => p !== platform)
-        : [...prev, platform],
+      isSelected ? prev.filter((p) => p !== platform) : [...prev, platform],
     );
+    if (isSelected) {
+      playDeselect();
+      vibrate(6);
+    } else {
+      playSelect();
+      vibrate(10);
+    }
   }
 
   const canContinue = selected.length >= 2;
@@ -109,6 +95,8 @@ export default function PlatformsPage() {
 
   function handleContinue() {
     update({ platforms: selected, currentStep: 3 });
+    playNavigation();
+    vibrate(15);
     goToStep(3);
   }
 

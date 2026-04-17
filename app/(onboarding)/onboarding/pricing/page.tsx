@@ -4,7 +4,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { TrustLine } from "@/components/onboarding/TrustLine";
-import { Button, KIND } from "baseui/button";
+import { Button } from "@/components/tremor/Button";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import {
   PRICING_PACKAGES,
@@ -78,22 +78,20 @@ export default function PricingPage() {
   }
 
   return (
-    <OnboardingShell step={4} showContinue={false} onBack={() => goToStep(3)}>
-      {/* Header */}
-      <div className="mb-10">
+    <OnboardingShell step={5} showContinue={false} onBack={() => goToStep(4)} wide>
+      {/* Header — centered */}
+      <div className="mb-6 text-center">
         <motion.h1
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.12, ease: [...EASE_SPRING] }}
           style={{
-            fontFamily: "var(--font-heading)",
-            fontWeight: 400,
-            fontSize: 24,
+            fontWeight: 700,
+            fontSize: 28,
             lineHeight: 1.15,
             letterSpacing: "-0.02em",
-            color: "var(--text-primary)",
           }}
-          className="tablet-sm:text-[28px]"
+          className="text-gradient-brand tablet-sm:text-[34px]"
         >
           {APP.ONBOARDING.step6.title}
         </motion.h1>
@@ -102,14 +100,13 @@ export default function PricingPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.12, ease: [...EASE_SPRING], delay: 0.04 }}
-          className="mt-3"
+          className="mt-3 mx-auto"
           style={{
-            fontFamily: "var(--font-heading)",
-            fontStyle: "italic",
             fontWeight: 400,
             fontSize: 15,
             lineHeight: 1.6,
             color: "var(--text-secondary)",
+            maxWidth: 440,
           }}
         >
           {APP.ONBOARDING.step6.framingLine}
@@ -118,7 +115,7 @@ export default function PricingPage() {
 
       {/* Billing toggle */}
       <motion.div
-        className="flex justify-center mb-8"
+        className="flex justify-center mb-5"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.12, duration: DURATION_ENTRY }}
@@ -129,9 +126,9 @@ export default function PricingPage() {
       {/* 3-tier pricing cards — snap-scroll on mobile, grid on desktop */}
       <div
         ref={scrollRef}
-        className="flex tablet-sm:grid gap-4 overflow-x-auto tablet-sm:overflow-visible snap-x snap-mandatory pb-2 -mx-6 px-6 tablet-sm:mx-0 tablet-sm:px-0"
+        className="flex tablet-sm:grid gap-6 overflow-x-visible tablet-sm:overflow-visible snap-x snap-mandatory pb-2 -mx-4 px-4 tablet-sm:mx-0 tablet-sm:px-0 justify-center pt-6"
         style={{
-          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateColumns: "repeat(3, minmax(0, 340px))",
           scrollbarWidth: "none",
         }}
       >
@@ -152,23 +149,31 @@ export default function PricingPage() {
               }}
               className="relative flex flex-col snap-center shrink-0 tablet-sm:shrink"
               style={{
-                width: 280,
+                width: 300,
                 minWidth: 280,
                 borderRadius: "var(--radius-lg)",
-                backgroundColor: isCreator ? "var(--accent-subtle)" : "var(--bg-elevated)",
-                padding: 20,
+                backgroundColor: isCreator ? "var(--accent-subtle)" : "var(--bg-surface)",
+                border: isCreator
+                  ? "1.5px solid var(--accent)"
+                  : "1.5px solid var(--border-default)",
+                boxShadow: isCreator
+                  ? "0 0 0 3px rgba(217,119,87,0.10), 0 8px 24px rgba(217,119,87,0.10)"
+                  : "var(--shadow-card-landing)",
+                padding: 24,
               }}
             >
               {/* Badge */}
               {"badge" in pkg && (pkg as typeof pkg & { badge: string }).badge && (
                 <motion.span
-                  className="absolute left-1/2 font-semibold px-3 py-1 rounded-full whitespace-nowrap"
+                  className="absolute left-1/2 font-semibold px-4 py-1.5 rounded-full whitespace-nowrap"
                   style={{
                     fontSize: "var(--type-micro)",
-                    top: -12,
+                    top: -20,
                     transform: "translateX(-50%)",
                     backgroundColor: "var(--accent)",
                     color: "var(--text-inverse)",
+                    letterSpacing: "0.01em",
+                    zIndex: 10,
                   }}
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -182,7 +187,7 @@ export default function PricingPage() {
               <h3
                 className="mb-1"
                 style={{
-                  fontFamily: "var(--font-heading)",
+                  
                   fontWeight: 400,
                   fontSize: "var(--type-section-desktop)",
                   color: "var(--text-primary)",
@@ -192,8 +197,8 @@ export default function PricingPage() {
               </h3>
               <div className="flex items-baseline gap-1 mb-2">
                 <span
-                  className="font-medium"
-                  style={{ fontSize: 32, color: "var(--text-primary)", fontFamily: "var(--font-mono)", fontWeight: 500 }}
+                  className="font-medium font-mono"
+                  style={{ fontSize: 32, color: "var(--text-primary)", fontWeight: 500 }}
                 >
                   ${displayPrice}
                 </span>
@@ -216,9 +221,9 @@ export default function PricingPage() {
 
               {/* CTA */}
               <Button
-                kind={isCreator ? KIND.primary : KIND.secondary}
+                variant={isCreator ? "primary" : "secondary"}
                 onClick={() => handleSelect(pkg.tier)}
-                overrides={{ BaseButton: { style: { width: "100%" } } }}
+                className="w-full"
               >
                 Start &mdash; ${displayPrice}/mo
               </Button>

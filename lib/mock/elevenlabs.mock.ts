@@ -87,6 +87,14 @@ export async function cloneVoice(params: {
   audioUrl: string;
   userId: string;
 }): Promise<{ voiceId: string }> {
+  // Mirror the real-API consent guard so dev surfaces missing-consent bugs.
+  const { hasVoiceConsent } = await import("@/lib/services/db");
+  const consentOk = await hasVoiceConsent(params.userId);
+  if (!consentOk) {
+    throw new Error(
+      `cloneVoice refused: no voice consent record for user ${params.userId}.`
+    );
+  }
   console.log("[MOCK elevenlabs] cloneVoice");
   await delay(1500);
   return { voiceId: `voice_clone_${Date.now()}` };

@@ -2,9 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "castly-dev",
-      "runtimeExecutable": "/Users/annasrauther/.nvm/versions/node/v20.20.2/bin/node",
-      "runtimeArgs": ["./node_modules/.bin/next", "dev", "--port", "3000"],
+      "name": "build-in-social",
+      "runtimeExecutable": "/Users/annasrauther/.nvm/versions/node/v20.20.2/bin/pnpm",
+      "runtimeArgs": ["dev", "--port", "3000"],
+      "cwd": "/Users/annasrauther/Projects/video-auto-pilot/build_in_social",
       "port": 3000
     }
   ]

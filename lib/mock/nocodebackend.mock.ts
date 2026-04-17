@@ -373,3 +373,87 @@ export async function createPseoPage(
   store.pseoPages.set(page.id, page);
   return page;
 }
+
+// ─── Stripe webhook idempotency (critical path #2) ────────────────────────────
+
+const processedStripeEvents = new Set<string>();
+
+/**
+ * Insert-once: returns true if this is the first time we've seen `eventId`,
+ * false if it was already processed. Mock uses a Set; real uses a UNIQUE
+ * constraint on the processed_stripe_events table.
+ */
+export async function recordStripeEvent(eventId: string): Promise<boolean> {
+  await delay(20);
+  if (processedStripeEvents.has(eventId)) return false;
+  processedStripeEvents.add(eventId);
+  return true;
+}
+
+// ─── Voice clone consent (critical path #7) ───────────────────────────────────
+
+interface VoiceConsentRecord {
+  userId: string;
+  consentedAt: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+const voiceConsents = new Map<string, VoiceConsentRecord>();
+
+/**
+ * Persist explicit consent for biometric voice cloning. MUST be called BEFORE
+ * any ElevenLabs cloneVoice request so we can prove consent in disputes.
+ * Idempotent: re-recording for the same user updates the timestamp.
+ */
+export async function recordVoiceConsent(params: {
+  userId: string;
+  consentedAt: string;
+  ipAddress?: string;
+  userAgent?: string;
+}): Promise<VoiceConsentRecord> {
+  await delay(50);
+  const record: VoiceConsentRecord = {
+    userId: params.userId,
+    consentedAt: params.consentedAt,
+    ipAddress: params.ipAddress,
+    userAgent: params.userAgent,
+  };
+  voiceConsents.set(params.userId, record);
+  return record;
+}
+
+export async function hasVoiceConsent(userId: string): Promise<boolean> {
+  await delay(20);
+  return voiceConsents.has(userId);
+}
+
+// ─── Avatar waitlist (lead capture for Phase 2) ───────────────────────────────
+
+interface WaitlistRecord {
+  email: string;
+  joinedAt: string;
+}
+
+const waitlist = new Map<string, WaitlistRecord>();
+
+/**
+ * Idempotent insert: returns { added: true, position } on first insert,
+ * { added: false, position } on duplicate. Position is 1-indexed.
+ */
+export async function addToAvatarWaitlist(email: string): Promise<{
+  added: boolean;
+  position: number;
+}> {
+  await delay(60);
+  const normalized = email.trim().toLowerCase();
+  if (waitlist.has(normalized)) {
+    const keys = Array.from(waitlist.keys());
+    return { added: false, position: keys.indexOf(normalized) + 1 };
+  }
+  waitlist.set(normalized, {
+    email: normalized,
+    joinedAt: new Date().toISOString(),
+  });
+  return { added: true, position: waitlist.size };
+}

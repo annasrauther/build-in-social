@@ -1,7 +1,7 @@
 import type { Platform } from "./user";
 
 export type OnboardingTone = "straight-shooter" | "friendly-expert" | "technical-deep-dive" | "casual-builder";
-export type OnboardingStep = 1 | 2 | 3 | 4 | 5;
+export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6;
 export type PricingTier = "solo" | "creator" | "studio";
 
 export interface PlanPreviewVideo {

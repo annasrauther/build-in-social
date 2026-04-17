@@ -10,9 +10,9 @@ const ContextSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  let userId: string;
+  let _userId: string;
   try {
-    userId = await requireAuth();
+    _userId = await requireAuth();
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

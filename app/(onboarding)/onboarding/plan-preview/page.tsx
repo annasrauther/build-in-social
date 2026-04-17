@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { OnboardingHeading } from "@/components/onboarding/OnboardingHeading";
 import { WeekCalendarView } from "@/components/onboarding/WeekCalendarView";
 import { PremiumInput } from "@/components/onboarding/PremiumInput";
 import { TrustLine } from "@/components/onboarding/TrustLine";
-import { Button, KIND, SIZE } from "baseui/button";
+import { Button } from "@/components/tremor/Button";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import { LOADING_MESSAGES, EASE_SPRING } from "@/lib/constants/onboarding";
 import { APP } from "@/content/app";
@@ -93,7 +93,10 @@ export default function PlanPreviewPage() {
   const [plan, setPlan] = useState<PlanPreviewVideo[]>([]);
   const generationStarted = useRef(false);
 
-  const platforms = data.platforms.length > 0 ? data.platforms : (["youtube", "linkedin"] as Platform[]);
+  const platforms = useMemo<Platform[]>(
+    () => (data.platforms.length > 0 ? data.platforms : ["youtube", "linkedin"]),
+    [data.platforms],
+  );
   const niche = data.niche || "your niche";
 
   /* ── Phase 1: mock generation ─────────────────────────────────────────── */
@@ -147,12 +150,12 @@ export default function PlanPreviewPage() {
       <style>{shimmerCSS}</style>
 
       <OnboardingShell
-        step={3}
+        step={4}
         showContinue={phase === "revealed"}
         continueLabel={APP.ONBOARDING.step5.cta}
-        onContinue={() => goToStep(4)}
+        onContinue={() => goToStep(5)}
         showBack={phase === "revealed"}
-        onBack={() => goToStep(2)}
+        onBack={() => goToStep(3)}
         wide={phase === "revealed"}
       >
         <AnimatePresence mode="wait">
@@ -169,7 +172,7 @@ export default function PlanPreviewPage() {
               <h2
                 className="mb-6"
                 style={{
-                  fontFamily: "var(--font-heading)",
+                  
                   fontSize: "var(--type-display-mobile)",
                   fontWeight: 400,
                   color: "var(--text-primary)",
@@ -273,8 +276,8 @@ export default function PlanPreviewPage() {
                       />
                     </div>
                     <Button
-                      kind={KIND.tertiary}
-                      size={SIZE.compact}
+                      variant="ghost"
+                      className="text-sm"
                       disabled={!data.recoveryEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.recoveryEmail)}
                       onClick={() => {/* saved via update already */}}
                     >

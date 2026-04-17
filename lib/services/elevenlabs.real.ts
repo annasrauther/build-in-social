@@ -90,6 +90,19 @@ export async function cloneVoice(params: {
   audioUrl: string;
   userId: string;
 }): Promise<{ voiceId: string }> {
+  // ── Critical path #7: REFUSE without DB-recorded consent ───────────────
+  // ElevenLabs ToS + biometric privacy laws require provable consent BEFORE
+  // any voice biometric capture. The /api/onboard/voice route writes the
+  // consent record; this guard ensures no other code path can ever skip it.
+  const { hasVoiceConsent } = await import("@/lib/services/db");
+  const consentOk = await hasVoiceConsent(params.userId);
+  if (!consentOk) {
+    throw new Error(
+      `cloneVoice refused: no voice consent record for user ${params.userId}. ` +
+        `Consent must be persisted via recordVoiceConsent() before any ElevenLabs clone request.`
+    );
+  }
+
   // Fetch the audio file from the URL first
   const audioRes = await fetch(params.audioUrl);
   if (!audioRes.ok) throw new Error("Failed to fetch audio for voice clone");

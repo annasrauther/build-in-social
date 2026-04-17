@@ -129,6 +129,7 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
     const stored = loadFromStorage();
     // Only update if localStorage actually had data
     if (stored.productInput || stored.platforms.length > 0 || stored.currentStep > 1) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- post-mount hydration from localStorage to avoid SSR mismatch
       setData(stored);
     }
   }, []);

@@ -6,13 +6,16 @@
 import {
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
+  STRIPE_PRICE_SOLO,
+  STRIPE_PRICE_CREATOR,
+  STRIPE_PRICE_STUDIO,
   APP_URL,
 } from "@/lib/env";
 
 const PRICE_IDS: Record<"solo" | "creator" | "studio", string | undefined> = {
-  solo: process.env.STRIPE_PRICE_SOLO,
-  creator: process.env.STRIPE_PRICE_CREATOR,
-  studio: process.env.STRIPE_PRICE_STUDIO,
+  solo: STRIPE_PRICE_SOLO,
+  creator: STRIPE_PRICE_CREATOR,
+  studio: STRIPE_PRICE_STUDIO,
 };
 
 function getStripe() {

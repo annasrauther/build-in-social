@@ -139,3 +139,17 @@ export interface HookVariant {
   label: string;
   hook: string;
 }
+
+/** Lightweight video shape used by the weekly plan UI and WeekContext. */
+export interface PlanVideo {
+  id: string;
+  platform: Platform;
+  title: string;
+  hook: string;
+  script: string;
+  durationSeconds: number;
+  contentType: string;
+  status: VideoStatus;
+  dayOfWeek: string;
+  outputUrl?: string;
+}

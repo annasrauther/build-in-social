@@ -6,7 +6,12 @@
 
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { getUserByClerkId, updateUser, createVoiceProfile } from "@/lib/services/db";
+import {
+  getUserByClerkId,
+  updateUser,
+  createVoiceProfile,
+  recordVoiceConsent,
+} from "@/lib/services/db";
 import { z } from "zod";
 
 const onboardCompleteSchema = z.object({
@@ -52,6 +57,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found. Complete signup first." }, { status: 404 });
     }
 
+    // Critical path #7: persist voice consent to DB BEFORE creating any
+    // voice profile (which is the trigger for downstream ElevenLabs calls).
+    // The /api/onboard/voice route also writes this; we double-write here for
+    // the activation submit path. recordVoiceConsent is upsert-safe.
+    if (voiceChoice === "clone") {
+      if (!voiceConsentAt) {
+        return NextResponse.json(
+          { error: "Voice clone consent timestamp is required for clone mode" },
+          { status: 422 }
+        );
+      }
+      await recordVoiceConsent({
+        userId,
+        consentedAt: voiceConsentAt,
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+          request.headers.get("x-real-ip") ??
+          undefined,
+        userAgent: request.headers.get("user-agent") ?? undefined,
+      });
+    }
+
     // Create voice profile if voice was selected
     let voiceProfileId: string | undefined;
     if (voiceChoice && libraryVoiceId) {
@@ -74,11 +101,6 @@ export async function POST(request: Request) {
       subscriptionTier: selectedTier ?? "creator",
       voiceProfileId,
     });
-
-    // Log consent timestamp
-    if (voiceConsentAt) {
-      console.log(`[onboard/complete] Voice consent recorded for user ${user.id} at ${voiceConsentAt}`);
-    }
 
     return NextResponse.json({
       data: {

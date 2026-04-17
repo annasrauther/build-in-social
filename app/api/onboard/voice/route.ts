@@ -1,6 +1,15 @@
+/**
+ * POST /api/onboard/voice
+ *
+ * Critical path #7: voice clone consent MUST be recorded in the DB BEFORE
+ * any ElevenLabs API call. ElevenLabs ToS and most jurisdictions require
+ * provable consent for biometric voice cloning.
+ */
+
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAuth } from "@/lib/auth";
+import { recordVoiceConsent } from "@/lib/services/db";
 
 const VoiceSchema = z.discriminatedUnion("mode", [
   z.object({
@@ -10,6 +19,13 @@ const VoiceSchema = z.discriminatedUnion("mode", [
   z.object({
     mode: z.literal("clone"),
     fileName: z.string().min(1),
+    // Hard requirement: explicit, server-validated consent boolean.
+    consent: z.literal(true, {
+      errorMap: () => ({
+        message:
+          "Voice clone consent is required. Check the consent box to continue.",
+      }),
+    }),
   }),
 ]);
 
@@ -29,9 +45,29 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    // In Sprint 7, this will trigger ElevenLabs voice clone job
+
+    // ── Critical path #7: persist consent BEFORE any ElevenLabs call ─────
+    if (result.data.mode === "clone") {
+      await recordVoiceConsent({
+        userId,
+        consentedAt: new Date().toISOString(),
+        ipAddress:
+          req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+          req.headers.get("x-real-ip") ??
+          undefined,
+        userAgent: req.headers.get("user-agent") ?? undefined,
+      });
+    }
+
+    // The actual ElevenLabs cloneVoice() call happens in a downstream step
+    // (Sprint 7 worker). cloneVoice() now refuses to run without the consent
+    // record this route just wrote.
     return NextResponse.json({ data: { saved: true }, error: null });
-  } catch {
-    return NextResponse.json({ data: null, error: "Invalid request" }, { status: 400 });
+  } catch (error) {
+    console.error("[onboard/voice]", error);
+    return NextResponse.json(
+      { data: null, error: "Failed to record voice choice" },
+      { status: 500 }
+    );
   }
 }

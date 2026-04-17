@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { getUserByClerkId, createUser, updateUser } from "@/lib/services/db";
 import { sendEmail } from "@/lib/services/resend";
+import { CLERK_WEBHOOK_SECRET } from "@/lib/env";
 
 export const runtime = "nodejs";
 
@@ -21,7 +22,7 @@ interface ClerkUserEvent {
 }
 
 export async function POST(req: NextRequest) {
-  const secret = process.env.CLERK_WEBHOOK_SECRET;
+  const secret = CLERK_WEBHOOK_SECRET;
   if (!secret) {
     console.error("[clerk-webhook] CLERK_WEBHOOK_SECRET not configured");
     return NextResponse.json(

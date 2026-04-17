@@ -51,46 +51,40 @@ export function PlanVideoCard({ video, delay = 0 }: PlanVideoCardProps) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      className="rounded-[var(--radius-lg)] px-[14px] py-3 border-l-[3px]"
       style={{
-        borderRadius: "var(--radius-lg)",
         backgroundColor: "var(--bg-elevated)",
-        borderLeft: `3px solid ${cfg.color}`,
-        padding: "12px 14px",
+        borderLeftColor: cfg.color,
       }}
     >
       {/* Top row: platform icon + name + content type badge + duration */}
       <div className="flex items-center gap-2 mb-2">
-        <span style={{ color: cfg.color, flexShrink: 0 }}>
+        <span className="shrink-0" style={{ color: cfg.color }}>
           <PlatformIcon platform={video.platform} />
         </span>
         <span
+          className="font-medium"
           style={{
             fontSize: "var(--type-supporting-mobile)",
             color: "var(--text-secondary)",
-            fontWeight: 500,
           }}
         >
           {cfg.label}
         </span>
         <span
-          className="px-1.5 py-0.5 rounded-sm"
+          className="px-1.5 py-2 rounded-sm font-mono uppercase tracking-wider"
           style={{
             fontSize: "var(--type-micro)",
-            fontFamily: "var(--font-mono)",
             color: "var(--text-tertiary)",
             backgroundColor: "var(--bg-overlay)",
-            letterSpacing: "0.03em",
-            textTransform: "uppercase",
           }}
         >
           {video.contentType}
         </span>
         <span
-          className="ml-auto"
+          className="ml-auto font-mono font-medium"
           style={{
             fontSize: "var(--type-micro)",
-            fontFamily: "var(--font-mono)",
-            fontWeight: 500,
             color: "var(--text-tertiary)",
           }}
         >
@@ -124,10 +118,10 @@ export function PlanVideoCard({ video, delay = 0 }: PlanVideoCardProps) {
 
       {/* CTA */}
       <p
+        className="font-mono"
         style={{
           fontSize: "var(--type-supporting-mobile)",
           color: "var(--text-tertiary)",
-          fontFamily: "var(--font-mono)",
         }}
       >
         {video.cta}

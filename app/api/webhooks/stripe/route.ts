@@ -1,26 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { updateUser, getUserByClerkId } from "@/lib/services/db";
+import { updateUser, getUserByClerkId, recordStripeEvent } from "@/lib/services/db";
 import { sendEmail } from "@/lib/services/resend";
+import {
+  STRIPE_SECRET_KEY,
+  STRIPE_WEBHOOK_SECRET,
+  STRIPE_PRICE_SOLO,
+  STRIPE_PRICE_CREATOR,
+  STRIPE_PRICE_STUDIO,
+} from "@/lib/env";
 import type { SubscriptionTier } from "@/lib/types/user";
 
 export const runtime = "nodejs";
 
-// Register this URL in the Stripe dashboard (Sprint 8):
+// Register this URL in the Stripe dashboard:
 //   Developers → Webhooks → Add endpoint → https://yourdomain.com/api/webhooks/stripe
 //   Events: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted
 
-const PRICE_TO_TIER: Record<string, SubscriptionTier> = {
-  [process.env.STRIPE_PRICE_SOLO ?? ""]: "solo",
-  [process.env.STRIPE_PRICE_CREATOR ?? ""]: "creator",
-  [process.env.STRIPE_PRICE_STUDIO ?? ""]: "studio",
-};
+/**
+ * Build price→tier map. Skip empty env values so an unset STRIPE_PRICE_*
+ * doesn't map "" → tier and let any webhook with a missing priceId resolve
+ * to a paid tier.
+ */
+function buildPriceToTierMap(): Record<string, SubscriptionTier> {
+  const map: Record<string, SubscriptionTier> = {};
+  const entries: Array<[string | undefined, SubscriptionTier]> = [
+    [STRIPE_PRICE_SOLO, "solo"],
+    [STRIPE_PRICE_CREATOR, "creator"],
+    [STRIPE_PRICE_STUDIO, "studio"],
+  ];
+  for (const [priceId, tier] of entries) {
+    if (priceId && priceId.trim()) map[priceId] = tier;
+  }
+  return map;
+}
 
 export async function POST(req: NextRequest) {
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  if (!stripeKey || !webhookSecret) {
+  if (!STRIPE_SECRET_KEY || !STRIPE_WEBHOOK_SECRET) {
     console.error("[stripe-webhook] Stripe not configured");
     return NextResponse.json(
       { error: "Webhook not configured" },
@@ -28,31 +44,65 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const stripe = new Stripe(stripeKey);
+  const stripe = new Stripe(STRIPE_SECRET_KEY);
   const payload = await req.text();
   const sig = req.headers.get("stripe-signature") ?? "";
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(payload, sig, webhookSecret);
+    event = stripe.webhooks.constructEvent(payload, sig, STRIPE_WEBHOOK_SECRET);
   } catch {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
+
+  // ─── Critical path #2: idempotency ────────────────────────────────────────
+  // Stripe retries on any non-2xx, including transient network blips. Without
+  // a dedupe check, the same `checkout.session.completed` could activate the
+  // plan twice and send two billing-confirmed emails.
+  const isFirstSeen = await recordStripeEvent(event.id).catch((err) => {
+    // If the dedupe layer itself fails, fail closed — better to retry the
+    // webhook than to risk double-processing.
+    console.error("[stripe-webhook] idempotency check failed:", err);
+    return null;
+  });
+
+  if (isFirstSeen === null) {
+    return NextResponse.json(
+      { error: "Idempotency layer unavailable" },
+      { status: 503 }
+    );
+  }
+
+  if (!isFirstSeen) {
+    // Already processed — return 200 so Stripe stops retrying.
+    return NextResponse.json({ ok: true, duplicate: true });
+  }
+
+  const PRICE_TO_TIER = buildPriceToTierMap();
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const { userId, tier } = session.metadata ?? {};
 
     if (userId && tier) {
-      await updateUser(userId, { subscriptionTier: tier as SubscriptionTier });
-
+      // Resolve user FIRST so we can verify the metadata matches a real user
+      // and update by their internal ID rather than trusting the metadata
+      // claim blindly.
       const user = await getUserByClerkId(userId).catch(() => null);
-      if (user?.email) {
+      if (!user) {
+        console.warn("[stripe-webhook] checkout for unknown user:", userId);
+        return NextResponse.json({ ok: true });
+      }
+      await updateUser(user.id, { subscriptionTier: tier as SubscriptionTier });
+
+      if (user.email) {
         sendEmail({
           to: user.email,
           template: "billing-confirmed",
           data: { displayName: user.displayName, tier },
-        }).catch((err) => console.error("[stripe-webhook] billing-confirmed email failed:", err));
+        }).catch((err) =>
+          console.error("[stripe-webhook] billing-confirmed email failed:", err)
+        );
       }
     }
   }

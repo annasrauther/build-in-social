@@ -35,7 +35,7 @@ export const APP = {
     manualTitle: "I have something to share this week",
     manualDescription:
       "Answer 3 quick questions. Build In Social builds the week around your specific work.",
-    autopilotTitle: "Run autopilot",
+    autopilotTitle: "Hand it to autopilot",
     autopilotBadge: "Recommended",
     autopilotDescription:
       "Build In Social picks the best angles for your niche and builds the full week. No input needed.",
@@ -56,9 +56,9 @@ export const APP = {
     q3: "Who needs to hear this, and why does it matter to them?",
     q3Placeholder: "Your audience and their specific pain point.",
     submitCta: "Continue",
-    switchToAutopilot: "Run autopilot instead",
+    switchToAutopilot: "Let Build In Social run this week instead",
     pushback:
-      "This is a bit general \u2014 one specific detail makes the content 10\u00d7 better. What exactly did you launch? What number surprised you?",
+      "This is a bit general \u2014 one specific detail makes the content 10\u00d7 better. What exactly did you launch? What number surprised you? Even one sentence changes everything.",
     specificityLabels: ["Too vague", "Getting there", "Specific enough"],
     stickyLabel: "Specific answers = better content",
   },
@@ -134,7 +134,7 @@ export const APP = {
     voicePrefsOptional: "Optional",
     voicePrefsPlaceholder:
       "Phrases you always use, things you never say, references your audience gets...",
-    saving: "Saving...",
+    saving: "Build In Social is saving...",
     saveCta: "Save changes",
     saved: "Saved \u2713",
   },
@@ -145,7 +145,7 @@ export const APP = {
       "Connect your accounts so Build In Social can post automatically.",
     connected: "Connected",
     disconnect: "Disconnect",
-    connecting: "Connecting...",
+    connecting: "Build In Social is connecting your account...",
     connect: "Connect",
     oauthNotice:
       "Platform OAuth connections are being set up. Auto-posting will be available shortly.",
@@ -195,7 +195,7 @@ export const APP = {
       "HeyGen-powered. Lip-synced to your script. Looks like you. Sounds like you. We\u2019re onboarding Avatar users in cohorts to ensure quality.",
     emailPlaceholder: "your@email.com",
     emailError: "Enter a valid email address.",
-    joining: "Joining...",
+    joining: "Adding you to the list...",
     joinCta: "Join waitlist \u2192",
     noSpam: "No spam. Notified when your cohort opens.",
     successTitle: "You\u2019re on the list.",
@@ -204,6 +204,11 @@ export const APP = {
   },
 
   ONBOARDING: {
+    common: {
+      back: "Back",
+      continueLabel: "Continue",
+      skipForNow: "Skip for now",
+    },
     step1: {
       headline: "Your social media employee starts here.",
       subheading:
@@ -251,19 +256,35 @@ export const APP = {
     },
   },
 
+  PLAN_UI: {
+    shareWhatsNew: "Share what\u2019s new",
+    approvedStatus: "Approved",
+    back: "Back",
+  },
+
+  DASHBOARD_UI: {
+    comparedTo: "compared to",
+    edit: "Edit",
+    customiseCharts: "Customise overview charts",
+    customiseChartsDescription: "Add or remove the charts for the overview panel.",
+    cancel: "Cancel",
+    apply: "Apply",
+    from: "from",
+  },
+
   COMMON: {
     cancel: "Cancel",
     confirm: "Confirm",
-    save: "Save",
+    save: "Save changes",
     saved: "Saved \u2713",
-    loading: "Loading...",
+    loading: "Build In Social is loading...",
     retry: "Try again",
     errorGeneric:
       "Build In Social couldn\u2019t complete this action. Try again or refresh the page.",
     errorSave:
       "Build In Social couldn\u2019t save your changes. Try again or refresh the page.",
     errorGenerate:
-      "Build In Social couldn\u2019t generate your plan. Try again or refresh the page.",
+      "Build In Social couldn\u2019t build your plan this time. Try again or refresh the page.",
   },
 
   PLATFORMS: {

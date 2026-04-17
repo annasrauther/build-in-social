@@ -9,12 +9,19 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from "next/server";
+import { CRON_SECRET } from "@/lib/env";
 
 export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
+  // Fail closed: if CRON_SECRET is unset, the route is not callable.
+  if (!CRON_SECRET) {
+    return NextResponse.json(
+      { error: "Cron secret not configured" },
+      { status: 503 }
+    );
+  }
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  const authHeader = req.headers.get("authorization");
+  if (authHeader !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

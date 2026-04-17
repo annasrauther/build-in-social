@@ -3,6 +3,7 @@ import { getUserByClerkId, updateUser, createUser } from "@/lib/services/db";
 import { requireAuth } from "@/lib/auth";
 import { z } from "zod";
 import { createClerkClient } from "@clerk/nextjs/server";
+import { CLERK_SECRET_KEY } from "@/lib/env";
 
 const platformSchema = z.enum(["youtube", "instagram", "linkedin", "x"]);
 const profileUpdateSchema = z.object({
@@ -30,9 +31,8 @@ export async function GET() {
     // Auto-create user if webhook hasn't fired yet (race condition on first signup)
     if (!user) {
       try {
-        const clerkSecretKey = process.env.CLERK_SECRET_KEY;
-        if (clerkSecretKey) {
-          const clerk = createClerkClient({ secretKey: clerkSecretKey });
+        if (CLERK_SECRET_KEY) {
+          const clerk = createClerkClient({ secretKey: CLERK_SECRET_KEY });
           const clerkUser = await clerk.users.getUser(userId);
           user = await createUser({
             clerkUserId: userId,

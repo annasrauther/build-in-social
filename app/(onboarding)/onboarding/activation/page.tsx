@@ -7,7 +7,8 @@ import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { OnboardingHeading } from "@/components/onboarding/OnboardingHeading";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import { EASE_SPRING, DURATION_ENTRY } from "@/lib/constants/onboarding";
-import { Button } from "baseui/button";
+import { Button } from "@/components/tremor/Button";
+import { ArrowAnimated } from "@/components/marketing/ArrowAnimated";
 
 /* -------------------------------------------------------------------------- */
 /*  Confetti                                                                   */
@@ -43,7 +44,11 @@ function generateParticles(count: number): Particle[] {
 }
 
 function ConfettiBurst() {
-  const [particles] = useState(() => generateParticles(50));
+  const [particles, setParticles] = useState<Particle[]>([]);
+
+  useEffect(() => {
+    setParticles(generateParticles(50));
+  }, []);
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 20 }}>
@@ -145,7 +150,7 @@ export default function ActivationPage() {
   }
 
   return (
-    <OnboardingShell step={5} showBack={false} showContinue={false}>
+    <OnboardingShell step={6} showBack={false} showContinue={false}>
       <ConfettiBurst />
 
       <AnimatePresence>
@@ -168,9 +173,10 @@ export default function ActivationPage() {
               <motion.div whileTap={{ scale: 0.98 }}>
                 <Button
                   onClick={handleGoToPlan}
-                  overrides={{ BaseButton: { style: { width: "100%" } } }}
+                  className="group w-full"
                 >
-                  Build your first plan &rarr;
+                  Build your first plan
+                  <ArrowAnimated />
                 </Button>
               </motion.div>
             </motion.div>
