@@ -1,11 +1,13 @@
-import type { Appearance } from "@clerk/shared/types";
-
 /**
  * Shared Clerk theming. Aligns the Clerk-rendered <SignIn>/<SignUp> with
  * Build In Social's Anthropic-warm palette (brand-500 = #D97757) and
  * Montserrat (headings) + Poppins (body) typography.
+ *
+ * Shape is validated at the call site via each Clerk component's
+ * `appearance` prop — avoids importing `@clerk/shared/types` (a transitive
+ * dep that isn't hoisted under pnpm on Vercel builds).
  */
-export const clerkAppearance: Appearance = {
+export const clerkAppearance = {
   variables: {
     colorPrimary: "#D97757",
     colorBackground: "#FFFFFF",
