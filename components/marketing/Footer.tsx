@@ -3,12 +3,15 @@
 import Link from "next/link"
 import { Wordmark } from "@/components/ui/Wordmark"
 import ThemeSwitch from "@/components/tremor/ThemeSwitch"
+import { LANDING } from "@/content/landing"
 
-const LINKS = [
+const LINKS: { name: string; href: string }[] = [
   { name: "Pricing", href: "/pricing" },
   { name: "About", href: "/about" },
   { name: "Privacy", href: "/privacy" },
   { name: "Terms", href: "/terms" },
+  { name: "Sub-processors", href: "/subprocessors" },
+  { name: "Data residency", href: "/subprocessors#residency" },
 ]
 
 export default function Footer() {
@@ -35,7 +38,13 @@ export default function Footer() {
           <ThemeSwitch />
         </div>
 
-        <p className="mt-4 text-xs text-[var(--text-tertiary)]">
+        {LANDING.FOOTER.dataLine ? (
+          <p className="mt-4 text-xs text-[var(--text-tertiary)]">
+            {LANDING.FOOTER.dataLine}
+          </p>
+        ) : null}
+
+        <p className="mt-2 text-xs text-[var(--text-tertiary)]">
           &copy; {new Date().getFullYear()} Build In Social. All rights reserved.
         </p>
       </div>

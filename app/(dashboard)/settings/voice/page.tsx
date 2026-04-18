@@ -144,6 +144,9 @@ export default function VoiceSettings() {
             <p className="mt-1 text-sm leading-6 text-gray-500">
               {COPY.subtitle}
             </p>
+            <p className="mt-3 text-xs leading-5 text-gray-500 dark:text-gray-500">
+              {COPY.disambiguation}
+            </p>
           </div>
 
           <div className="md:col-span-2 space-y-6">

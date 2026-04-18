@@ -15,6 +15,7 @@ interface HeroContent {
   headline: string;
   subhead: string;
   callout: string;
+  subCallout?: string;
   primaryCta: string;
   secondaryCta: string;
   reassurance: string;
@@ -100,6 +101,7 @@ interface FinalCtaContent {
 interface FooterContent {
   links: { label: string; href: string }[];
   copyright: string;
+  dataLine?: string;
 }
 
 interface SocialProofMetric {
@@ -119,6 +121,7 @@ interface Feature {
 
 interface FeaturesContent {
   headline: string;
+  builtFor?: string;
   features: Feature[];
 }
 
@@ -155,9 +158,11 @@ export const LANDING: LandingContent = {
   HERO: {
     headline: "Your domain presence, on autopilot.",
     subhead:
-      "You ship. You consult. You learn. You forget to post. Build In Social runs a full week of YouTube Shorts, Reels, LinkedIn, and X about what you actually know.",
+      "You ship. You consult. You learn. You forget to post. Build In Social writes the script, renders your voice over B-roll, posts to 4 platforms, and spins up a search article — every week.",
     callout:
       "Even when nothing shipped — Build In Social runs on autopilot.",
+    subCallout:
+      "Scripts are easy. Shipping 23 platform-native videos a week isn\u2019t. That\u2019s the part Build In Social automates.",
     primaryCta: "Start free trial",
     secondaryCta: "See how it works",
     reassurance: "No credit card required. 14-day trial.",
@@ -174,12 +179,14 @@ export const LANDING: LandingContent = {
 
   FEATURES: {
     headline: "You ship. Nobody sees it. That\u2019s what we fix.",
+    builtFor:
+      "Built for indie developers, SaaS founders, freelancers, and solo creators. Not for marketing teams \u2014 yet.",
     features: [
-      { title: "Zero-input weeks on autopilot", description: "Works from your niche alone — no product, no launch, no news required. Build In Social prepares a full week of content.", image: "/images/features/autopilot.png" },
-      { title: "Four platforms, algorithm-native", description: "YouTube Shorts, Reels, LinkedIn, X. Each video matches the format that platform rewards.", image: "/images/features/four-platforms.png" },
+      { title: "A ranking article per video", description: "Every video auto-generates a Google-indexed search article on your subdomain (e.g. yourproduct.buildinsocial.com/topic). Your long-tail SEO compounds while you ship.", image: "/images/features/autopilot.png" },
+      { title: "Script, voice, B-roll, render, post", description: "Build In Social writes the script, renders your voice over B-roll, assembles platform-native video, and posts to YouTube Shorts, Reels, LinkedIn, and X. End to end \u2014 not a scheduler.", image: "/images/features/four-platforms.png" },
+      { title: "Up to 23 posts across 4 platforms", description: "A full week of content \u2014 formatted for each platform, prepared and scheduled at once. 5 minutes a week of review, not 15 minutes a day of scheduling.", image: "/images/features/weekly-batches.png" },
+      { title: "Zero-input weeks on autopilot", description: "Works from your niche alone \u2014 no product, no launch, no news required. Build In Social prepares a full week of content.", image: "/images/features/manual-mode.png" },
       { title: "Sounds like you, not a template", description: "Content matches your domain, your audience, and how you talk. Every time.", image: "/images/features/your-voice.png" },
-      { title: "Share a win, we handle the rest", description: "Shipped something? Tell Build In Social. It prepares platform-ready video from your input.", image: "/images/features/manual-mode.png" },
-      { title: "Up to 23 posts across 4 platforms", description: "A full week of content — formatted for each platform, prepared and scheduled at once.", image: "/images/features/weekly-batches.png" },
       { title: "See what resonates", description: "Videos post on your schedule. Performance data flows back so you know what lands.", image: "/images/features/post-track.png" },
     ],
   },
@@ -197,7 +204,7 @@ export const LANDING: LandingContent = {
       },
       {
         title: "Build 300+ search articles per quarter",
-        body: "Every video generates a Google-indexed search article. Your long-tail search presence compounds while you focus on your product.",
+        body: "Every video generates a Google-indexed search article. Articles published on your subdomain (e.g. yourproduct.buildinsocial.com/topic) and indexed by Google. Your long-tail search presence compounds while you focus on your product.",
       },
       {
         title: "Sound like yourself, not a template",
@@ -205,7 +212,7 @@ export const LANDING: LandingContent = {
       },
       {
         title: "Spend zero hours a week on social",
-        body: "Share something specific when you want. Or do nothing — full autopilot runs without you touching it.",
+        body: "Share something specific when you want. Or do nothing \u2014 full autopilot runs without you touching it. 5 minutes a week of review, not 15 minutes a day of scheduling.",
       },
     ],
   },
@@ -324,6 +331,26 @@ export const LANDING: LandingContent = {
         q: "I don\u2019t have a product yet \u2014 is this for me?",
         a: "Yes. Autopilot generates weekly content from your niche alone. You don\u2019t need a product URL, a launch, or weekly news.",
       },
+      {
+        q: "How is this different from Taplio or Hypefury?",
+        a: "Taplio helps you rewrite LinkedIn posts. Hypefury schedules X threads. Neither produces video or touches YouTube Shorts / Reels. Build In Social renders platform-native video across all four platforms and spawns a pSEO article for every video. Many founders run both \u2014 text tools for one platform, Build In Social for everything else.",
+      },
+      {
+        q: "Does this replace Buffer / Hootsuite?",
+        a: "No \u2014 those are schedulers for content you\u2019ve already written. Build In Social writes, renders, and publishes. If you have a junior who drafts and a senior who approves, stay on Buffer. If you\u2019re a solo founder who doesn\u2019t draft at all, that\u2019s who Build In Social is built for.",
+      },
+      {
+        q: "How is this different from Opus Clip or Descript?",
+        a: "Opus Clip and Descript edit long-form content you already filmed. Build In Social writes and renders content from scratch \u2014 ideal for founders who don\u2019t record weekly. If you publish a podcast or YouTube channel, stick with Descript. Build In Social covers the weeks you can\u2019t film.",
+      },
+      {
+        q: "I already have ChatGPT and ElevenLabs. Why would I pay for this?",
+        a: "Scripts take 10 minutes in ChatGPT. The 3 hours between a script and a video posted to four platforms \u2014 sourcing B-roll, rendering the voice, assembling the video, reformatting for each aspect ratio, posting \u2014 is the part Build In Social automates. Plus a pSEO article per video, which you\u2019d need a blog and a CMS to build yourself.",
+      },
+      {
+        q: "Is this for teams or just solo operators?",
+        a: "Solo operators and founder-led brands. Build In Social has no seats, approvals, or shared workspaces. If you run content for a team or multiple clients, stay on Jasper Business or Hootsuite \u2014 or join our agency waitlist.",
+      },
     ],
   },
 
@@ -342,7 +369,10 @@ export const LANDING: LandingContent = {
       { label: "Sign in", href: "/login" },
       { label: "Privacy", href: "/privacy" },
       { label: "Terms", href: "/terms" },
+      { label: "Sub-processors", href: "/subprocessors" },
+      { label: "Data residency", href: "/subprocessors#residency" },
     ],
     copyright: "\u00a9 2026 Build In Social",
+    dataLine: "Data stored on Cloudflare R2. See sub-processors.",
   },
 };

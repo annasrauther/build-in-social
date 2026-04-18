@@ -29,6 +29,11 @@ export default function Features() {
         Shorts, Instagram Reels, LinkedIn, and X — then posts it on your
         schedule. Full autopilot, or review first. Your call.
       </p>
+      {LANDING.FEATURES.builtFor ? (
+        <p className="mt-3 max-w-3xl text-sm text-gray-500 dark:text-gray-400">
+          {LANDING.FEATURES.builtFor}
+        </p>
+      ) : null}
       <dl className="mt-12 grid grid-cols-1 gap-y-8 md:grid-cols-3 md:border-y md:border-gray-200 md:py-14 dark:border-gray-800">
         {stats.map((stat, index) => (
           <React.Fragment key={index}>

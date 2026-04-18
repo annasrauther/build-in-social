@@ -451,7 +451,7 @@ export default function VoicePage() {
       </div>
 
       <OnboardingHeading
-        title="Choose a voice"
+        title="Choose a narration voice"
         subtitle="Pick the voice that narrates your videos. Click Preview to hear it first."
       />
 

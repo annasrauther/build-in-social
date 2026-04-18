@@ -55,6 +55,58 @@ export default function WaitlistPage() {
         {APP.WAITLIST.description}
       </p>
 
+      <section className="mt-10" aria-labelledby="waitlist-how">
+        <h2
+          id="waitlist-how"
+          className="text-sm font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+        >
+          {APP.WAITLIST.howItWorksLabel}
+        </h2>
+        <ol className="mt-4 space-y-3">
+          {APP.WAITLIST.howItWorks.map((step, i) => (
+            <li
+              key={i}
+              className="flex gap-3 text-sm text-gray-700 dark:text-gray-300"
+            >
+              <span
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-900 text-xs font-medium text-gray-50 dark:bg-gray-50 dark:text-gray-900"
+                aria-hidden="true"
+              >
+                {i + 1}
+              </span>
+              <span className="leading-6">{step}</span>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="mt-10" aria-labelledby="waitlist-specs">
+        <h2
+          id="waitlist-specs"
+          className="text-sm font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400"
+        >
+          {APP.WAITLIST.specsLabel}
+        </h2>
+        <ul className="mt-4 space-y-2">
+          {APP.WAITLIST.specs.map((spec, i) => (
+            <li
+              key={i}
+              className="flex gap-3 text-sm text-gray-700 dark:text-gray-300"
+            >
+              <span
+                className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-gray-500"
+                aria-hidden="true"
+              />
+              <span className="leading-6">{spec}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <p className="mt-8 text-sm text-gray-600 dark:text-gray-400">
+        {APP.WAITLIST.targetAudience}
+      </p>
+
       <div className="mt-10">
         <AnimatePresence mode="wait">
           {state === "success" ? (
@@ -106,8 +158,14 @@ export default function WaitlistPage() {
                   : APP.WAITLIST.joinCta}
                 {state !== "submitting" && <ArrowAnimated />}
               </Button>
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                {APP.WAITLIST.waitlistPerk}
+              </p>
               <p className="text-xs text-gray-500 dark:text-gray-500">
                 {APP.WAITLIST.noSpam}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">
+                {APP.WAITLIST.cohortNote}
               </p>
             </motion.form>
           )}

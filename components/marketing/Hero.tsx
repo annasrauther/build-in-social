@@ -27,6 +27,13 @@ export default function Hero() {
       >
         {LANDING.HERO.callout}
       </p>
+      {LANDING.HERO.subCallout ? (
+        <p
+          className="mt-4 max-w-xl animate-slide-up-fade [animation-duration:1050ms] px-4 text-sm text-gray-600 dark:text-gray-400"
+        >
+          {LANDING.HERO.subCallout}
+        </p>
+      ) : null}
       <div
         className="mt-8 flex w-full animate-slide-up-fade [animation-duration:1100ms] flex-col justify-center gap-3 px-3 sm:flex-row"
       >

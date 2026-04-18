@@ -142,8 +142,8 @@ export const APP = {
     profileDescription: "Name, niche, voice notes, tone",
     platformsLabel: "Platforms",
     platformsDescription: "Connect YouTube, Instagram, LinkedIn, X",
-    voiceLabel: "Voice",
-    voiceDescription: "Manage your voice clone or library selection",
+    voiceLabel: "Narration voice",
+    voiceDescription: "Manage your narration clone or library selection",
     billingLabel: "Billing",
     billingDescription: "Subscription and payment management",
   },
@@ -198,11 +198,13 @@ export const APP = {
   },
 
   SETTINGS_VOICE: {
-    title: "Voice",
+    title: "Narration voice",
     subtitle: "The voice used to narrate your videos.",
-    cloneTitle: "Voice clone",
-    cloneActive: "Your voice clone is active.",
-    cloneEmpty: "No voice clone yet. Powered by ElevenLabs.",
+    disambiguation:
+      "This is the voice that narrates your videos \u2014 not your written brand voice. Built on ElevenLabs.",
+    cloneTitle: "Narration clone",
+    cloneActive: "Your narration clone is active.",
+    cloneEmpty: "No narration clone yet. Powered by ElevenLabs.",
     removeClone: "Remove",
     uploadSample: "Upload voice sample",
     uploadHint:
@@ -259,9 +261,28 @@ export const APP = {
     badge: "Coming soon",
     title: "Avatar Mode",
     headline:
-      "Your AI clone. Record once. Post your face on every platform every week \u2014 without filming.",
+      "Your AI clone. Record once. Post your face on every platform \u2014 every week, without filming.",
     description:
-      "Your AI clone. Record once. Post your face on every platform, every week, without filming.",
+      "Build In Social is training an Instant Avatar pipeline for founder-grade vertical video. You record once, we clone your voice and likeness, and every weekly autopilot video ships with your face \u2014 no studio, no filming.",
+    howItWorksLabel: "How it works",
+    howItWorks: [
+      "Record a 2-minute webcam clip. Good light, one take \u2014 phone or laptop works.",
+      "Build In Social trains your clone in under 24 hours.",
+      "Every autopilot video renders with your face and cloned voice.",
+    ],
+    specsLabel: "What Avatar Mode is (and isn\u2019t)",
+    specs: [
+      "Built for vertical short-form \u2014 YouTube Shorts, Reels, LinkedIn, X.",
+      "Single avatar per account. One background, recorded from your session.",
+      "Not a Synthesia replacement \u2014 we are founder-grade, not enterprise broadcast.",
+      "Pricing: Studio plan add-on. Final price announced at cohort launch.",
+    ],
+    targetAudience:
+      "Built for solo founders and creator-founders. If you need enterprise training videos or multi-avatar teams, stay on Synthesia.",
+    cohortNote:
+      "Rolling out to the waitlist in cohorts. We\u2019ll email you when yours opens.",
+    waitlistPerk:
+      "Waitlist members get early-access pricing locked in for life.",
     emailPlaceholder: "your@email.com",
     emailError: "Enter a valid email address.",
     joining: "Adding you to the list...",
