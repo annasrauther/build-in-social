@@ -6,6 +6,7 @@ import { RiAddLine, RiCloseLine, RiCheckLine } from "@remixicon/react";
 import { PremiumInput } from "@/components/onboarding/PremiumInput";
 import { PremiumTextarea } from "@/components/onboarding/PremiumTextarea";
 import { DomainPreviewCard } from "@/components/onboarding/DomainPreviewCard";
+import { SourceIngestPanel } from "@/components/onboarding/SourceIngestPanel";
 import { TrustLine } from "@/components/onboarding/TrustLine";
 import { Button } from "@/components/tremor/Button";
 import { ArrowAnimated } from "@/components/marketing/ArrowAnimated";
@@ -15,6 +16,7 @@ import { inferProduct } from "@/lib/services/infer-product";
 import { SOCIAL_PROOF_LINES, EASE_SPRING, DURATION_ENTRY } from "@/lib/constants/onboarding";
 import { APP } from "@/content/app";
 import type { InferProductResponse } from "@/lib/types/infer-product";
+import type { IngestSourceType, IngestTopicCandidate } from "@/lib/types/ingest";
 
 const ease = [...EASE_SPRING] as [number, number, number, number];
 
@@ -329,8 +331,16 @@ type InferenceState = "idle" | "loading" | "preview" | "confirmed" | "manual";
 /* ─── Page ────────────────────────────────────────────────────────────────── */
 
 export default function StartPage() {
-  const { update, goToStep } = useOnboarding();
+  const { data: onboardingData, update, goToStep } = useOnboarding();
   const customInputId = useId();
+
+  // Source-ingest state
+  const [ingestTopics, setIngestTopics] = useState<IngestTopicCandidate[]>(
+    onboardingData.sourceTopics ?? []
+  );
+  const [ingestSourceType, setIngestSourceType] = useState<IngestSourceType | undefined>(
+    onboardingData.sourceType
+  );
 
   // Phase 1
   const [domainInput, setDomainInput] = useState("");
@@ -469,6 +479,8 @@ export default function StartPage() {
       productMetaSource: isManual ? "manual" : "domain",
       niche,
       nicheCustomEntries: customNiches,
+      sourceTopics: ingestTopics.length ? ingestTopics : undefined,
+      sourceType: ingestTopics.length ? ingestSourceType : undefined,
       currentStep: 2,
     });
     goToStep(2);
@@ -857,6 +869,18 @@ export default function StartPage() {
                 {totalNiches} topic{totalNiches !== 1 ? "s" : ""} selected — you can refine this in Settings at any time.
               </motion.p>
             )}
+
+            {/* Optional source material ingest */}
+            <div style={{ marginTop: 20 }}>
+              <SourceIngestPanel
+                initialTopics={ingestTopics}
+                initialSourceType={ingestSourceType}
+                onTopicsExtracted={(topics, type) => {
+                  setIngestTopics(topics);
+                  setIngestSourceType(type);
+                }}
+              />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

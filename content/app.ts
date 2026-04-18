@@ -319,6 +319,30 @@ export const APP = {
       manualDescriptionPlaceholder:
         "Describe it \u2014 \u2018a SaaS for X\u2019 or \u2018I\u2019m a freelance React dev helping startups ship\u2019.",
       noWebsiteLink: "No website yet? Describe it instead",
+      ingestLabel: "I already have source material",
+      ingestHint:
+        "Paste a Notion page, a transcript, or an RSS feed. Build In Social reads it and seeds your first week.",
+      ingestTypeNotion: "Notion page",
+      ingestTypeTranscript: "Transcript / text",
+      ingestTypeRss: "RSS / podcast feed",
+      ingestNotionPlaceholder: "https://yourname.notion.site/...",
+      ingestTranscriptPlaceholder:
+        "Paste a transcript, talk notes, or raw writing (at least a paragraph).",
+      ingestRssPlaceholder: "https://yourpodcast.com/feed.xml",
+      ingestSubmitCta: "Read this source",
+      ingestLoading: "Build In Social is reading your source...",
+      ingestSuccess: (n: number) =>
+        `Extracted ${n} topic candidate${n === 1 ? "" : "s"}. We\u2019ll use these in your first week\u2019s plan.`,
+      ingestErrorNotion:
+        "Couldn\u2019t read that Notion page. Make sure it\u2019s set to public share.",
+      ingestErrorTranscript:
+        "That transcript is too short or empty. Paste at least a few sentences.",
+      ingestErrorRss:
+        "Couldn\u2019t parse that feed. Check that the URL points to a valid RSS or Atom feed.",
+      ingestErrorRateLimit:
+        "You\u2019ve already read a source in the last hour. Try again later \u2014 we cap this to keep costs low.",
+      ingestErrorGeneric:
+        "Something went wrong reading that source. Try another one.",
     },
     step2: {
       title: "What happened this week?",

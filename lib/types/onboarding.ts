@@ -1,4 +1,5 @@
 import type { Platform } from "./user";
+import type { IngestSourceType, IngestTopicCandidate } from "./ingest";
 
 export type OnboardingTone = "straight-shooter" | "friendly-expert" | "technical-deep-dive" | "casual-builder";
 export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -40,6 +41,10 @@ export interface OnboardingData {
   niche: string;
   nicheAudiences?: string[];
   nicheCustomEntries?: string[];
+
+  // Optional source material (Notion / transcript / RSS) — seeds plan topics
+  sourceTopics?: IngestTopicCandidate[];
+  sourceType?: IngestSourceType;
 
   // Step 4 — Tone
   tone: OnboardingTone | "";
