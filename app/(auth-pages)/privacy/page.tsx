@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LEGAL } from "@/content/legal";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "How Build In Social collects, uses, and protects your data.",
 };
 
-const LAST_UPDATED = "April 8, 2026";
+const P = LEGAL.PRIVACY;
+const META = LEGAL.META;
+const BANNER = LEGAL.DRAFT_BANNER;
+const SUBPROCESSORS = LEGAL.SUBPROCESSORS;
 
 export default function PrivacyPage() {
   return (
@@ -54,97 +58,185 @@ export default function PrivacyPage() {
 
       {/* Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        {/* Draft banner — must be visually prominent */}
+        <div
+          role="alert"
+          aria-label="Legal draft warning"
+          className="mb-10 flex gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            aria-hidden="true"
+            className="mt-0.5 shrink-0"
+          >
+            <path
+              d="M10 2L18 17H2L10 2z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M10 8v4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+            <circle cx="10" cy="14.5" r="0.75" fill="currentColor" />
+          </svg>
+          <div>
+            <p className="font-semibold text-[13px] tracking-wide uppercase">
+              {BANNER.title}
+            </p>
+            <p className="mt-1 text-[14px] leading-relaxed">{BANNER.body}</p>
+          </div>
+        </div>
+
         <div className="mb-10">
           <h1
             className="text-3xl sm:text-4xl font-semibold tracking-tight mb-3"
             style={{ color: "var(--text-primary)" }}
           >
-            Privacy Policy
+            {P.title}
           </h1>
-          <p className="text-sm text-[rgba(0,0,0,0.4)]">Last updated: {LAST_UPDATED}</p>
+          <p className="text-sm text-[rgba(0,0,0,0.4)]">
+            Last updated: {META.lastUpdated}
+          </p>
         </div>
 
         <div className="prose prose-neutral max-w-none text-[rgba(0,0,0,0.75)] leading-relaxed space-y-10">
           <section>
-            <h2
-              className="text-lg font-semibold mb-3"
-              style={{ color: "var(--text-primary)" }}
-            >
-              1. Information We Collect
-            </h2>
-            <p className="text-[15px]">
-              When you sign up for Build In Social, we collect your email address and any profile information
-              you provide. As you use the product, we collect usage data including prompts you submit,
-              videos you generate, and your subscription activity. We use Clerk for authentication.
-            </p>
+            <p className="text-[15px]">{P.intro}</p>
           </section>
 
           <section>
-            <h2
-              className="text-lg font-semibold mb-3"
-              style={{ color: "var(--text-primary)" }}
-            >
-              2. How We Use Your Information
-            </h2>
-            <p className="text-[15px]">
-              We use your information to provide and improve the Build In Social service. We do not sell
-              your personal data. We do not use your content to train AI models.
-            </p>
+            <SectionHeading>{P.controller.heading}</SectionHeading>
+            <p className="text-[15px]">{P.controller.body}</p>
           </section>
 
           <section>
-            <h2
-              className="text-lg font-semibold mb-3"
-              style={{ color: "var(--text-primary)" }}
-            >
-              3. Third-Party Services
-            </h2>
-            <p className="text-[15px]">
-              Build In Social integrates with third-party services to deliver its features.
-              Each service has its own privacy policy governing data they receive.
-            </p>
+            <SectionHeading>{P.dataWeCollect.heading}</SectionHeading>
+            <ul className="space-y-3 text-[15px] list-disc pl-5">
+              {P.dataWeCollect.categories.map((c) => (
+                <li key={c.label}>
+                  <span className="font-semibold">{c.label}.</span> {c.body}
+                </li>
+              ))}
+            </ul>
           </section>
 
           <section>
-            <h2
-              className="text-lg font-semibold mb-3"
-              style={{ color: "var(--text-primary)" }}
-            >
-              4. Data Retention
-            </h2>
-            <p className="text-[15px]">
-              We retain your account data and generated content for as long as your account is
-              active. You may request deletion at any time.
-            </p>
+            <SectionHeading>{P.lawfulBasis.heading}</SectionHeading>
+            <p className="text-[15px]">{P.lawfulBasis.body}</p>
+            <ul className="mt-3 space-y-2 text-[15px] list-disc pl-5">
+              {P.lawfulBasis.bullets.map((b) => (
+                <li key={b}>{b}</li>
+              ))}
+            </ul>
           </section>
 
           <section>
-            <h2
-              className="text-lg font-semibold mb-3"
-              style={{ color: "var(--text-primary)" }}
-            >
-              5. Security
-            </h2>
-            <p className="text-[15px]">
-              We use industry-standard encryption in transit (TLS) and at rest.
-            </p>
+            <SectionHeading>{P.subprocessors.heading}</SectionHeading>
+            <p className="text-[15px]">{P.subprocessors.body}</p>
+            <div className="mt-4 overflow-x-auto rounded-lg border border-black/[0.08]">
+              <table className="min-w-full text-left text-[14px]">
+                <thead className="bg-[rgba(0,0,0,0.03)] text-[12px] uppercase tracking-wide text-[rgba(0,0,0,0.55)]">
+                  <tr>
+                    <th className="px-3 py-2 font-medium">Subprocessor</th>
+                    <th className="px-3 py-2 font-medium">Purpose</th>
+                    <th className="px-3 py-2 font-medium">Data</th>
+                    <th className="px-3 py-2 font-medium">Region</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-black/[0.06]">
+                  {SUBPROCESSORS.map((s) => (
+                    <tr key={s.name}>
+                      <td className="px-3 py-2 font-medium align-top">
+                        {s.name}
+                      </td>
+                      <td className="px-3 py-2 align-top">{s.purpose}</td>
+                      <td className="px-3 py-2 align-top">{s.dataTypes}</td>
+                      <td className="px-3 py-2 align-top">{s.region}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
 
           <section>
-            <h2
-              className="text-lg font-semibold mb-3"
-              style={{ color: "var(--text-primary)" }}
-            >
-              6. Contact
-            </h2>
+            <SectionHeading>{P.doNotTrain.heading}</SectionHeading>
+            <p className="text-[15px]">{P.doNotTrain.body}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{P.userRights.heading}</SectionHeading>
+            <p className="text-[15px]">{P.userRights.bodyGdpr}</p>
+            <p className="mt-3 text-[15px]">{P.userRights.bodyCcpa}</p>
+            <p className="mt-3 text-[15px]">{P.userRights.selfServe}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{P.retention.heading}</SectionHeading>
+            <ul className="space-y-2 text-[15px] list-disc pl-5">
+              {P.retention.bullets.map((b) => (
+                <li key={b}>{b}</li>
+              ))}
+            </ul>
+          </section>
+
+          <section>
+            <SectionHeading>{P.internationalTransfers.heading}</SectionHeading>
+            <p className="text-[15px]">{P.internationalTransfers.body}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{P.children.heading}</SectionHeading>
+            <p className="text-[15px]">{P.children.body}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{P.security.heading}</SectionHeading>
+            <p className="text-[15px]">{P.security.body}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{P.breachNotification.heading}</SectionHeading>
+            <p className="text-[15px]">{P.breachNotification.body}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{P.dpo.heading}</SectionHeading>
+            <p className="text-[15px]">{P.dpo.body}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{P.changes.heading}</SectionHeading>
+            <p className="text-[15px]">{P.changes.body}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{P.contact.heading}</SectionHeading>
             <p className="text-[15px]">
-              Questions about this policy? Email us at{" "}
+              Questions, requests, or complaints about this policy should be
+              sent to{" "}
               <a
-                href="mailto:privacy@buildinsocial.app"
+                href={`mailto:${META.contactEmail}`}
                 className="transition-colors duration-150 hover:opacity-70"
                 style={{ color: "var(--accent)" }}
               >
-                privacy@buildinsocial.app
+                {META.contactEmail}
+              </a>
+              . For matters specific to the EU or UK, you may also reach our
+              DPO placeholder at{" "}
+              <a
+                href={`mailto:${META.dpoEmail}`}
+                className="transition-colors duration-150 hover:opacity-70"
+                style={{ color: "var(--accent)" }}
+              >
+                {META.dpoEmail}
               </a>
               .
             </p>
@@ -182,5 +274,16 @@ export default function PrivacyPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h2
+      className="text-lg font-semibold mb-3"
+      style={{ color: "var(--text-primary)" }}
+    >
+      {children}
+    </h2>
   );
 }

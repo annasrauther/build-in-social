@@ -83,6 +83,18 @@ export async function synthesizeSpeech(params: {
   };
 }
 
+export async function synthesizeClonePreview(params: {
+  userId: string;
+  voiceCloneId: string;
+  previewText: string;
+}): Promise<{ audioUrl: string }> {
+  console.log("[MOCK elevenlabs] synthesizeClonePreview", params.voiceCloneId);
+  await delay(900);
+  return {
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+  };
+}
+
 export async function cloneVoice(params: {
   audioUrl: string;
   userId: string;

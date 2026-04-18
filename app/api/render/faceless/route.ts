@@ -14,8 +14,18 @@ import { enqueueRenderJob } from "@/lib/services/queue";
 import { requireAuth } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/services/rate-limit";
 import { deductCreditForRender, refundCreditForRender } from "@/lib/services/credits";
+import { INTERNAL_SECRET, APP_URL } from "@/lib/env";
 
 export async function POST(req: NextRequest) {
+  // SECURITY (S2): Fail closed — refuse to enqueue work we can't authenticate
+  // the render worker for. Mirrors /api/render/complete and /api/render/process.
+  if (!INTERNAL_SECRET) {
+    return NextResponse.json(
+      { error: "Server misconfigured: INTERNAL_SECRET not set" },
+      { status: 500 }
+    );
+  }
+
   let userId: string;
   try {
     userId = await requireAuth();
@@ -76,6 +86,25 @@ export async function POST(req: NextRequest) {
         renderJobId: dbJob.id,
       });
 
+      // ── Fire-and-forget the render worker ─────────────────────────────────
+      // Not awaited — the response returns immediately; processing happens async.
+      const processUrl = `${APP_URL}/api/render/process`;
+      fetch(processUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-secret": INTERNAL_SECRET,
+        },
+        body: JSON.stringify({
+          jobId: queueJob.id,
+          dbJobId: dbJob.id,
+          videoId,
+          userId,
+        }),
+      }).catch((err: unknown) =>
+        console.error("[render/faceless] process trigger failed:", err)
+      );
+
       return NextResponse.json({
         data: {
           jobId: queueJob.id,
@@ -101,7 +130,8 @@ export async function POST(req: NextRequest) {
       throw submitError;
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to submit render job";
-    return NextResponse.json({ error: message }, { status: 500 });
+    // SECURITY (M6): log full error, return generic message to client.
+    console.error("[render/faceless] error:", error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

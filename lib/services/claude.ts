@@ -39,3 +39,7 @@ export const generateSeriesPlan: typeof real.generateSeriesPlan = useReal
 export const labelVideo: typeof real.labelVideo = useReal
   ? real.labelVideo
   : (mock.labelVideo as unknown as typeof real.labelVideo);
+
+export const reviseScript: typeof real.reviseScript = useReal
+  ? real.reviseScript
+  : mock.reviseScript;

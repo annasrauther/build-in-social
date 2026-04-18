@@ -44,24 +44,20 @@ export function SelectionCard({
         backgroundColor: selected ? "transparent" : "transparent",
       }}
     >
-      {/* Spinning conic-gradient border — only rendered when selected */}
+      {/* Traveling focus beam — only rendered when selected */}
       {selected && (
         <motion.div
           animate={{ opacity: 1 }}
           initial={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="absolute left-1/2 top-1/2 w-[200%] h-[200%] -translate-x-1/2 -translate-y-1/2"
-          style={{
-            background:
-              "conic-gradient(from 0deg, transparent 0%, transparent 65%, var(--accent) 78%, #F0A875 85%, var(--accent) 93%, transparent 100%)",
-            animation: "spin-gradient 5s linear infinite",
-          }}
+          className="focus-beam-layer"
         />
       )}
 
       <motion.button
         type="button"
         onClick={onSelect}
+        aria-pressed={selected}
         className="relative w-full text-left min-h-[44px] px-5 py-4 cursor-pointer outline-none z-[1] rounded-[var(--radius-lg)]"
         style={{
           backgroundColor: "var(--bg-elevated)",

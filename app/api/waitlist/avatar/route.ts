@@ -12,12 +12,22 @@ export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { addToAvatarWaitlist } from "@/lib/services/db";
+import { checkRateLimit } from "@/lib/services/rate-limit";
 
 const WaitlistSchema = z.object({
   email: z.string().email().max(254),
 });
 
 export async function POST(req: Request) {
+  // SECURITY (S4): IP-keyed rate limit — unauth endpoint, 5/min.
+  // Blocks email-enumeration probing of the waitlist.
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    req.headers.get("x-real-ip") ??
+    "unknown";
+  const limited = await checkRateLimit(`ip:${ip}`, "waitlist/avatar", 5, "1 m");
+  if (limited) return limited;
+
   let body: unknown;
   try {
     body = await req.json();

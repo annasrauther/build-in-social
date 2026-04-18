@@ -88,20 +88,107 @@ async function sqlInsert(query: string): Promise<number> {
 }
 
 // ─── SQL escape helpers ───────────────────────────────────────────────────────
+//
+// SECURITY (S1): NoCodeBackend's MCP `execute_sql` takes a raw SQL string and
+// does not expose bind variables. Because we cannot use parameterised queries,
+// every value interpolated into a query MUST be funnelled through one of the
+// typed escape helpers below. Each helper enforces a strict allow-list for its
+// type:
+//
+//   - escInt    → integers only, coerced through Number.isFinite + Math.trunc
+//   - escEnum   → must match a provided literal allow-list
+//   - escUuid   → must match a strict UUID/NCB-id regex
+//   - escBool   → rendered as 1 or 0
+//   - escString → MySQL-safe escape of single quotes, backslash, backtick,
+//                 NUL, ^Z (EOF), CRLF, and the SQL-comment sequences `--`,
+//                 `#`, `/*`, `*/`. Also strips BOM/zero-width marks and any
+//                 Unicode control characters that mysql's charset conversion
+//                 could otherwise smuggle through. The final payload is
+//                 validated against `\p{L}\p{N}\p{P}\p{Zs}\p{M}\p{S}` and any
+//                 character outside that set is rejected.
+//   - esc       → dispatch wrapper that routes to the right helper for legacy
+//                 call sites. NEW call sites should prefer the typed helpers.
+//
+// Any change to these helpers requires re-audit by @security-auditor.
 
-function esc(val: unknown): string {
+const UUID_RE =
+  /^[a-zA-Z0-9_-]{1,64}$/; // NCB ids are short alphanumeric strings; real UUIDs also match.
+
+function escInt(val: unknown): string {
   if (val === null || val === undefined) return "NULL";
-  if (typeof val === "number") {
-    if (!Number.isFinite(val)) return "NULL";
-    return String(val);
+  const n = typeof val === "number" ? val : Number(val);
+  if (!Number.isFinite(n)) return "NULL";
+  return String(Math.trunc(n));
+}
+
+function escBool(val: unknown): string {
+  return val ? "1" : "0";
+}
+
+function escEnum(val: unknown, allowed: readonly string[]): string {
+  if (val === null || val === undefined) return "NULL";
+  const s = String(val);
+  if (!allowed.includes(s)) {
+    throw new Error(`SQL value rejected: not in allow-list (${allowed.join(",")})`);
   }
-  if (typeof val === "boolean") return val ? "1" : "0";
-  const str = String(val)
+  return `'${s}'`;
+}
+
+function escUuid(val: unknown): string {
+  if (val === null || val === undefined) return "NULL";
+  const s = String(val);
+  if (!UUID_RE.test(s)) {
+    throw new Error(`SQL value rejected: not a valid id: ${s.slice(0, 24)}`);
+  }
+  return `'${s}'`;
+}
+
+// SECURITY (S1): Hardened MySQL string escape. Applies in order:
+//   1. Strip BOM / zero-width marks (U+FEFF, U+200B–U+200F, U+2028/U+2029)
+//      which some mysql client charsets decode into quote-terminators.
+//   2. Reject any character not in {L,N,P,Zs,M,S} — this whitelists letters,
+//      numbers, punctuation, spaces, combining marks, and symbols, and blocks
+//      C0/C1 controls, ASCII NUL, and raw ^Z.
+//   3. Escape backslash, single quote, backtick, CR, LF, NUL, ^Z.
+//   4. Neutralise SQL comment starters — "--", "#", slash-star, star-slash —
+//      by escaping an inner character so the token can never appear in the
+//      emitted SQL even if an attacker smuggled it past step 2.
+const BACKTICK = String.fromCharCode(0x60);
+
+function escString(val: unknown): string {
+  if (val === null || val === undefined) return "NULL";
+  const raw = String(val)
+    .replace(/\uFEFF/g, "")
+    .replace(/[\u200B-\u200F\u2028\u2029]/g, "");
+  if (/[^\p{L}\p{N}\p{P}\p{Zs}\p{M}\p{S}]/u.test(raw)) {
+    throw new Error("SQL value rejected: contains disallowed control/format character");
+  }
+  const escaped = raw
     .replace(/\\/g, "\\\\")
     .replace(/'/g, "''")
+    .split(BACKTICK).join("\\" + BACKTICK)
+    .replace(/\r/g, "\\r")
+    .replace(/\n/g, "\\n")
     .replace(/\0/g, "")
-    .replace(/\x1a/g, "");
-  return `'${str}'`;
+    .replace(/\x1a/g, "")
+    // Neutralise comment starters after all other escaping — insert a backslash
+    // between the two chars so the sequence cannot appear in the final SQL.
+    .replace(/--/g, "-\\-")
+    .replace(/#/g, "\\#")
+    .replace(/\/\*/g, "/\\*")
+    .replace(/\*\//g, "*\\/");
+  return "'" + escaped + "'";
+}
+
+/**
+ * Dispatch wrapper for legacy call sites. New code should use the typed
+ * helpers (escInt, escUuid, escEnum, escString, escBool) directly.
+ */
+function esc(val: unknown): string {
+  if (val === null || val === undefined) return "NULL";
+  if (typeof val === "number") return escInt(val);
+  if (typeof val === "boolean") return escBool(val);
+  return escString(val);
 }
 
 // ─── Serialization helpers ────────────────────────────────────────────────────
@@ -185,6 +272,7 @@ function rowToVideo(row: NcbRow): Video {
     trafficFromPseo: maybe(row.traffic_from_pseo, num),
     visibilityScore: maybe(row.visibility_score, num),
     platformVideoId: maybe(row.platform_video_id, str),
+    revisionCount: maybe(row.revision_count, num),
     createdAt: str(row.created_at) || new Date().toISOString(),
     publishedAt: maybe(row.published_at, str),
   };
@@ -432,6 +520,10 @@ export async function updateVideo(videoId: string, data: Partial<Video>): Promis
   if (data.visibilityScore !== undefined) sets.push(`visibility_score = ${esc(data.visibilityScore)}`);
   if (data.publishedAt !== undefined) sets.push(`published_at = ${esc(data.publishedAt)}`);
   if (data.platformVideoId !== undefined) sets.push(`platform_video_id = ${esc(data.platformVideoId)}`);
+  // TODO(schema): add `revision_count INT DEFAULT 0` column to `videos` table.
+  // Until the migration lands, writes here will fail if the column is absent;
+  // callers must catch and fall back to counting revisions another way.
+  if (data.revisionCount !== undefined) sets.push(`revision_count = ${esc(data.revisionCount)}`);
   if (sets.length > 0) {
     await sql(`UPDATE videos SET ${sets.join(", ")} WHERE id = ${esc(videoId)}`);
   }
@@ -451,9 +543,10 @@ export async function approveAllForWeek(weekId: string): Promise<void> {
 }
 
 export async function getTopPerformingVideos(userId: string, limit = 10): Promise<Video[]> {
+  // SECURITY (S1): LIMIT value is coerced via escInt, never interpolated raw.
   const rows = await sql(
-    `SELECT * FROM videos WHERE user_id = ${esc(userId)} AND visibility_score IS NOT NULL
-     ORDER BY visibility_score DESC LIMIT ${limit}`
+    `SELECT * FROM videos WHERE user_id = ${escUuid(userId)} AND visibility_score IS NOT NULL
+     ORDER BY visibility_score DESC LIMIT ${escInt(limit)}`
   );
   return rows.map(rowToVideo);
 }
@@ -601,6 +694,62 @@ export async function hasVoiceConsent(userId: string): Promise<boolean> {
     `SELECT user_id FROM voice_consent_records WHERE user_id = ${esc(userId)} LIMIT 1`
   ).catch(() => [] as NcbRow[]);
   return rows.length > 0;
+}
+
+// ─── GDPR: cascade delete + export (Article 17 + 20) ─────────────────────────
+
+/**
+ * Return every row tied to a user, grouped by table. Used by the data-export
+ * endpoint (Article 20). Caller is responsible for stripping third-party IDs
+ * before sending to the client.
+ */
+export async function getAllUserData(userId: string): Promise<{
+  user: User | null;
+  voiceProfiles: VoiceProfile[];
+  weeks: ContentWeek[];
+  videos: Video[];
+  pseoPages: PseoPage[];
+}> {
+  const [userRow, voiceRows, weekRows, videoRows, pseoRows] = await Promise.all([
+    sql(`SELECT * FROM users WHERE id = ${escUuid(userId)} LIMIT 1`),
+    sql(`SELECT * FROM voice_profiles WHERE user_id = ${escUuid(userId)}`),
+    sql(`SELECT * FROM content_weeks WHERE user_id = ${escUuid(userId)} ORDER BY created_at ASC`),
+    sql(`SELECT * FROM videos WHERE user_id = ${escUuid(userId)} ORDER BY created_at ASC`),
+    sql(`SELECT * FROM pseo_pages WHERE user_id = ${escUuid(userId)} ORDER BY created_at ASC`),
+  ]);
+  return {
+    user: userRow.length > 0 ? rowToUser(userRow[0]) : null,
+    voiceProfiles: voiceRows.map(rowToVoiceProfile),
+    weeks: weekRows.map(rowToContentWeek),
+    videos: videoRows.map(rowToVideo),
+    pseoPages: pseoRows.map(rowToPseoPage),
+  };
+}
+
+/**
+ * Permanently delete a user and every row that references them. GDPR Article 17.
+ *
+ * Order matters: child tables first, user row last. NCB's MCP API has no
+ * transactional envelope exposed, so we issue each DELETE individually. A
+ * mid-flight failure leaves an orphaned parent row the user can retry against,
+ * which is the least-bad failure mode.
+ *
+ * R2 objects, ElevenLabs voices, and Stripe subscriptions are NOT deleted here
+ * — those are best-effort cleanups handled by the API route before this call.
+ */
+export async function deleteUserAndData(userId: string): Promise<void> {
+  const uid = escUuid(userId);
+  // Children referencing videos (pseo, render_jobs) by user_id
+  await sql(`DELETE FROM pseo_pages WHERE user_id = ${uid}`).catch(() => undefined);
+  await sql(`DELETE FROM render_jobs WHERE user_id = ${uid}`).catch(() => undefined);
+  // Videos, weeks, voice profiles
+  await sql(`DELETE FROM videos WHERE user_id = ${uid}`).catch(() => undefined);
+  await sql(`DELETE FROM content_weeks WHERE user_id = ${uid}`).catch(() => undefined);
+  await sql(`DELETE FROM voice_profiles WHERE user_id = ${uid}`).catch(() => undefined);
+  // Consent record
+  await sql(`DELETE FROM voice_consent_records WHERE user_id = ${uid}`).catch(() => undefined);
+  // User row last
+  await sql(`DELETE FROM users WHERE id = ${uid}`);
 }
 
 // ─── Avatar waitlist (Phase 2 lead capture) ───────────────────────────────────

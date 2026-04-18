@@ -54,6 +54,8 @@ Why:
 8. Credit deduction happens **before** render job submission. Refund on failure.
 9. All Claude API calls: use **Haiku** for scripts, labelling, quality gate. Use **Sonnet** only for pSEO articles and intelligence summaries.
 10. Do not install, import, or write a single HeyGen API call until written confirmation is received from HeyGen that Build In Social's managed services use case is permitted.
+11. All AI-generated content carries a `confidenceScore` (1–10). This score appears on every video card in the plan UI. Score < 6 surfaces a soft prompt: "This content might be stronger with more context — edit before rendering?" Score is generated in the same LLM call as the script — zero added cost.
+12. Autopilot mode accepts an optional natural-language hint from the user ("this week lean into my MRR breakdown post"). The hint is forwarded to the angle generation step as a soft seed — the AI decides how much weight to give it. The hint input is a single text field, max 140 chars, shown prominently in the autopilot UI.
 
 ---
 
@@ -135,8 +137,53 @@ User selects one visual style at onboarding. Cannot change per video (only in se
 - Messaging: "We're onboarding Avatar users in cohorts to ensure quality that actually represents you."
 - CTA: "Join the waitlist"
 
-**Avatar Mode spec for Phase 2:**
-- Training: 2-minute clip → HeyGen Avatar IV → clone ready in 15–45 minutes
+---
+
+### 7A. Guided In-App Recording Flow (Phase 2)
+
+Instead of asking users to upload a pre-recorded clip, Build In Social guides them through recording their training video entirely in-app. This produces higher-quality training data and eliminates the most common drop-off point (finding and uploading an existing clip).
+
+**Recording flow (6 steps):**
+
+1. **Setup check** — Camera + microphone permission request. Show a live preview. Display a checklist:
+   - Face centered and well-lit (indicator turns green when face detected)
+   - Background is clean or blurred
+   - Microphone level showing green (no clipping)
+   - "Look directly at the camera" reminder
+
+2. **Teleprompter screen** — Claude Haiku generates a 90-second training script on first load. The script is a natural, conversational monologue about the user's niche (e.g. "Hi, I'm [name]. I build [product]..."). Rules:
+   - Script length: exactly 90–120 seconds of spoken content
+   - Tone: how the user talks, not how they write
+   - Seeded from onboarding niche + voice notes
+   - Large scrolling text, auto-scroll at comfortable reading pace (~130 wpm)
+   - "Regenerate script" button re-calls Claude Haiku (max 3 times)
+
+3. **Countdown + record** — 3-2-1 countdown with Framer Motion animation, then record. Recording uses browser `MediaRecorder` API (video/webm preferred, mp4 fallback). Recording indicator (red dot, elapsed timer) is always visible. "Stop" ends recording early.
+
+4. **Playback + review** — User reviews the recording inline. Two options: "Re-record" (goes back to step 3) or "This looks good →". Quality nudge shown if clip < 60s: "Longer clips produce better avatars — try for 90 seconds."
+
+5. **Upload + submit** — Blob uploaded to R2 via `/api/avatar/upload-recording`. After R2 upload, immediately submitted to HeyGen Avatar IV. Confirmation screen shows: "Your avatar is being trained — ready in 15–45 minutes. We'll email you."
+
+6. **Training complete** — Resend email triggers on HeyGen webhook confirmation. Users can re-record at any time (replaces previous avatar).
+
+**API routes added for this flow:**
+```
+GET  /api/avatar/recording-script     Generate teleprompter script (Claude Haiku, seeded from user niche)
+POST /api/avatar/upload-recording     Upload webm/mp4 blob to R2, submit to HeyGen Avatar IV
+GET  /api/avatar/status               Poll HeyGen job status → update users.avatar_status
+POST /api/webhooks/heygen             HeyGen avatar-ready webhook → update DB + send Resend email
+```
+
+**IA route:**
+```
+/onboarding/avatar-record    In-app recording with teleprompter (Phase 2 only)
+```
+
+---
+
+### 7B. Avatar Mode Technical Spec (Phase 2)
+
+- Training: guided in-app recording (90–120s) → R2 → HeyGen Avatar IV → clone ready in 15–45 minutes
 - Output: 1080p, full Avatar IV with natural gestures, micro-expressions, accurate lip sync
 - Duration: 30–60s (Anchor content only — never daily fill)
 - Platforms: YouTube, Instagram, LinkedIn (never X)
@@ -147,6 +194,8 @@ User selects one visual style at onboarding. Cannot change per video (only in se
 - Additional Avatar: $4.50/video
 
 **Hard rule on Avatar:** Do not launch until HeyGen Enterprise pricing is confirmed in writing. At pay-as-you-go rates ($3.04/video COGS for 30s): 37% margin. At Enterprise rates (~$1.84/video COGS): 62% margin. Enterprise rates are required for scale.
+
+**R2 lifecycle rule for recording clips:** Training clips auto-deleted from R2 after 30 days (same as other video files). Users must be informed of this in the privacy policy.
 
 ---
 
@@ -229,7 +278,7 @@ Every video automatically triggers a pSEO page on render completion. This is nev
 | Next.js 14 App Router + TypeScript (strict) | Frontend framework | |
 | Tailwind CSS v3 | Styling | |
 | Tremor Raw (Tailwind + Radix) | Component library | Design system source of truth |
-| Geist font | Typography | Via `geist` package |
+| Montserrat + Poppins | Typography | Via `next/font/google` (Montserrat = `font-serif`, Poppins = `font-sans`) |
 | Clerk | Auth | Magic link + Google OAuth. Free to 10k MAU |
 | NoCodeBackend | Database + API layer | Existing Starter subscription |
 | Upstash Redis + BullMQ | Render job queue | |
@@ -466,7 +515,7 @@ claude --model claude-opus-4-6
 
 | Sprint | Days | What Ships | Agents |
 |---|---|---|---|
-| 1 — Foundation | 1–3 | Token system + Geist font + Tremor Raw setup + base layout + env.ts validation | `@architect` → `@implementer` → `@tester` |
+| 1 — Foundation | 1–3 | Token system + Montserrat/Poppins fonts + Tremor Raw setup + base layout + env.ts validation | `@architect` → `@implementer` → `@tester` |
 | 2 — Landing Page | 4–6 | Full landing page (all copy from PRD Section 4) | `@marketing-copywriter` → `@architect` → `@implementer` → `@tester` (Lighthouse >90) |
 | 3 — Auth + Onboarding | 7–10 | Clerk auth + 4-step onboarding + quality gate + voice clone flow | `@architect` → `@implementer` → `@tester` E2E → `@security-auditor` |
 | 4 — Plan Generator | 11–14 | Weekly plan generation + duration enforcement + video card UI + approve flow | `@architect` → `@implementer` → `@cost-optimizer` (verify Haiku) → `@tester` |
@@ -575,5 +624,49 @@ Coaches/consultants vertical · Agency tier · iOS companion app
 
 ---
 
-*Build In Social — Knowledge Center | Based on PRD v7.0, April 2026*
+---
+
+## 21. UX Principles (Riverside-Inspired)
+
+These principles are derived from Riverside.fm's product design and apply across all of Build In Social's UI. They are constraints, not suggestions.
+
+### 21A. Confidence Scoring
+Every AI-generated script and content piece shows a confidence score (1–10) on its card. This builds user trust in AI outputs — they don't have to guess if something is good.
+- Score 8–10: green indicator, "Strong"
+- Score 6–7: yellow indicator, "Good"
+- Score < 6: amber indicator + soft prompt: "This might be stronger with more context — edit before rendering?"
+- Score is generated in the same LLM call as the script. No added API cost.
+
+### 21B. Platform-Specific Output Optimization
+Every generated piece of content is natively formatted for its destination platform. Users never need to think about this. It happens automatically.
+- YouTube Shorts: Hook within first 2 seconds, chapters, replay-worthy ending
+- Instagram Reels: Emotional trigger + save-worthy insight, DM-share framing
+- LinkedIn: Dwell-time opening, data-backed body, invite comment in first 60 min
+- X: Engagement velocity framing, punchy under 200 chars, no hashtag spam
+This is enforced in the Claude Haiku prompt — not optional. Platform framing must differ even when the underlying content angle is the same.
+
+### 21C. Conversational Autopilot Input
+The autopilot hint field is the primary UX pattern for autopilot mode. It replaces the "what do you want content about?" mental model with a frictionless "just say what's on your mind" pattern.
+- Single text field, 140 chars max
+- Placeholder: "Anything top of mind this week? (optional)"
+- Examples shown below the field: "my new pricing page", "a mistake I made with onboarding", "React performance tips"
+- When filled, hint seeds the angle generation. When empty, AI generates from niche alone.
+
+### 21D. Instant Aha Moment Design
+The onboarding must get users to a generated, platform-specific post within 3 minutes of signup. No credit card required for the first generation.
+- Step 1: Niche + one sentence about what they're building (30s)
+- Step 2: Select 1 platform to start (15s)
+- Step 3: Choose mode (manual prompt or autopilot) (15s)
+- Step 4: First week's content appears — scored, platform-native, ready to approve (immediate)
+This is the "wow" moment. Every onboarding design decision must protect this path.
+
+### 21E. End-to-End Positioning
+All UI copy, empty states, and button labels reinforce one loop: **Create → Schedule → Grow.**
+- Never use "generate", "create content", or "use AI"
+- Always use partner framing: "Build In Social is preparing", "Your week is ready", "Build In Social noticed"
+- Every empty state has one clear next action that moves the user forward in the loop
+
+---
+
+*Build In Social — Knowledge Center | Based on PRD v8.0, April 2026*
 *This document supersedes all previous versions. Build from this. Nothing else.*

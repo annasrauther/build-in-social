@@ -1,6 +1,7 @@
 "use client"
 
 import ThemedImage from "./ThemedImage"
+import { APP } from "@/content/app"
 
 export default function HeroImage() {
   return (
@@ -10,7 +11,7 @@ export default function HeroImage() {
           <ThemedImage
             lightSrc="/images/hero-light.png"
             darkSrc="/images/hero-dark.png"
-            alt="A preview of the Video Auto Pilot dashboard"
+            alt={APP.A11Y.heroDashboardAlt}
             width={2400}
             height={1600}
             className="rounded-xl shadow-2xl dark:shadow-brand-500/10"

@@ -1,15 +1,21 @@
 "use client";
 
-import { SignUp } from "@clerk/nextjs";
+import { SignIn } from "@clerk/nextjs";
 import { motion } from "framer-motion";
 import { ELEMENT_ENTER, ease } from "@/lib/motion";
 import { Button } from "@/components/tremor/Button";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 
-const devAuth = process.env.NEXT_PUBLIC_DEV_AUTH === "1";
-const hasClerk = !devAuth && !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+/**
+ * Login page — Clerk SignIn component.
+ * When NEXT_PUBLIC_DEV_AUTH=1, renders a one-click "Sign in as Test User" panel
+ * that POSTs to /api/dev/login. Falls back to a redirect link when Clerk keys
+ * are not configured and dev-auth is off.
+ */
+export function LoginView() {
+  const devAuth = process.env.NEXT_PUBLIC_DEV_AUTH === "1";
+  const hasClerk = !devAuth && !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-export default function SignUpPage() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-4"
@@ -45,8 +51,8 @@ export default function SignUpPage() {
         {devAuth ? (
           <form
             method="POST"
-            action="/api/dev/login?to=/onboarding/start"
-            className="rounded-[var(--radius-lg)] p-8 text-center"
+            action="/api/dev/login"
+            className="rounded-[var(--radius-lg)] p-6 sm:p-8 text-center"
             style={{
               backgroundColor: "var(--bg-surface)",
               border: "1px solid var(--border-default)",
@@ -56,28 +62,25 @@ export default function SignUpPage() {
               className="text-[18px] font-medium mb-2 font-sans"
               style={{ color: "var(--text-primary)" }}
             >
-              Development sign-up
+              Development sign-in
             </h1>
             <p
               className="text-[14px] mb-6"
               style={{ color: "var(--text-secondary)" }}
             >
-              Bypass Clerk and continue as the test user.
+              Bypass Clerk and sign in as the test user.
             </p>
             <Button type="submit" className="w-full">
-              Continue as Test User
+              Sign in as Test User
             </Button>
           </form>
         ) : hasClerk ? (
           <div className="flex justify-center">
-            <SignUp
-              afterSignUpUrl="/onboarding/start"
-              appearance={clerkAppearance}
-            />
+            <SignIn fallbackRedirectUrl="/dashboard" appearance={clerkAppearance} />
           </div>
         ) : (
           <div
-            className="rounded-[var(--radius-lg)] p-8 text-center"
+            className="rounded-[var(--radius-lg)] p-6 sm:p-8 text-center"
             style={{
               backgroundColor: "var(--bg-surface)",
               border: "1px solid var(--border-default)",
@@ -87,7 +90,7 @@ export default function SignUpPage() {
               className="text-[18px] font-medium mb-2"
               style={{ color: "var(--text-primary)" }}
             >
-              Create account
+              Sign in
             </h1>
             <p
               className="text-[14px] mb-6"
@@ -97,14 +100,14 @@ export default function SignUpPage() {
               authentication.
             </p>
             <a
-              href="/onboarding/start"
+              href="/dashboard"
               className="inline-block px-6 py-3 rounded-lg font-medium"
               style={{
                 backgroundColor: "var(--accent)",
                 color: "var(--text-inverse)",
               }}
             >
-              Start onboarding (dev mode)
+              Continue to dashboard (dev mode)
             </a>
           </div>
         )}

@@ -16,6 +16,10 @@ export const getPresignedUploadUrl: typeof real.getPresignedUploadUrl = useReal
   ? real.getPresignedUploadUrl
   : mock.getPresignedUploadUrl;
 
+export const uploadBuffer: typeof real.uploadBuffer = useReal
+  ? real.uploadBuffer
+  : mock.uploadBuffer;
+
 export const deleteObject: typeof real.deleteObject = useReal
   ? real.deleteObject
   : mock.deleteObject;

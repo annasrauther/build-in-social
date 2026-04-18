@@ -22,6 +22,11 @@ export default function Hero() {
       >
         {LANDING.HERO.subhead}
       </p>
+      <p
+        className="mt-4 inline-flex max-w-lg animate-slide-up-fade [animation-duration:1000ms] items-center rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-sm font-semibold text-brand-700 dark:border-brand-900/40 dark:bg-brand-950/30 dark:text-brand-300"
+      >
+        {LANDING.HERO.callout}
+      </p>
       <div
         className="mt-8 flex w-full animate-slide-up-fade [animation-duration:1100ms] flex-col justify-center gap-3 px-3 sm:flex-row"
       >
@@ -50,8 +55,11 @@ export default function Hero() {
           </Link>
         </Button>
       </div>
+      <p className="mt-3 animate-slide-up-fade [animation-duration:1200ms] text-xs text-gray-500 dark:text-gray-500">
+        {LANDING.HERO.reassurance}
+      </p>
       <div
-        className="relative mx-auto ml-3 mt-20 h-fit w-[40rem] max-w-6xl animate-slide-up-fade [animation-duration:1400ms] sm:ml-auto sm:w-full sm:px-2"
+        className="relative mx-auto mt-20 h-fit w-full max-w-6xl animate-slide-up-fade [animation-duration:1400ms] sm:px-2"
       >
         {/* Radial Glow */}
         <div className="bg-radial-glow absolute inset-0 -top-20 -z-10 h-[150%] w-full opacity-50 dark:opacity-20" />

@@ -61,10 +61,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ data: { sessionUrl }, error: null });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Checkout failed";
+    // SECURITY (M6): log full error, return generic message to client.
     console.error("[billing/checkout] error:", err);
     return NextResponse.json(
-      { data: null, error: message },
+      { data: null, error: "Internal error" },
       { status: 500 }
     );
   }

@@ -131,6 +131,60 @@ export default function BillingSettings() {
             <Badge variant="success">${tier.price}{APP.SETTINGS_BILLING.perMonth}</Badge>
           )}
         </div>
+        {isTrial && (
+          <p className="mt-3 text-sm leading-6 text-gray-500">
+            {APP.SETTINGS_BILLING.afterTrialNote}
+          </p>
+        )}
+      </div>
+
+      <div className="mt-6">
+        <section aria-labelledby="usage-meter">
+          <div className="grid grid-cols-1 gap-x-14 gap-y-8 md:grid-cols-3">
+            <div>
+              <h2
+                id="usage-meter"
+                className="scroll-mt-10 font-medium text-gray-900 dark:text-gray-50"
+              >
+                {APP.SETTINGS_BILLING.usageTitle}
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-gray-500">
+                {APP.SETTINGS_BILLING.usagePending}
+              </p>
+            </div>
+            <div className="md:col-span-2">
+              <Card className="p-4">
+                <dl className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                  <div className="flex items-center justify-between">
+                    <dt className="text-gray-500">
+                      {APP.SETTINGS_BILLING.usageVideos(0, 40).replace(
+                        /^0/,
+                        "—"
+                      )}
+                    </dt>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <dt className="text-gray-500">
+                      {APP.SETTINGS_BILLING.usagePlatforms(
+                        profile.platforms?.length ?? 0,
+                        4
+                      )}
+                    </dt>
+                  </div>
+                  {profile.trialEndsAt && (
+                    <div className="flex items-center justify-between">
+                      <dt className="text-gray-500">
+                        {APP.SETTINGS_BILLING.usageRenews(
+                          new Date(profile.trialEndsAt).toLocaleDateString()
+                        )}
+                      </dt>
+                    </div>
+                  )}
+                </dl>
+              </Card>
+            </div>
+          </div>
+        </section>
       </div>
 
       <div className="mt-6 space-y-10">
@@ -167,6 +221,26 @@ export default function BillingSettings() {
                   {error}
                 </p>
               )}
+            </div>
+          </div>
+        </section>
+
+        <Divider />
+
+        <section aria-labelledby="cancellation-policy">
+          <div className="grid grid-cols-1 gap-x-14 gap-y-8 md:grid-cols-3">
+            <div>
+              <h2
+                id="cancellation-policy"
+                className="scroll-mt-10 font-medium text-gray-900 dark:text-gray-50"
+              >
+                {APP.SETTINGS_BILLING.cancellationPolicyTitle}
+              </h2>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-sm leading-6 text-gray-500">
+                {APP.SETTINGS_BILLING.cancellationPolicyBody}
+              </p>
             </div>
           </div>
         </section>

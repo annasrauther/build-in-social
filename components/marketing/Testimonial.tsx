@@ -4,13 +4,13 @@ export default function Testimonial() {
   return (
     <section id="testimonial" aria-label="Testimonial">
       <figure className="mx-auto">
-        <blockquote className="mx-auto max-w-2xl text-center text-xl font-semibold leading-8 text-gray-900 sm:text-2xl sm:leading-9 dark:text-white">
+        <blockquote className="mx-auto max-w-2xl px-4 sm:px-0 text-center text-lg leading-7 sm:text-xl sm:leading-8 font-semibold text-gray-900 md:text-2xl md:leading-9 dark:text-white">
           <p>
             <Balancer>
               &ldquo;I used to spend Sunday nights scripting, recording, and
               editing. Four hours minimum. Now I answer three questions on
-              Monday morning, and by Tuesday I have 23 platform-native videos
-              scheduled for the week. I genuinely forgot what Sunday stress
+              Monday morning, and by Tuesday I have 23 videos scheduled across
+              YouTube, Reels, LinkedIn, and X. I genuinely forgot what Sunday stress
               felt like.&rdquo;
             </Balancer>
           </p>

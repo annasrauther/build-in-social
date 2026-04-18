@@ -36,9 +36,10 @@ export async function createSubscriptionCheckout(params: {
   const stripe = getStripe();
 
   if (!stripe) {
+    const activateUrl = `/api/dev/billing/activate?tier=${params.packageId}&userId=${params.userId}`;
     return {
-      sessionUrl: "/dashboard?mock_checkout=true",
-      sessionId: "mock_sess_xxx",
+      sessionUrl: activateUrl,
+      sessionId: `mock_sess_${Date.now()}`,
     };
   }
 

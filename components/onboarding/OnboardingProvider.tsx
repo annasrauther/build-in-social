@@ -98,12 +98,16 @@ function computeCanProceed(data: OnboardingData): boolean {
     case 3:
       return !!data.libraryVoiceId;
 
-    // Pricing — tier selected
+    // Plan preview — mode choice made
     case 4:
+      return !!data.contentMode;
+
+    // Pricing — tier selected
+    case 5:
       return !!data.selectedTier;
 
     // Activation — payment done
-    case 5:
+    case 6:
       return data.paymentComplete;
 
     default:

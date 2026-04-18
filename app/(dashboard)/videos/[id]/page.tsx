@@ -10,6 +10,9 @@ import { Divider } from "@/components/tremor/Divider";
 import { APP } from "@/content/app";
 import type { Video } from "@/lib/types/video";
 
+const MAX_REVISIONS_PER_VIDEO = 3;
+const NOTE_MAX = 500;
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }
@@ -19,6 +22,56 @@ export default function VideoDetailPage({ params }: PageProps) {
   const [video, setVideo] = useState<Video | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Revision flow state
+  const [revisionOpen, setRevisionOpen] = useState(false);
+  const [revisionNote, setRevisionNote] = useState("");
+  const [revisionSubmitting, setRevisionSubmitting] = useState(false);
+  const [revisionError, setRevisionError] = useState<string | null>(null);
+  const [revisionFlash, setRevisionFlash] = useState<string | null>(null);
+
+  const revisionCount = video?.revisionCount ?? 0;
+  const revisionsRemaining = Math.max(0, MAX_REVISIONS_PER_VIDEO - revisionCount);
+  const revisionLimitReached = revisionsRemaining === 0;
+  const noteOver = revisionNote.length > NOTE_MAX;
+
+  async function submitRevision() {
+    if (!video || noteOver || revisionNote.trim().length === 0) return;
+    setRevisionSubmitting(true);
+    setRevisionError(null);
+    try {
+      const res = await fetch("/api/script/revise", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ videoId: video.id, note: revisionNote.trim() }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 429) {
+          setRevisionError(APP.VIDEO_DETAIL.revisionDailyCap);
+        } else if (res.status === 400) {
+          setRevisionError(
+            j?.error === "Revision limit reached on this video."
+              ? APP.VIDEO_DETAIL.revisionLimitReached
+              : (j?.error as string) ?? APP.VIDEO_DETAIL.revisionError
+          );
+        } else {
+          setRevisionError(APP.VIDEO_DETAIL.revisionError);
+        }
+        return;
+      }
+      const nextVideo = (j?.data?.video as Video) ?? null;
+      if (nextVideo) setVideo(nextVideo);
+      setRevisionOpen(false);
+      setRevisionNote("");
+      setRevisionFlash(APP.VIDEO_DETAIL.revisionSuccess);
+      window.setTimeout(() => setRevisionFlash(null), 4000);
+    } catch {
+      setRevisionError(APP.VIDEO_DETAIL.revisionError);
+    } finally {
+      setRevisionSubmitting(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -56,7 +109,8 @@ export default function VideoDetailPage({ params }: PageProps) {
       </Link>
 
       {loading ? (
-        <div className="mt-6 space-y-4">
+        <div className="mt-6 space-y-4" aria-live="polite" aria-busy="true">
+          <span className="sr-only">{APP.A11Y.loading}</span>
           <div className="skeleton-line" style={{ height: 32, width: "60%", borderRadius: "var(--radius-sm)" }} />
           <div className="skeleton-line" style={{ height: 256, borderRadius: "var(--radius-lg)" }} />
         </div>
@@ -124,6 +178,110 @@ export default function VideoDetailPage({ params }: PageProps) {
                 <p className="mt-3 text-sm font-medium text-gray-900 dark:text-gray-50">
                   {video.scriptJson.cta}
                 </p>
+
+                {/* Revision flow — Haiku-backed rewrite, capped 3/video. */}
+                <div className="mt-6 border-t border-gray-100 pt-4 dark:border-gray-800">
+                  {revisionFlash && (
+                    <p
+                      role="status"
+                      className="mb-3 text-sm text-emerald-600 dark:text-emerald-400"
+                    >
+                      {revisionFlash}
+                    </p>
+                  )}
+
+                  {!revisionOpen ? (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          setRevisionError(null);
+                          setRevisionOpen(true);
+                        }}
+                        disabled={revisionLimitReached}
+                        title={
+                          revisionLimitReached
+                            ? APP.VIDEO_DETAIL.revisionLimitReached
+                            : undefined
+                        }
+                        aria-disabled={revisionLimitReached}
+                      >
+                        {APP.VIDEO_DETAIL.revisionCta}
+                      </Button>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {revisionLimitReached
+                          ? APP.VIDEO_DETAIL.revisionLimitReached
+                          : APP.VIDEO_DETAIL.revisionRemaining(revisionsRemaining)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <label
+                        htmlFor="revision-note"
+                        className="block text-sm font-medium text-gray-900 dark:text-gray-50"
+                      >
+                        {APP.VIDEO_DETAIL.revisionCta}
+                      </label>
+                      <textarea
+                        id="revision-note"
+                        value={revisionNote}
+                        onChange={(e) => setRevisionNote(e.target.value)}
+                        placeholder={APP.VIDEO_DETAIL.revisionPlaceholder}
+                        disabled={revisionSubmitting}
+                        aria-invalid={noteOver}
+                        maxLength={NOTE_MAX + 50}
+                        rows={4}
+                        className="w-full rounded-md border border-gray-200 bg-white p-3 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 disabled:opacity-60 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50"
+                      />
+                      <div className="flex items-center justify-between text-xs">
+                        <span
+                          className={
+                            noteOver
+                              ? "text-red-600 dark:text-red-400"
+                              : "text-gray-500 dark:text-gray-400"
+                          }
+                        >
+                          {APP.VIDEO_DETAIL.revisionCharsRemaining(
+                            NOTE_MAX - revisionNote.length
+                          )}
+                        </span>
+                        {revisionError && (
+                          <span
+                            role="alert"
+                            className="text-red-600 dark:text-red-400"
+                          >
+                            {revisionError}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          onClick={submitRevision}
+                          disabled={
+                            revisionSubmitting ||
+                            noteOver ||
+                            revisionNote.trim().length === 0
+                          }
+                        >
+                          {revisionSubmitting
+                            ? APP.VIDEO_DETAIL.revisionRewriting
+                            : APP.VIDEO_DETAIL.revisionSendCta}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          onClick={() => {
+                            setRevisionOpen(false);
+                            setRevisionNote("");
+                            setRevisionError(null);
+                          }}
+                          disabled={revisionSubmitting}
+                        >
+                          {APP.VIDEO_DETAIL.revisionCancelCta}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </Card>
 
               <Card className="p-6">
@@ -135,7 +293,18 @@ export default function VideoDetailPage({ params }: PageProps) {
                     controls
                     className="mt-3 w-full rounded-lg bg-black"
                     src={video.outputUrl}
-                  />
+                  >
+                    {/* A7: WebVTT caption track for screen readers and caption-on viewers */}
+                    {video.captionUrl && (
+                      <track
+                        kind="captions"
+                        src={video.captionUrl}
+                        srcLang="en"
+                        label="English"
+                        default
+                      />
+                    )}
+                  </video>
                 ) : (
                   <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
                     {video.status === "rendering"

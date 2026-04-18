@@ -17,7 +17,7 @@ Every screen and every interactive component must have all three states:
 ## Component standards
 
 - **Only use Tremor Raw components** (built on Tailwind + Radix). No custom component implementations where a Tremor Raw equivalent exists.
-- **Geist font only** via the `geist` package. No other fonts.
+- **Fonts:** Montserrat (headings, `font-serif`) + Poppins (body, `font-sans`) via `next/font/google`. Never import other families.
 - **Tailwind CSS v3 utility classes only**. No inline styles. No hardcoded colors.
 - **Dark mode must work**. Every component uses Tailwind's `dark:` variants where needed.
 - **Mobile layout must not break**. Sidebar collapses correctly. Cards stack correctly.
@@ -46,7 +46,7 @@ Run a Lighthouse audit on every new page. Gate: Performance ≥ 90, Accessibilit
 
 ### Component compliance
 [ ] Tremor Raw components used where applicable
-[ ] Geist font applied correctly
+[ ] Montserrat (headings) + Poppins (body) applied correctly
 [ ] No inline styles
 [ ] Tailwind utilities only
 [ ] Dark mode functional

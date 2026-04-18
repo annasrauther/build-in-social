@@ -14,8 +14,10 @@ interface NavContent {
 interface HeroContent {
   headline: string;
   subhead: string;
+  callout: string;
   primaryCta: string;
   secondaryCta: string;
+  reassurance: string;
 }
 
 interface ValueProp {
@@ -50,9 +52,15 @@ interface Testimonial {
   metricLabel?: string;
 }
 
+interface TestimonialPlaceholder {
+  heading: string;
+  body: string;
+}
+
 interface TestimonialsContent {
   headline: string;
   testimonials: Testimonial[];
+  placeholder?: TestimonialPlaceholder;
 }
 
 interface PricingPlan {
@@ -76,6 +84,10 @@ interface PricingContent {
   subhead: string;
   plans: PricingPlan[];
   faqs: PricingFaq[];
+}
+
+interface PartnerCalloutContent {
+  quote: string;
 }
 
 interface FinalCtaContent {
@@ -118,6 +130,7 @@ export interface LandingContent {
   VALUE_PROPS: ValuePropsContent;
   HOW_IT_WORKS: HowItWorksContent;
   TESTIMONIALS: TestimonialsContent;
+  PARTNER_CALLOUT: PartnerCalloutContent;
   PRICING: PricingContent;
   FINAL_CTA: FinalCtaContent;
   FOOTER: FooterContent;
@@ -140,11 +153,14 @@ export const LANDING: LandingContent = {
   },
 
   HERO: {
-    headline: "Ship code. We handle the distribution.",
+    headline: "Your domain presence, on autopilot.",
     subhead:
-      "Platform-native video for YouTube, Instagram, LinkedIn, and X — prepared and posted while you build. One prompt a week, or zero.",
+      "You ship. You consult. You learn. You forget to post. Build In Social runs a full week of YouTube Shorts, Reels, LinkedIn, and X about what you actually know.",
+    callout:
+      "Even when nothing shipped — Build In Social runs on autopilot.",
     primaryCta: "Start free trial",
     secondaryCta: "See how it works",
+    reassurance: "No credit card required. 14-day trial.",
   },
 
   SOCIAL_PROOF: {
@@ -157,13 +173,13 @@ export const LANDING: LandingContent = {
   },
 
   FEATURES: {
-    headline: "Stay visible on every platform without the work",
+    headline: "You ship. Nobody sees it. That\u2019s what we fix.",
     features: [
-      { title: "Zero-input weeks on autopilot", description: "Set your niche. Build In Social prepares a full week of content. No input required.", image: "/images/features/autopilot.png" },
+      { title: "Zero-input weeks on autopilot", description: "Works from your niche alone — no product, no launch, no news required. Build In Social prepares a full week of content.", image: "/images/features/autopilot.png" },
       { title: "Four platforms, algorithm-native", description: "YouTube Shorts, Reels, LinkedIn, X. Each video matches the format that platform rewards.", image: "/images/features/four-platforms.png" },
       { title: "Sounds like you, not a template", description: "Content matches your domain, your audience, and how you talk. Every time.", image: "/images/features/your-voice.png" },
       { title: "Share a win, we handle the rest", description: "Shipped something? Tell Build In Social. It prepares platform-ready video from your input.", image: "/images/features/manual-mode.png" },
-      { title: "Up to 23 videos per week", description: "A full week of posts prepared and scheduled at once. Across all four platforms.", image: "/images/features/weekly-batches.png" },
+      { title: "Up to 23 posts across 4 platforms", description: "A full week of content — formatted for each platform, prepared and scheduled at once.", image: "/images/features/weekly-batches.png" },
       { title: "See what resonates", description: "Videos post on your schedule. Performance data flows back so you know what lands.", image: "/images/features/post-track.png" },
     ],
   },
@@ -180,8 +196,8 @@ export const LANDING: LandingContent = {
         body: "YouTube Shorts, Instagram Reels, LinkedIn, and X. Each video matches that platform's algorithm — right duration, hook structure, and posting window.",
       },
       {
-        title: "Build 300+ SEO pages per quarter",
-        body: "Every video builds a Google-indexed landing page. Your long-tail search presence compounds while you focus on your product.",
+        title: "Build 300+ search articles per quarter",
+        body: "Every video generates a Google-indexed search article. Your long-tail search presence compounds while you focus on your product.",
       },
       {
         title: "Sound like yourself, not a template",
@@ -200,7 +216,7 @@ export const LANDING: LandingContent = {
       {
         num: "1",
         title: "Describe what you build",
-        body: "Your niche, your audience, your tone. Three minutes, once. Never again.",
+        body: "Your niche, your audience, your tone. Three minutes, once. Never again (update any time from Settings).",
       },
       {
         num: "2",
@@ -210,67 +226,25 @@ export const LANDING: LandingContent = {
       {
         num: "3",
         title: "Videos go live across four platforms",
-        body: "YouTube Shorts, Reels, LinkedIn, X. Each one native. Each one building an SEO page behind it.",
+        body: "YouTube Shorts, Reels, LinkedIn, X. Each one formatted for its platform. Each one building a search article behind it.",
       },
     ],
   },
 
   TESTIMONIALS: {
     headline: "What founders are saying",
-    testimonials: [
-      {
-        handle: "@marcuswei",
-        name: "Marcus Wei",
-        product: "Patchwork",
-        role: "Founder",
-        quote:
-          "I was mass-producing X posts with AI tools. They got zero engagement. Build In Social took the same ideas, turned them into platform-native video, and my LinkedIn impressions went from 200 to 9,000 in one week. Not a fluke — it held.",
-        metric: "45x",
-        metricLabel: "LinkedIn impressions",
-      },
-      {
-        handle: "@priya_builds",
-        name: "Priya Sharma",
-        product: "Funnelkit",
-        role: "Solo founder",
-        quote:
-          "I used to spend Sunday nights scripting, recording, and editing. Four hours minimum. Now I answer three questions on Monday morning, and by Tuesday I have 23 platform-native videos scheduled for the week. I genuinely forgot what Sunday stress felt like.",
-        metric: "4 hrs",
-        metricLabel: "saved every week",
-      },
-      {
-        handle: "@danielcr",
-        name: "Daniel Costa-Reis",
-        product: "Terrace",
-        role: "CTO & co-founder",
-        quote:
-          "Our marketing hire quit in month two. We were about to go silent on every channel. Plugged in Build In Social, set it to autopilot, and our social channels have been more consistent than when we had a person doing it. The quality of the hooks surprised me.",
-      },
-      {
-        handle: "@amira_k",
-        name: "Amira Khalil",
-        product: "Stackprint",
-        role: "Indie hacker",
-        quote:
-          "The thing nobody tells you about content tools: they still expect YOU to be creative. Build In Social doesn't. I set my niche, my tone, and it handles the rest. I've published more in 3 weeks than I did in 6 months of trying to do it myself.",
-        metric: "92",
-        metricLabel: "videos published",
-      },
-      {
-        handle: "@jakerunner",
-        name: "Jake Paterson",
-        product: "Metrix",
-        role: "Founder",
-        quote:
-          "Honestly skeptical at first. Another AI content tool? But the videos actually sound like me. My co-founder watched one and asked when I started making Reels. That's when I knew it was working.",
-      },
-    ],
+    testimonials: [],
+  },
+
+  PARTNER_CALLOUT: {
+    quote:
+      "You\u2019re not paying for a tool. You\u2019re hiring a distribution partner.",
   },
 
   PRICING: {
-    headline: "One plan. Everything included.",
+    headline: "Simple, honest pricing. Pick your scale.",
     subhead:
-      "Video content across four platforms, starting today.",
+      "You\u2019re not paying for a tool. You\u2019re hiring a distribution partner.",
     plans: [
       {
         id: "solo",
@@ -279,8 +253,9 @@ export const LANDING: LandingContent = {
         annualPrice: 33,
         description: "2 platforms. ~40 videos per month.",
         bullets: [
+          "~40 videos/month",
           "YouTube Shorts + one other platform",
-          "Google-indexed pSEO page per video",
+          "Google-indexed search article per video",
           "Professional library voice",
         ],
         ctaLabel: "Start free trial",
@@ -292,9 +267,11 @@ export const LANDING: LandingContent = {
         annualPrice: 66,
         description: "3 platforms. ~65 videos per month.",
         bullets: [
+          "~65 videos/month",
           "Three platforms of your choice",
+          "Scheduled posting on your 3 platforms",
           "Your cloned voice from a 60-second recording",
-          "Hook variant performance data from week 4",
+          "Performance breakdowns from week 4",
         ],
         ctaLabel: "Start free trial",
         popular: true,
@@ -306,9 +283,10 @@ export const LANDING: LandingContent = {
         annualPrice: 125,
         description: "All 4 platforms. ~92 videos per month.",
         bullets: [
+          "~92 videos/month",
           "All four platforms",
           "Full autopilot scheduling",
-          "Intelligence panel with performance insights",
+          "Deeper performance insights + content recommendations (week 4+)",
         ],
         ctaLabel: "Start free trial",
       },
@@ -316,7 +294,7 @@ export const LANDING: LandingContent = {
     faqs: [
       {
         q: "Is the content actually good, or is it generic AI slop?",
-        a: "Every video is built for a specific platform with the right duration, hook structure, and pacing. YouTube Shorts get 30-45 seconds. Reels get 20-30. LinkedIn gets 45-60. X gets 15-20. Build In Social learns your niche, your audience, and your voice \u2014 not a one-size-fits-all template. On Creator and Studio plans, it uses your cloned voice from a 60-second recording.",
+        a: "Every video is formatted for the platform it lives on \u2014 the right duration, hook structure, and pacing. YouTube Shorts get 30\u201345 seconds. Reels get 20\u201330. LinkedIn gets 45\u201360. X gets 15\u201320. Build In Social learns your niche, your audience, and your voice \u2014 not a one-size-fits-all template. On Creator and Studio plans, it uses your cloned voice from a 60-second recording.",
       },
       {
         q: "Do I lose control over what gets posted?",
@@ -330,13 +308,29 @@ export const LANDING: LandingContent = {
         q: "How fast can I start posting?",
         a: "Three minutes. Describe your niche, connect your platform accounts, and your first weekly batch is ready. No credit card for the 14-day trial. Most founders are live the same day they sign up.",
       },
+      {
+        q: "Can I use this for multiple projects?",
+        a: "Build In Social is designed for one niche/product per account. You can update your niche any time from Settings. If you\u2019re managing multiple distinct brands simultaneously, contact us \u2014 agency tooling is on our roadmap.",
+      },
+      {
+        q: "Can I use this for client accounts / agency use?",
+        a: "Build In Social is built for individual founders and creators. For agency use across multiple clients, reach out \u2014 we\u2019re collecting interest for a dedicated tier.",
+      },
+      {
+        q: "Does my voice clone work if English is my second language?",
+        a: "Yes. ElevenLabs accurately reproduces your specific voice \u2014 accent, tone, cadence included. Your clone sounds like you.",
+      },
+      {
+        q: "I don\u2019t have a product yet \u2014 is this for me?",
+        a: "Yes. Autopilot generates weekly content from your niche alone. You don\u2019t need a product URL, a launch, or weekly news.",
+      },
     ],
   },
 
   FINAL_CTA: {
-    headline: "Your competitors are posting daily. You should be too.",
+    headline: "You\u2019ll never run another Sunday-night scripting session.",
     subhead:
-      "14-day free trial. Your first video batch is ready in under three minutes.",
+      "Or never started? Autopilot runs without you. 14-day free trial. Your first video batch is ready in under three minutes.",
     ctaLabel: "Start your free trial",
     reassurance: "No credit card required. Cancel anytime. Takes 3 minutes.",
   },

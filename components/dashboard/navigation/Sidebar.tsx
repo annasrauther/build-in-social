@@ -91,7 +91,7 @@ export function Sidebar() {
         </aside>
       </nav>
       {/* top navbar (xs-lg) */}
-      <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between px-2 shadow-sm sm:gap-x-6 sm:px-4 lg:hidden border-b border-[color:var(--border-default)] bg-[color:var(--bg-surface)]">
+      <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between px-3 shadow-sm sm:gap-x-6 sm:px-4 lg:hidden border-b border-[color:var(--border-default)] bg-[color:var(--bg-surface)]">
         <Link href="/dashboard" className="flex items-center">
           <Wordmark size={20} />
         </Link>

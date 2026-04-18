@@ -55,3 +55,7 @@ export const hasVoiceConsent = useReal ? real.hasVoiceConsent : mock.hasVoiceCon
 
 // ── Avatar waitlist (Phase 2 lead capture) ──
 export const addToAvatarWaitlist = useReal ? real.addToAvatarWaitlist : mock.addToAvatarWaitlist;
+
+// ── GDPR: cascade delete + export (Article 17 + 20) ──
+export const getAllUserData = useReal ? real.getAllUserData : mock.getAllUserData;
+export const deleteUserAndData = useReal ? real.deleteUserAndData : mock.deleteUserAndData;

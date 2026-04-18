@@ -12,7 +12,7 @@ import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import { LOADING_MESSAGES, EASE_SPRING } from "@/lib/constants/onboarding";
 import { APP } from "@/content/app";
 import { PLATFORM_CONFIGS } from "@/lib/utils/platform-config";
-import type { PlanPreviewVideo, GeneratedPlanPreview } from "@/lib/types/onboarding";
+import type { PlanPreviewVideo, GeneratedPlanPreview, ContentMode } from "@/lib/types/onboarding";
 import type { Platform } from "@/lib/types/user";
 
 /* -------------------------------------------------------------------------- */
@@ -91,6 +91,7 @@ export default function PlanPreviewPage() {
   const [msgIndex, setMsgIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [plan, setPlan] = useState<PlanPreviewVideo[]>([]);
+  const [selectedMode, setSelectedMode] = useState<ContentMode | null>(data.contentMode ?? null);
   const generationStarted = useRef(false);
 
   const platforms = useMemo<Platform[]>(
@@ -153,7 +154,12 @@ export default function PlanPreviewPage() {
         step={4}
         showContinue={phase === "revealed"}
         continueLabel={APP.ONBOARDING.step5.cta}
-        onContinue={() => goToStep(5)}
+        continueDisabled={selectedMode === null}
+        onContinue={() => {
+          if (!selectedMode) return;
+          update({ contentMode: selectedMode, currentStep: 5 });
+          goToStep(5); // → /onboarding/pricing
+        }}
         showBack={phase === "revealed"}
         onBack={() => goToStep(3)}
         wide={phase === "revealed"}
@@ -254,7 +260,160 @@ export default function PlanPreviewPage() {
               {/* Week calendar */}
               <WeekCalendarView videos={plan} />
 
-              {/* Email capture — below calendar, constrained width */}
+              {/* ── Mode choice ── */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35, duration: 0.28, ease: [...EASE_SPRING] }}
+                className="mt-10 mx-auto"
+                style={{ maxWidth: 560 }}
+              >
+                <p
+                  className="mb-4 font-semibold text-center"
+                  style={{ fontSize: "var(--type-body-mobile)", color: "var(--text-primary)" }}
+                >
+                  {APP.ONBOARDING.step5.modeHeading}
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {(
+                    [
+                      {
+                        mode: "manual" as const,
+                        title: APP.ONBOARDING.step5.modeManualTitle,
+                        description: APP.ONBOARDING.step5.modeManualDescription,
+                        badge: null,
+                      },
+                      {
+                        mode: "autopilot" as const,
+                        title: APP.ONBOARDING.step5.modeAutopilotTitle,
+                        description: APP.ONBOARDING.step5.modeAutopilotDescription,
+                        badge: APP.ONBOARDING.step5.modeAutopilotBadge,
+                      },
+                    ] as const
+                  ).map(({ mode, title, description, badge }) => {
+                    const isSelected = selectedMode === mode;
+                    const launchHint =
+                      mode === "manual" ? APP.ONBOARDING.step5.modeLaunchHint : null;
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => {
+                          setSelectedMode(mode);
+                          update({ contentMode: mode });
+                        }}
+                        className="flex-1 text-left relative rounded-[var(--radius-lg)] transition-all"
+                        style={{
+                          minHeight: 88,
+                          padding: "16px 18px",
+                          border: isSelected
+                            ? "1.5px solid var(--accent)"
+                            : "1.5px solid var(--border-default)",
+                          backgroundColor: isSelected
+                            ? "var(--accent-subtle)"
+                            : "var(--bg-elevated)",
+                          boxShadow: isSelected
+                            ? "0 0 0 3px rgba(217,119,87,0.10)"
+                            : "none",
+                          cursor: "pointer",
+                          outline: "none",
+                        }}
+                      >
+                        {badge && (
+                          <span
+                            className="absolute font-semibold px-2 py-0.5 rounded-full"
+                            style={{
+                              fontSize: "var(--type-micro)",
+                              top: -10,
+                              right: 14,
+                              backgroundColor: "var(--accent)",
+                              color: "var(--text-inverse)",
+                              letterSpacing: "0.01em",
+                            }}
+                          >
+                            {badge}
+                          </span>
+                        )}
+
+                        <div className="flex items-start gap-3">
+                          {/* Radio dot */}
+                          <motion.div
+                            className="shrink-0 rounded-full mt-0.5 flex items-center justify-center"
+                            style={{
+                              width: 20,
+                              height: 20,
+                              border: isSelected
+                                ? "2px solid var(--accent)"
+                                : "2px solid var(--border-default)",
+                              backgroundColor: isSelected ? "var(--accent)" : "transparent",
+                              transition: "border-color 120ms, background-color 120ms",
+                            }}
+                            animate={{ scale: isSelected ? 1 : 0.92 }}
+                            transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                          >
+                            <AnimatePresence>
+                              {isSelected && (
+                                <motion.span
+                                  key="dot"
+                                  className="block rounded-full"
+                                  style={{ width: 7, height: 7, backgroundColor: "white" }}
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  exit={{ scale: 0 }}
+                                  transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                                />
+                              )}
+                            </AnimatePresence>
+                          </motion.div>
+
+                          <div>
+                            <p
+                              className="font-semibold leading-snug"
+                              style={{
+                                fontSize: "var(--type-body-mobile)",
+                                color: "var(--text-primary)",
+                              }}
+                            >
+                              {title}
+                            </p>
+                            <p
+                              className="mt-1 leading-snug"
+                              style={{
+                                fontSize: "var(--type-supporting-mobile)",
+                                color: "var(--text-secondary)",
+                              }}
+                            >
+                              {description}
+                            </p>
+                            {launchHint && (
+                              <p
+                                className="mt-2 leading-snug"
+                                style={{
+                                  fontSize: "var(--type-micro)",
+                                  color: "var(--accent)",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {launchHint}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <p
+                  className="mt-3 text-center"
+                  style={{ fontSize: "var(--type-micro)", color: "var(--text-tertiary)" }}
+                >
+                  {APP.ONBOARDING.step5.modeNote}
+                </p>
+              </motion.div>
+
+              {/* Email capture — below mode choice, constrained width */}
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}

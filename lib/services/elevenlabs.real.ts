@@ -84,6 +84,51 @@ export async function synthesizeSpeech(params: {
   return { audioUrl, durationSeconds };
 }
 
+// ─── synthesizeClonePreview ───────────────────────────────────────────────────
+
+/**
+ * Render a short preview from a user's cloned voice and return a playable URL.
+ *
+ * When R2 credentials are configured, uploads the MP3 to R2 under
+ * `voice-previews/<userId>/<voiceCloneId>-<ts>.mp3` and returns the public URL.
+ * Otherwise returns a data: URL (fine for dev / Phase 1).
+ *
+ * COST NOTE: each call is a real ElevenLabs TTS billable event. All callers
+ * MUST go through the cache + rate-limit layer in `lib/services/voice-preview-cache.ts`.
+ */
+export async function synthesizeClonePreview(params: {
+  userId: string;
+  voiceCloneId: string;
+  previewText: string;
+}): Promise<{ audioUrl: string }> {
+  const { audioUrl: dataUrl } = await synthesizeSpeech({
+    text: params.previewText,
+    voiceId: params.voiceCloneId,
+  });
+
+  const r2Ready = !!(
+    process.env.CLOUDFLARE_ACCOUNT_ID &&
+    process.env.R2_ACCESS_KEY_ID &&
+    process.env.R2_SECRET_ACCESS_KEY
+  );
+  if (!r2Ready) {
+    return { audioUrl: dataUrl };
+  }
+
+  // Strip the `data:audio/mpeg;base64,` prefix, upload raw bytes to R2.
+  const base64 = dataUrl.replace(/^data:audio\/mpeg;base64,/, "");
+  const buffer = Buffer.from(base64, "base64");
+
+  const { uploadBuffer } = await import("@/lib/services/r2");
+  const key = `voice-previews/${params.userId}/${params.voiceCloneId}-${Date.now()}.mp3`;
+  const { publicUrl } = await uploadBuffer({
+    key,
+    buffer,
+    contentType: "audio/mpeg",
+  });
+  return { audioUrl: publicUrl };
+}
+
 // ─── cloneVoice ───────────────────────────────────────────────────────────────
 
 export async function cloneVoice(params: {

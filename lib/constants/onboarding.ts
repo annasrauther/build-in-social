@@ -10,14 +10,15 @@ export const STAGGER_CARDS = 0.06;
 export const STORAGE_KEY = "buildinsocial_onboarding";
 export const TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
 
-export const TOTAL_STEPS = 5;
+export const TOTAL_STEPS = 6;
 
 export const STEP_ROUTES: Record<number, string> = {
   1: "/onboarding/start",
   2: "/onboarding/platforms",
   3: "/onboarding/voice",
-  4: "/onboarding/pricing",
-  5: "/onboarding/activation",
+  4: "/onboarding/plan-preview",
+  5: "/onboarding/pricing",
+  6: "/onboarding/activation",
 };
 
 export const containerVariants: Variants = {
@@ -145,7 +146,7 @@ export const LIBRARY_VOICES = [
     description: "Methodical and thoughtful. Turns complexity into clarity.",
     previewText: "The data shows something counterintuitive. Let me walk you through it.",
     elevenlabsId: "TxGEqnHWrfWFTfGW9XjX",
-    color: "#8B7CC4",
+    color: "#C76544",
   },
   {
     id: "casey",
@@ -155,7 +156,7 @@ export const LIBRARY_VOICES = [
     description: "High energy that pulls people in. Built for short-form.",
     previewText: "Okay this blew my mind — and it'll blow yours too. Watch this.",
     elevenlabsId: "VR6AewLTigWG4xSOukaG",
-    color: "#F59E0B",
+    color: "#DF8F70",
   },
   {
     id: "riley",
@@ -165,7 +166,7 @@ export const LIBRARY_VOICES = [
     description: "Sharp and a little irreverent. Stays memorable without trying.",
     previewText: "Nobody told me this would work. So I tried it anyway. It did.",
     elevenlabsId: "MF3mGyEYCl7XYWbV9V6O",
-    color: "#E87EA5",
+    color: "#7E3F29",
   },
 ] as const;
 
@@ -216,8 +217,7 @@ export const PRICING_PACKAGES = [
       "3 platforms",
       "~65 videos/month",
       "Your cloned voice",
-      "Hook variant suggestions",
-      "Performance insights from week 4",
+      "Performance insights after 4 weeks",
       "Everything in Solo",
     ],
   },
@@ -233,7 +233,7 @@ export const PRICING_PACKAGES = [
       "All 4 platforms",
       "~92 videos/month",
       "Your cloned voice",
-      "Full intelligence panel",
+      "Performance insights after 4 weeks",
       "Priority rendering",
       "Avatar Mode add-on available (coming soon)",
       "Everything in Creator",

@@ -6,7 +6,7 @@ import { Providers } from "@/components/providers";
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  variable: "--font-poppins",
+  variable: "--font-sans",
   display: "swap",
 });
 
@@ -14,7 +14,7 @@ const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   style: ["normal", "italic"],
-  variable: "--font-montserrat",
+  variable: "--font-serif",
   display: "swap",
 });
 

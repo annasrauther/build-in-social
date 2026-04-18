@@ -74,6 +74,8 @@ export function Navigation() {
               onClick={() => setOpen(!open)}
               variant="light"
               className="aspect-square p-2"
+              aria-label="Toggle navigation menu"
+              aria-expanded={open}
             >
               {open ? (
                 <RiCloseLine aria-hidden="true" className="size-5" />

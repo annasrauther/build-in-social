@@ -71,7 +71,7 @@ export default function MobileSidebar() {
                           isActive(item.href)
                             ? "text-brand-500 dark:text-brand-400"
                             : "text-gray-600 hover:text-gray-900 dark:text-gray-400 hover:dark:text-gray-50",
-                          "flex items-center gap-x-2.5 rounded-md px-2 py-1.5 text-base font-medium transition hover:bg-gray-100 sm:text-sm hover:dark:bg-gray-900",
+                          "flex items-center gap-x-2.5 rounded-md px-2 py-2.5 min-h-[44px] text-base font-medium transition hover:bg-gray-100 sm:py-1.5 sm:min-h-0 sm:text-sm hover:dark:bg-gray-900",
                           focusRing,
                         )}
                       >

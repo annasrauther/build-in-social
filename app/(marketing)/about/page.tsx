@@ -62,15 +62,132 @@ export default function About() {
             are building the distribution partner that every indie founder needs
             but nobody can justify hiring.
           </p>
-          <p
-            className={cx(
-              "w-fit rotate-3 font-serif italic text-3xl text-brand-500 dark:text-brand-400",
-            )}
-          >
-            – The Build In Social team
-          </p>
         </div>
-        <Button asChild className="group mt-32 h-12 w-full shadow-xl shadow-brand-500/20 text-lg">
+      </section>
+
+      {/* Founders — TODO: user must provide real founder info before launch */}
+      {/* TODO: user must provide real founder info before launch */}
+      <section
+        aria-labelledby="founders-title"
+        className="mx-auto mt-32 w-full max-w-4xl"
+      >
+        <h2
+          id="founders-title"
+          className="inline-block bg-brand-gradient bg-clip-text py-2 text-3xl font-bold tracking-tighter text-transparent md:text-4xl dark:bg-brand-gradient-dark"
+        >
+          Who&apos;s behind Build In Social
+        </h2>
+        <p className="mt-4 max-w-prose text-gray-600 dark:text-gray-300">
+          We&apos;re a small, named team. Enterprise buyers need to know who
+          they&apos;re trusting; we agree.
+        </p>
+
+        <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
+          {/* Founder 1 */}
+          <div className="rounded-xl border border-gray-200 bg-white/60 p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900/40">
+            <div className="flex items-center gap-4">
+              <div
+                aria-hidden="true"
+                className="h-14 w-14 rounded-full bg-brand-100 ring-1 ring-brand-200 dark:bg-brand-900/40 dark:ring-brand-800"
+              />
+              <div>
+                <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  [FOUNDER NAME]
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  [FOUNDER ROLE]
+                </p>
+              </div>
+            </div>
+            <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">
+              [ONE-SENTENCE BIO]
+            </p>
+            <a
+              href="[LINKEDIN URL]"
+              className="mt-4 inline-block text-sm font-medium text-brand-600 hover:underline dark:text-brand-400"
+            >
+              LinkedIn &rarr;
+            </a>
+          </div>
+
+          {/* Founder 2 */}
+          <div className="rounded-xl border border-gray-200 bg-white/60 p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900/40">
+            <div className="flex items-center gap-4">
+              <div
+                aria-hidden="true"
+                className="h-14 w-14 rounded-full bg-brand-100 ring-1 ring-brand-200 dark:bg-brand-900/40 dark:ring-brand-800"
+              />
+              <div>
+                <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  [FOUNDER NAME]
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  [FOUNDER ROLE]
+                </p>
+              </div>
+            </div>
+            <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">
+              [ONE-SENTENCE BIO]
+            </p>
+            <a
+              href="[LINKEDIN URL]"
+              className="mt-4 inline-block text-sm font-medium text-brand-600 hover:underline dark:text-brand-400"
+            >
+              LinkedIn &rarr;
+            </a>
+          </div>
+        </div>
+
+        {/* Company registration — required by EU/UK buyers (Mike persona) */}
+        {/* TODO: user must fill legal-entity fields before launch */}
+        <div className="mt-10 rounded-xl border border-gray-200 bg-gray-50/60 p-6 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900/40 dark:text-gray-300">
+          <p className="font-semibold text-gray-900 dark:text-gray-100">
+            Company
+          </p>
+          <dl className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Legal entity
+              </dt>
+              <dd>[LEGAL ENTITY NAME]</dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Country of incorporation
+              </dt>
+              <dd>[COUNTRY OF INCORPORATION]</dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Registration number
+              </dt>
+              <dd>[REGISTRATION NUMBER]</dd>
+            </div>
+            <div>
+              <dt className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                Contact
+              </dt>
+              <dd>
+                <a
+                  href="mailto:hello@buildinsocial.com"
+                  className="text-brand-600 hover:underline dark:text-brand-400"
+                >
+                  hello@buildinsocial.com
+                </a>
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        <p
+          className={cx(
+            "mt-12 w-fit rotate-3 font-serif italic text-3xl text-brand-500 dark:text-brand-400",
+          )}
+        >
+          – The Build In Social team
+        </p>
+
+        <Button asChild className="group mt-16 h-12 w-full shadow-xl shadow-brand-500/20 text-lg">
           <Link href="/signup" className="flex items-center justify-center">
             Start free trial
             <ArrowAnimated />

@@ -17,6 +17,16 @@ export async function getPresignedUploadUrl(params: {
   };
 }
 
+export async function uploadBuffer(params: {
+  key: string;
+  buffer: Buffer | Uint8Array;
+  contentType: string;
+}): Promise<{ publicUrl: string }> {
+  console.log("[MOCK r2] uploadBuffer", params.key, params.contentType);
+  await delay(200);
+  return { publicUrl: `https://mock-r2.example.com/public/${params.key}` };
+}
+
 export async function deleteObject(key: string): Promise<void> {
   console.log("[MOCK r2] deleteObject", key);
   await delay(100);

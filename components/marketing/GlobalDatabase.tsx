@@ -79,9 +79,9 @@ function AlgoArt() {
       <rect width="1400" height="800" fill="url(#algo-dots)" />
 
       {/* YouTube — top-left */}
-      <polyline points="130,110 130,390 630,390" stroke="#FF4444" strokeWidth="1" fill="none" strokeDasharray="5 9" opacity="0.3" />
-      <circle cx="130" cy="110" r="3.5" fill="#FF4444" opacity="0.7" />
-      <circle cx="130" cy="110" r="14" stroke="#FF4444" strokeWidth="1" fill="none" opacity="0.15" />
+      <polyline points="130,110 130,390 630,390" stroke="#FF0000" strokeWidth="1" fill="none" strokeDasharray="5 9" opacity="0.3" />
+      <circle cx="130" cy="110" r="3.5" fill="#FF0000" opacity="0.7" />
+      <circle cx="130" cy="110" r="14" stroke="#FF0000" strokeWidth="1" fill="none" opacity="0.15" />
 
       {/* Instagram — top-right */}
       <polyline points="1270,110 1270,390 770,390" stroke="#E1306C" strokeWidth="1" fill="none" strokeDasharray="5 9" opacity="0.3" />
@@ -89,9 +89,9 @@ function AlgoArt() {
       <circle cx="1270" cy="110" r="14" stroke="#E1306C" strokeWidth="1" fill="none" opacity="0.15" />
 
       {/* LinkedIn — bottom-left */}
-      <polyline points="130,690 130,410 630,410" stroke="#4A9FE0" strokeWidth="1" fill="none" strokeDasharray="5 9" opacity="0.3" />
-      <circle cx="130" cy="690" r="3.5" fill="#4A9FE0" opacity="0.7" />
-      <circle cx="130" cy="690" r="14" stroke="#4A9FE0" strokeWidth="1" fill="none" opacity="0.15" />
+      <polyline points="130,690 130,410 630,410" stroke="#0A66C2" strokeWidth="1" fill="none" strokeDasharray="5 9" opacity="0.3" />
+      <circle cx="130" cy="690" r="3.5" fill="#0A66C2" opacity="0.7" />
+      <circle cx="130" cy="690" r="14" stroke="#0A66C2" strokeWidth="1" fill="none" opacity="0.15" />
 
       {/* X — bottom-right */}
       <polyline points="1270,690 1270,410 770,410" stroke="rgba(255,255,255,0.55)" strokeWidth="1" fill="none" strokeDasharray="5 9" opacity="0.3" />
@@ -199,7 +199,7 @@ export const GlobalDatabase: FunctionComponent = () => {
         {/* Headline */}
         <h2
           id="global-database-title"
-          className="inline-block bg-gradient-to-b from-white via-white to-brand-200 bg-clip-text text-transparent text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[1.05] max-w-4xl"
+          className="inline-block bg-gradient-to-b from-white via-white to-brand-200 bg-clip-text text-transparent text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter leading-[1.05] max-w-4xl"
         >
           One niche.{" "}
           <span className="bg-gradient-to-r from-brand-300 to-brand-500 bg-clip-text text-transparent">
@@ -210,7 +210,7 @@ export const GlobalDatabase: FunctionComponent = () => {
         </h2>
 
         {/* Platform logos — flat on dark, no containers */}
-        <div className="flex items-center justify-center gap-10 mt-12">
+        <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 mt-10 sm:mt-12">
           {PLATFORM_LOGOS.map(({ component: Logo, glow }, i) => (
             <div
               key={i}
@@ -232,9 +232,9 @@ export const GlobalDatabase: FunctionComponent = () => {
       </div>
 
       {/* ── Feature cards ── */}
-      <div className="relative z-20 w-full bg-gray-950 px-6 pb-20 pt-4">
+      <div className="relative z-20 w-full bg-gray-950 px-4 sm:px-6 pb-16 sm:pb-20 pt-4">
         <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 gap-x-8 gap-y-6 rounded-2xl border border-white/[4%] bg-white/[2%] px-6 py-8 shadow-xl backdrop-blur-sm md:grid-cols-3 md:p-10">
+          <div className="grid grid-cols-1 gap-x-8 gap-y-6 rounded-2xl border border-white/[4%] bg-white/[2%] px-5 py-7 sm:px-6 sm:py-8 shadow-xl backdrop-blur-sm md:grid-cols-3 md:p-10">
             {features.map((item) => (
               <div key={item.name} className="flex flex-col gap-3">
                 <h3 className="bg-gradient-to-br from-brand-300 to-brand-500 bg-clip-text text-base font-semibold text-transparent md:text-lg">

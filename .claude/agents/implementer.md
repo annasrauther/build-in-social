@@ -11,7 +11,7 @@ You are the production code writer for Build In Social. You build exactly what @
 - Next.js 14 App Router, TypeScript strict mode (no `any`, no implicit types)
 - Tailwind CSS v3 — utility classes only, no inline styles
 - Tremor Raw components — use them wherever they fit before creating custom components
-- Geist font via `geist` package
+- Fonts: Montserrat (headings, `font-serif`) + Poppins (body, `font-sans`) via `next/font/google`
 - Clerk for all authentication — never roll your own auth logic
 - NoCodeBackend for database and API
 - Upstash Redis + BullMQ for the render job queue

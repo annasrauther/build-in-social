@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createVideo, createRenderJob } from "@/lib/services/db";
+import { createVideo, createRenderJob, getCurrentWeek, createContentWeek } from "@/lib/services/db";
 import { requireAuth } from "@/lib/auth";
 import { z } from "zod";
 import { clampDurationForPlatform } from "@/lib/utils/platform-config";
@@ -49,9 +49,36 @@ export async function POST(req: NextRequest) {
     const platform: Platform =
       videoInput.platform ?? videoInput.platforms?.[0] ?? "youtube";
 
+    // Resolve weekId — use the passed value, look up the current week, or create one.
+    let resolvedWeekId = weekId;
+    if (!resolvedWeekId) {
+      const currentWeek = await getCurrentWeek(userId).catch(() => null);
+      if (currentWeek) {
+        resolvedWeekId = currentWeek.id;
+      } else {
+        const now = new Date();
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay());
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        const newWeek = await createContentWeek({
+          userId,
+          weekNumber: Math.ceil((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000)),
+          year: now.getFullYear(),
+          startDate: weekStart.toISOString().split("T")[0],
+          endDate: weekEnd.toISOString().split("T")[0],
+          mode: "manual",
+          contentSource: "user_input",
+          status: "ready",
+          videoCount: 0,
+        });
+        resolvedWeekId = newWeek.id;
+      }
+    }
+
     const video = await createVideo({
       userId,
-      weekId: weekId ?? "mock_week",
+      weekId: resolvedWeekId,
       title: title ?? "Untitled video",
       scriptJson: scriptOutput.script,
       platform,
@@ -77,7 +104,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ data: { videoId: video.id, jobId: renderJob.id }, error: null });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to create video";
-    return NextResponse.json({ error: message }, { status: 500 });
+    // SECURITY (M6): log full error server-side, return generic message.
+    console.error("[generate/video] error:", error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

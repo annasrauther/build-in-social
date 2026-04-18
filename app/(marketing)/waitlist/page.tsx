@@ -41,11 +41,11 @@ export default function WaitlistPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-24">
+    <div className="mx-auto max-w-2xl px-4 py-16 sm:py-24">
       <Badge variant="default" className="mb-4">
         {APP.WAITLIST.badge}
       </Badge>
-      <h1 className="text-4xl font-medium tracking-tight text-gray-900 dark:text-gray-50">
+      <h1 className="text-3xl sm:text-4xl font-medium tracking-tight text-gray-900 dark:text-gray-50">
         {APP.WAITLIST.title}
       </h1>
       <p className="mt-6 text-lg text-gray-600 dark:text-gray-400">

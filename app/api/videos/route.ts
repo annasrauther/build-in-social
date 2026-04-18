@@ -1,18 +1,19 @@
 import { NextResponse } from "next/server";
-import { getVideos, getUserByClerkId } from "@/lib/services/db";
-import { requireAuth } from "@/lib/auth";
+import { getVideos } from "@/lib/services/db";
+import { getOrCreateUser } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/services/rate-limit";
 
 export async function GET() {
-  let clerkUserId: string;
+  let user;
   try {
-    clerkUserId = await requireAuth();
+    user = await getOrCreateUser();
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  // SECURITY (S4): userId-keyed rate limit, 60/min.
+  const limited = await checkRateLimit(user.id, "videos/list", 60, "1 m");
+  if (limited) return limited;
   try {
-    // getVideos filters by internal user id, not Clerk user id, so resolve first.
-    const user = await getUserByClerkId(clerkUserId);
-    if (!user) return NextResponse.json({ data: [], error: null });
     const videos = await getVideos(user.id);
     return NextResponse.json({ data: videos, error: null });
   } catch {

@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LEGAL } from "@/content/legal";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
   description: "The terms governing your use of Build In Social.",
 };
 
-const LAST_UPDATED = "April 8, 2026";
+const T = LEGAL.TERMS;
+const META = LEGAL.META;
+const BANNER = LEGAL.DRAFT_BANNER;
 
 export default function TermsPage() {
   return (
@@ -54,97 +57,154 @@ export default function TermsPage() {
 
       {/* Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        {/* Draft banner — must be visually prominent */}
+        <div
+          role="alert"
+          aria-label="Legal draft warning"
+          className="mb-10 flex gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            aria-hidden="true"
+            className="mt-0.5 shrink-0"
+          >
+            <path
+              d="M10 2L18 17H2L10 2z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M10 8v4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+            <circle cx="10" cy="14.5" r="0.75" fill="currentColor" />
+          </svg>
+          <div>
+            <p className="font-semibold text-[13px] tracking-wide uppercase">
+              {BANNER.title}
+            </p>
+            <p className="mt-1 text-[14px] leading-relaxed">{BANNER.body}</p>
+          </div>
+        </div>
+
         <div className="mb-10">
           <h1
             className="text-3xl sm:text-4xl font-semibold tracking-tight mb-3"
             style={{ color: "var(--text-primary)" }}
           >
-            Terms of Service
+            {T.title}
           </h1>
-          <p className="text-sm text-[rgba(0,0,0,0.4)]">Last updated: {LAST_UPDATED}</p>
+          <p className="text-sm text-[rgba(0,0,0,0.4)]">
+            Last updated: {META.lastUpdated}
+          </p>
         </div>
 
         <div className="prose prose-neutral max-w-none text-[rgba(0,0,0,0.75)] leading-relaxed space-y-10">
           <section>
-            <h2
-              className="text-lg font-semibold mb-3"
-              style={{ color: "var(--text-primary)" }}
-            >
-              1. Acceptance of Terms
-            </h2>
-            <p className="text-[15px]">
-              By creating an account or using Build In Social, you agree to these Terms of Service.
-              These terms apply to all users including free and paid plan subscribers.
-            </p>
+            <p className="text-[15px]">{T.intro}</p>
           </section>
 
           <section>
-            <h2
-              className="text-lg font-semibold mb-3"
-              style={{ color: "var(--text-primary)" }}
-            >
-              2. Description of Service
-            </h2>
-            <p className="text-[15px]">
-              Build In Social is an AI-powered social media distribution partner that builds and maintains
-              your domain presence across multiple platforms.
-            </p>
+            <SectionHeading>{T.acceptance.heading}</SectionHeading>
+            <p className="text-[15px]">{T.acceptance.body}</p>
           </section>
 
           <section>
-            <h2
-              className="text-lg font-semibold mb-3"
-              style={{ color: "var(--text-primary)" }}
-            >
-              3. Accounts and Subscriptions
-            </h2>
-            <p className="text-[15px]">
-              You are responsible for keeping your account credentials secure. Plans include Solo,
-              Creator, and Studio tiers.
-            </p>
+            <SectionHeading>{T.serviceDescription.heading}</SectionHeading>
+            <p className="text-[15px]">{T.serviceDescription.body}</p>
           </section>
 
           <section>
-            <h2
-              className="text-lg font-semibold mb-3"
-              style={{ color: "var(--text-primary)" }}
-            >
-              4. Intellectual Property
-            </h2>
-            <p className="text-[15px]">
-              You own the content you generate using Build In Social. Build In Social retains no rights
-              to your generated content.
-            </p>
+            <SectionHeading>{T.accounts.heading}</SectionHeading>
+            <p className="text-[15px]">{T.accounts.body}</p>
           </section>
 
           <section>
-            <h2
-              className="text-lg font-semibold mb-3"
-              style={{ color: "var(--text-primary)" }}
-            >
-              5. Payments and Billing
-            </h2>
-            <p className="text-[15px]">
-              Payments are processed by Stripe. All prices are in USD. You may cancel your subscription
-              at any time.
-            </p>
+            <SectionHeading>{T.acceptableUse.heading}</SectionHeading>
+            <p className="text-[15px]">{T.acceptableUse.intro}</p>
+            <ul className="mt-3 space-y-2 text-[15px] list-disc pl-5">
+              {T.acceptableUse.bullets.map((b) => (
+                <li key={b}>{b}</li>
+              ))}
+            </ul>
           </section>
 
           <section>
-            <h2
-              className="text-lg font-semibold mb-3"
-              style={{ color: "var(--text-primary)" }}
-            >
-              6. Contact
-            </h2>
+            <SectionHeading>{T.subscription.heading}</SectionHeading>
+            <ul className="space-y-2 text-[15px] list-disc pl-5">
+              {T.subscription.bullets.map((b) => (
+                <li key={b}>{b}</li>
+              ))}
+            </ul>
+          </section>
+
+          <section>
+            <SectionHeading>{T.contentOwnership.heading}</SectionHeading>
             <p className="text-[15px]">
-              Questions about these terms? Email us at{" "}
+              <strong>
+                You own your generated scripts, videos, voice clones, and pSEO
+                pages.
+              </strong>{" "}
+              We grant ourselves only a limited, non-exclusive license to host,
+              process, render, and deliver your content for the sole purpose of
+              operating the Service. This license terminates when you delete
+              the content or close your account.
+            </p>
+            <p className="mt-3 text-[15px]">{T.contentOwnership.noTraining}</p>
+            <p className="mt-3 text-[15px]">{T.contentOwnership.portability}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{T.limitation.heading}</SectionHeading>
+            <p className="text-[15px]">{T.limitation.body}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{T.indemnification.heading}</SectionHeading>
+            <p className="text-[15px]">{T.indemnification.body}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{T.termination.heading}</SectionHeading>
+            <p className="text-[15px]">{T.termination.body}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{T.dpa.heading}</SectionHeading>
+            <p className="text-[15px]">{T.dpa.body}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{T.sla.heading}</SectionHeading>
+            <p className="text-[15px]">{T.sla.body}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{T.governingLaw.heading}</SectionHeading>
+            <p className="text-[15px]">{T.governingLaw.body}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{T.changes.heading}</SectionHeading>
+            <p className="text-[15px]">{T.changes.body}</p>
+          </section>
+
+          <section>
+            <SectionHeading>{T.contact.heading}</SectionHeading>
+            <p className="text-[15px]">
+              Questions about these Terms? Email{" "}
               <a
-                href="mailto:legal@buildinsocial.app"
+                href={`mailto:${META.legalEmail}`}
                 className="transition-colors duration-150 hover:opacity-70"
                 style={{ color: "var(--accent)" }}
               >
-                legal@buildinsocial.app
+                {META.legalEmail}
               </a>
               .
             </p>
@@ -182,5 +242,16 @@ export default function TermsPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h2
+      className="text-lg font-semibold mb-3"
+      style={{ color: "var(--text-primary)" }}
+    >
+      {children}
+    </h2>
   );
 }

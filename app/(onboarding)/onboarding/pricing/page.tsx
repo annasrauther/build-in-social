@@ -73,8 +73,8 @@ export default function PricingPage() {
   }, [recommendedTier]);
 
   function handleSelect(tier: PricingTier) {
-    update({ selectedTier: tier, paymentComplete: true, currentStep: 5 });
-    goToStep(5);
+    update({ selectedTier: tier, paymentComplete: true, currentStep: 6 });
+    goToStep(6); // → /onboarding/activation
   }
 
   return (
@@ -235,6 +235,17 @@ export default function PricingPage() {
       {/* Trial reassurance */}
       <div className="mt-4">
         <TrustLine lines={APP.ONBOARDING.step6.noCreditCard} />
+        <p
+          className="mt-3 text-center mx-auto"
+          style={{
+            fontSize: "var(--type-supporting-mobile)",
+            color: "var(--text-tertiary)",
+            lineHeight: 1.55,
+            maxWidth: 480,
+          }}
+        >
+          {APP.ONBOARDING.step6.afterTrial}
+        </p>
       </div>
     </OnboardingShell>
   );

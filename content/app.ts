@@ -11,7 +11,7 @@ export const APP = {
     greetingEvening: "Good evening.",
     subtitle: "Here\u2019s what Build In Social is doing this week.",
     weekSummary: "This week",
-    reviewCta: "Review this week \u2192",
+    reviewCta: "Review this week",
     modeAutopilot: "Autopilot active",
     modeManual: "Manual mode",
     approved: (n: number, total: number) => `${n}/${total} approved`,
@@ -19,15 +19,18 @@ export const APP = {
     nextScheduled: "Next scheduled",
     nextScheduledEmpty:
       "Your upcoming posts will appear here once Build In Social has built your plan and you\u2019ve approved it.",
-    buildPlanCta: "Build this week\u2019s plan \u2192",
+    buildPlanCta: "Build this week\u2019s plan",
+    buildPlanCtaAutopilot: "See this week\u2019s plan",
+    nextPostPrefix: "Next post:",
+    autopilotStatusActive: "Autopilot is running. ",
     topPerformer: "Last week\u2019s top performer",
     topPerformerEmpty:
       "Performance data will appear after your first published week.",
     topPerformerSub: "Views, watch time, and click-through per platform.",
     emptyTitle: "Your first week is ready to build",
     emptyDescription:
-      "Tell Build In Social what you\u2019re building \u2014 or hit autopilot.",
-    emptyCta: "Start this week \u2192",
+      "Hit autopilot and Build In Social runs the week. Or tell us what you shipped and we\u2019ll build around it.",
+    emptyCta: "Start this week",
   },
 
   PLAN: {
@@ -39,18 +42,19 @@ export const APP = {
     autopilotBadge: "Recommended",
     autopilotDescription:
       "Build In Social picks the best angles for your niche and builds the full week. No input needed.",
-    approveAll: "Approve all \u2192",
-    startFresh: "Start fresh \u2192",
-    startFreshTitle: "Start fresh?",
+    approveAll: "Approve all",
+    startFresh: "Rebuild this week",
+    startFreshTitle: "Rebuild this week\u2019s content?",
     startFreshDescription:
-      "This removes all videos and approvals from this week. You\u2019ll choose between manual and autopilot mode again.",
-    startFreshConfirm: "Start fresh",
+      "This clears all videos and approvals for this week. You\u2019ll pick manual or autopilot again.",
+    startFreshConfirm: "Rebuild this week",
   },
 
   QUALITY_GATE: {
     title: "What happened this week?",
-    q1: "What did you ship, learn, or decide?",
-    q1Placeholder: 'Be specific. "Launched Stripe billing" not "worked on my app."',
+    q1: "What did you learn, ship, or decide?",
+    q1Placeholder:
+      'Be specific. "Launched Stripe billing," "Finally understood useEffect," or "Delivered a client audit" \u2014 all work.',
     q2: "What surprised you about it?",
     q2Placeholder: "The unexpected detail makes content 10\u00d7 better.",
     q3: "Who needs to hear this, and why does it matter to them?",
@@ -70,7 +74,8 @@ export const APP = {
     emptyTitle: "No videos yet",
     emptyDescription:
       "Build your first weekly plan to see videos here.",
-    emptyCta: "Build this week \u2192",
+    emptyCta: "Build this week",
+    emptyFirstWeekCta: "Build In Social will create your first week of content",
     noFilter: (filter: string) => `No videos with status \u201c${filter}\u201d.`,
     filterAll: "All",
     filterDraft: "Draft",
@@ -79,6 +84,8 @@ export const APP = {
     filterReady: "Ready",
     filterPosted: "Posted",
     filterFailed: "Failed",
+    failedHint:
+      "Build In Social hit a snag rendering this video. Try regenerating, or contact support if it keeps failing.",
   },
 
   VIDEO_DETAIL: {
@@ -93,19 +100,40 @@ export const APP = {
     playVideo: "Play video",
     previewUnavailable: "Preview not available yet",
     notRendered: "Video not yet rendered",
+    renderingHint:
+      "Build In Social is rendering \u2014 usually ready in about 4 minutes.",
     download: "Download",
+    revisionCta: "Request revision",
+    revisionPlaceholder:
+      "What's off? 'Too salesy', 'hook is weak', 'wrong audience' \u2014 even one sentence helps.",
+    revisionCharsRemaining: (n: number) => `${n} chars remaining`,
+    revisionSendCta: "Send revision",
+    revisionCancelCta: "Cancel",
+    revisionRewriting: "Build In Social is rewriting this...",
+    revisionSuccess: "New version ready.",
+    revisionRemaining: (n: number) =>
+      `${n} revision${n === 1 ? "" : "s"} left on this video.`,
+    revisionLimitReached:
+      "Revision limit reached on this video. Approve or skip.",
+    revisionDailyCap:
+      "Daily revision limit reached \u2014 try again tomorrow.",
+    revisionError: "Build In Social couldn't rewrite this. Try again shortly.",
   },
 
   INTELLIGENCE: {
     lockedTitle: "Intelligence unlocks after 5 videos",
     lockedDescription:
-      "Build In Social needs data to find patterns. Publish 5 videos to unlock platform performance insights, hook analysis, and content recommendations.",
+      "Publish 5 videos to unlock: views and watch time by platform, hook strength scores for your first 3 seconds, best posting day, and weekly content recommendations tuned to your audience.",
     videosPublished: "Videos published",
-    lockCta: "Build this week\u2019s plan \u2192",
+    lockCta: "Build this week\u2019s plan",
     metricBestPlatform: "Best platform",
     metricTopContent: "Top content type",
     metricBestDay: "Best posting day",
     metricHookScore: "Hook score",
+    hookScoreTooltip:
+      "Hook score measures how well your video\u2019s first 3 seconds hold viewer attention \u2014 based on watch-through rate for seconds 0\u20133.",
+    week4Rationale:
+      "Four weeks is the minimum dataset for signal over noise \u2014 we won\u2019t show patterns that aren\u2019t real yet.",
   },
 
   SETTINGS: {
@@ -137,6 +165,24 @@ export const APP = {
     saving: "Build In Social is saving...",
     saveCta: "Save changes",
     saved: "Saved \u2713",
+    exportDataTitle: "Download your data",
+    exportDataDescription:
+      "Export everything Build In Social has about you \u2014 profile, videos, scripts, and settings. JSON format.",
+    exportDataCta: "Download my data",
+    exportDataPreparing: "Build In Social is preparing your export...",
+    exportDataReady: "Download ready",
+    exportDataError:
+      "Build In Social couldn\u2019t prepare your export. Please try again.",
+    deleteAccountTitle: "Delete account",
+    deleteAccountDescription:
+      "This permanently deletes your account and all associated data \u2014 videos, scripts, voice clone, and settings. This action cannot be undone.",
+    deleteAccountConfirm: "Delete account",
+    deleteAccountConfirmPrompt: "Type DELETE to confirm.",
+    deleteAccountConfirmCta: "Delete my account",
+    deleteAccountProcessing: "Build In Social is deleting your account...",
+    deleteAccountError:
+      "Build In Social couldn\u2019t delete your account. Please try again or contact support.",
+    deleteAccountSuccess: "Your account has been deleted.",
   },
 
   SETTINGS_PLATFORMS: {
@@ -164,6 +210,17 @@ export const APP = {
     libraryTitle: "Library voice",
     libraryFallback: "(fallback when clone is unavailable)",
     previewComingSoon: "Audio previews coming soon",
+    previewCloneCta: "Preview your clone",
+    previewRendering: "Build In Social is rendering your preview...",
+    previewPlaying: "Now playing",
+    previewStop: "Stop",
+    previewRateLimited:
+      "Previews are limited to one every 10 minutes \u2014 try again shortly.",
+    previewUpgradeNeeded:
+      "Voice clone previews are available on Creator and Studio plans.",
+    previewUpgradeCta: "Upgrade \u2192",
+    previewError:
+      "Build In Social couldn't render your preview. Try again shortly.",
     saveCta: "Save changes",
     saved: "Saved \u2713",
   },
@@ -182,8 +239,20 @@ export const APP = {
     avatarTitle: "Avatar Mode",
     avatarComingSoon: "Coming soon",
     avatarDescription:
-      "Add an AI avatar for on-camera content. HeyGen-powered, lip-synced to your script.",
+      "Your AI clone. Record once. Post your face on every platform, every week, without filming.",
     avatarCta: "Join waitlist",
+    usageTitle: "This month",
+    usageVideos: (count: number, limit: number) =>
+      `${count} of ~${limit} videos created`,
+    usagePlatforms: (active: number, total: number) =>
+      `${active} of ${total} platforms connected`,
+    usageRenews: (date: string) => `Renews ${date}`,
+    usagePending: "Usage data syncs after your first videos.",
+    cancellationPolicyTitle: "Cancellation",
+    cancellationPolicyBody:
+      "Cancel anytime from the billing portal. Access continues through your billing period. Your videos stay downloadable for 30 days after cancellation.",
+    afterTrialNote:
+      "After your 14-day trial, pick a plan. Your account pauses cleanly if you don\u2019t \u2014 no charges, no data loss.",
   },
 
   WAITLIST: {
@@ -192,11 +261,11 @@ export const APP = {
     headline:
       "Your AI clone. Record once. Post your face on every platform every week \u2014 without filming.",
     description:
-      "HeyGen-powered. Lip-synced to your script. Looks like you. Sounds like you. We\u2019re onboarding Avatar users in cohorts to ensure quality.",
+      "Your AI clone. Record once. Post your face on every platform, every week, without filming.",
     emailPlaceholder: "your@email.com",
     emailError: "Enter a valid email address.",
     joining: "Adding you to the list...",
-    joinCta: "Join waitlist \u2192",
+    joinCta: "Join waitlist",
     noSpam: "No spam. Notified when your cohort opens.",
     successTitle: "You\u2019re on the list.",
     successDescription: (email: string) =>
@@ -210,11 +279,25 @@ export const APP = {
       skipForNow: "Skip for now",
     },
     step1: {
-      headline: "Your social media employee starts here.",
+      headline: "Show us your product. We\u2019ll show you next week.",
       subheading:
-        "Drop your domain. Build In Social shows you your first content week in 60 seconds.",
+        "Drop your site. In 60 seconds, see the videos Build In Social would post for you across YouTube Shorts, Reels, LinkedIn, and X. No site? Describe what you build \u2014 autopilot works from your niche alone.",
       cta: "See my content plan \u2192",
-      socialProof: "Trusted by indie developers who ship and forget to post about it.",
+      socialProof: "For founders who ship faster than they can market.",
+      productSectionLabel: "Your website",
+      websitePlaceholder: "yourproduct.com",
+      nichePhaseSectionLabel: "Your expertise area",
+      nichePhaseQuestion: "What\u2019s your expertise area?",
+      nichePhaseHint:
+        "Select all that apply. Build In Social uses this to shape every video it creates for you. You can update these any time in Settings.",
+      noNewsReassurance:
+        "Nothing shipped this week? No problem. Autopilot runs on your niche \u2014 no news required.",
+      customNicheHint: "Don\u2019t see your niche? Type your own.",
+      manualNamePlaceholder:
+        "What\u2019s it called? (product, project, or just your focus area)",
+      manualDescriptionPlaceholder:
+        "Describe it \u2014 \u2018a SaaS for X\u2019 or \u2018I\u2019m a freelance React dev helping startups ship\u2019.",
+      noWebsiteLink: "No website yet? Describe it instead",
     },
     step2: {
       title: "What happened this week?",
@@ -229,6 +312,8 @@ export const APP = {
       title: "Set up your voice",
       cloneTitle: "Clone your voice",
       libraryTitle: "Library voice",
+      libraryIntro:
+        "Start with a library voice \u2014 professionally recorded, platform-optimized. You can upgrade to a voice clone later on Creator or Studio.",
       cta: "Looks good \u2192",
     },
     step5: {
@@ -238,6 +323,18 @@ export const APP = {
         `Showing ${shown} of ${total} videos`,
       cta: "Choose your plan",
       stickyLabel: "14-day free trial, no card needed",
+      modeHeading: "How do you want to run each week?",
+      modeManualTitle: "I have something to share this week",
+      modeManualDescription:
+        "Answer 3 quick questions. Build In Social builds the week around your specific work.",
+      modeAutopilotTitle: "Run on autopilot",
+      modeAutopilotBadge: "Recommended",
+      modeAutopilotDescription:
+        "Build In Social picks the best angles for your niche and builds a full week. No input needed.",
+      modeNote:
+        "You can switch modes any week from your dashboard. Review before anything goes live, or let it post on schedule.",
+      modeLaunchHint:
+        "Launching something? Manual mode builds the whole week around your moment.",
     },
     step6: {
       title: "Start your free trial",
@@ -247,6 +344,8 @@ export const APP = {
       toggleMonthly: "Monthly",
       mostChosen: "Most chosen",
       noCreditCard: "No credit card \u00b7 14-day trial \u00b7 Cancel anytime",
+      afterTrial:
+        "After 14 days, pick a plan \u2014 your account pauses cleanly if you don\u2019t. No charges, no data loss.",
     },
     step7: {
       headline: "You\u2019re in.",
@@ -272,6 +371,13 @@ export const APP = {
     from: "from",
   },
 
+  WAITLIST_CTA: {
+    submitting: "Joining...",
+    successTitle: "You\u2019re on the list.",
+    successBody: "We\u2019ll email you when your trial opens.",
+    errorGeneral: "Something went wrong. Try again.",
+  },
+
   COMMON: {
     cancel: "Cancel",
     confirm: "Confirm",
@@ -286,6 +392,39 @@ export const APP = {
     errorGenerate:
       "Build In Social couldn\u2019t build your plan this time. Try again or refresh the page.",
   },
+
+  NICHE_PRESETS: [
+    { id: "indie-hacking",      label: "Indie hacking"              },
+    { id: "saas-growth",        label: "SaaS growth"                },
+    { id: "dev-tools",          label: "Developer tools"            },
+    { id: "no-code",            label: "No-code & automation"       },
+    { id: "ai-builders",        label: "AI for builders"            },
+    { id: "b2b-gtm",            label: "B2B & GTM"                  },
+    { id: "product-design",     label: "Product design"             },
+    { id: "startup-ops",        label: "Startup ops"                },
+    { id: "open-source",        label: "Open source"                },
+    { id: "technical-writing",  label: "Technical writing"          },
+    { id: "wellness-fitness",   label: "Wellness & fitness"         },
+    { id: "creator-economy",    label: "Creator economy"            },
+    { id: "real-estate",        label: "Real estate"                },
+    { id: "personal-finance",   label: "Personal finance"           },
+    { id: "ecommerce-dtc",      label: "E-commerce / DTC"           },
+    { id: "health-nutrition",   label: "Health & nutrition"         },
+    { id: "productivity",       label: "Productivity & mindset"     },
+    { id: "education-courses",  label: "Education / online courses" },
+    { id: "freelancing",        label: "Freelancing & consulting"   },
+    { id: "design-branding",    label: "Design & branding"          },
+    { id: "content-marketing",  label: "Content marketing"          },
+    { id: "agency-ops",         label: "Agency ops"                 },
+    { id: "climate-tech",       label: "Climate tech"               },
+    { id: "developer-journey",  label: "Developer journey"          },
+    { id: "personal-brand",         label: "Personal brand / thought leadership" },
+    { id: "learning-in-public",     label: "Learning in public"          },
+    { id: "frontend-engineering",   label: "Frontend engineering"        },
+    { id: "developer-career",       label: "Developer career"            },
+    { id: "b2b-saas",               label: "B2B SaaS"                    },
+    { id: "non-technical-founder",  label: "Non-technical founder"       },
+  ],
 
   PLATFORMS: {
     youtube: { label: "YouTube Shorts", short: "YT", frequency: "5 videos/week \u00b7 30\u201345s" },
@@ -308,4 +447,19 @@ export const APP = {
     { id: "casey", name: "Casey", description: "Energetic and upbeat. Born for Reels." },
     { id: "riley", name: "Riley", description: "Dry wit. Great for contrarian takes." },
   ],
+
+  DASHBOARD_NAV: {
+    dashboardLabel: "Dashboard",
+    planLabel: "Plan",
+    videosLabel: "Videos",
+    settingsLabel: "Settings",
+  },
+
+  A11Y: {
+    skipToContent: "Skip to main content",
+    loading: "Loading\u2026",
+    loaded: "Loaded",
+    toggleNav: "Toggle navigation menu",
+    heroDashboardAlt: "A preview of the Build In Social dashboard",
+  },
 } as const;

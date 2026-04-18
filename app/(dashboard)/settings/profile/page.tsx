@@ -33,6 +33,17 @@ export default function ProfileSettings() {
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
 
+  // Export state
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [exportReady, setExportReady] = useState(false);
+
+  // Delete state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteTyped, setDeleteTyped] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     fetch("/api/user/profile")
@@ -78,6 +89,64 @@ export default function ProfileSettings() {
       setError(APP.COMMON.errorSave);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleExport() {
+    setExporting(true);
+    setExportError(null);
+    setExportReady(false);
+    try {
+      const res = await fetch("/api/user/export", { method: "POST" });
+      if (!res.ok) {
+        setExportError(APP.SETTINGS_PROFILE.exportDataError);
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      // Pull the server-suggested filename if present.
+      const disposition = res.headers.get("content-disposition") ?? "";
+      const match = /filename="?([^";]+)"?/i.exec(disposition);
+      a.download = match?.[1] ?? `build-in-social-export-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setExportReady(true);
+    } catch {
+      setExportError(APP.SETTINGS_PROFILE.exportDataError);
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (deleteTyped !== "DELETE") return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch("/api/user/delete", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ confirm: "DELETE" }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.error) {
+        setDeleteError(
+          typeof json.error === "string"
+            ? json.error
+            : APP.SETTINGS_PROFILE.deleteAccountError
+        );
+        return;
+      }
+      // Success: redirect home with a flag the landing page could surface.
+      window.location.href = "/?account_deleted=1";
+    } catch {
+      setDeleteError(APP.SETTINGS_PROFILE.deleteAccountError);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -213,6 +282,58 @@ export default function ProfileSettings() {
 
       <Divider />
 
+      {/* Data export — GDPR Article 20 */}
+      <section aria-labelledby="data-export">
+        <div className="grid grid-cols-1 gap-x-14 gap-y-8 md:grid-cols-3">
+          <div>
+            <h2
+              id="data-export"
+              className="scroll-mt-10 font-medium text-gray-900 dark:text-gray-50"
+            >
+              {APP.SETTINGS_PROFILE.exportDataTitle}
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-gray-500">
+              {APP.SETTINGS_PROFILE.exportDataDescription}
+            </p>
+          </div>
+          <div className="md:col-span-2">
+            <Card className="p-4">
+              <div className="flex items-start justify-between gap-10">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900 dark:text-gray-50">
+                    {APP.SETTINGS_PROFILE.exportDataTitle}
+                  </h4>
+                  <p className="mt-2 text-sm leading-6 text-gray-500">
+                    {exporting
+                      ? APP.SETTINGS_PROFILE.exportDataPreparing
+                      : exportReady
+                      ? APP.SETTINGS_PROFILE.exportDataReady
+                      : APP.SETTINGS_PROFILE.exportDataDescription}
+                  </p>
+                  {exportError && (
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                      {exportError}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  variant="secondary"
+                  onClick={handleExport}
+                  disabled={exporting}
+                >
+                  {exporting
+                    ? APP.SETTINGS_PROFILE.exportDataPreparing
+                    : APP.SETTINGS_PROFILE.exportDataCta}
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      <Divider />
+
+      {/* Danger zone — GDPR Article 17 */}
       <section aria-labelledby="danger-zone">
         <div className="grid grid-cols-1 gap-x-14 gap-y-8 md:grid-cols-3">
           <div>
@@ -223,8 +344,7 @@ export default function ProfileSettings() {
               Danger zone
             </h2>
             <p className="mt-1 text-sm leading-6 text-gray-500">
-              Account deletion permanently removes your data. Use the billing
-              portal to cancel your subscription before deleting.
+              {APP.SETTINGS_PROFILE.deleteAccountDescription}
             </p>
           </div>
           <div className="space-y-6 md:col-span-2">
@@ -232,29 +352,90 @@ export default function ProfileSettings() {
               <div className="flex items-start justify-between gap-10">
                 <div>
                   <h4 className="text-sm font-medium text-gray-900 dark:text-gray-50">
-                    Delete account
+                    {APP.SETTINGS_PROFILE.deleteAccountTitle}
                   </h4>
                   <p className="mt-2 text-sm leading-6 text-gray-500">
-                    Permanently delete your account and all associated data.
-                    This action cannot be undone.
+                    {APP.SETTINGS_PROFILE.deleteAccountDescription}
                   </p>
                 </div>
                 <Button
                   variant="secondary"
                   className="text-red-600 dark:text-red-500"
                   onClick={() => {
-                    alert(
-                      "Account deletion is not yet wired up — request via support."
-                    );
+                    setDeleteTyped("");
+                    setDeleteError(null);
+                    setDeleteDialogOpen(true);
                   }}
                 >
-                  Delete
+                  {APP.SETTINGS_PROFILE.deleteAccountTitle}
                 </Button>
               </div>
             </Card>
           </div>
         </div>
       </section>
+
+      {/*
+        Typed-confirmation delete dialog. ConfirmDialog doesn't take a child
+        input, so this is a local composition with the same visual treatment.
+      */}
+      {deleteDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="fixed inset-0 bg-black/50"
+            onClick={() => !deleting && setDeleteDialogOpen(false)}
+          />
+          <div className="relative z-10 w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-800 dark:bg-gray-950">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+              {APP.SETTINGS_PROFILE.deleteAccountTitle}
+            </h2>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              {APP.SETTINGS_PROFILE.deleteAccountDescription}
+            </p>
+            <div className="mt-4">
+              <Label htmlFor="deleteConfirm" className="font-medium">
+                {APP.SETTINGS_PROFILE.deleteAccountConfirmPrompt}
+              </Label>
+              <Input
+                id="deleteConfirm"
+                type="text"
+                className="mt-2"
+                autoComplete="off"
+                value={deleteTyped}
+                onChange={(e) => setDeleteTyped(e.target.value)}
+                disabled={deleting}
+                placeholder="DELETE"
+              />
+            </div>
+            {deleteError && (
+              <p className="mt-3 text-sm text-red-600 dark:text-red-400">
+                {deleteError}
+              </p>
+            )}
+            {deleting && (
+              <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                {APP.SETTINGS_PROFILE.deleteAccountProcessing}
+              </p>
+            )}
+            <div className="mt-6 flex items-center gap-3">
+              <Button
+                variant="destructive"
+                disabled={deleteTyped !== "DELETE" || deleting}
+                onClick={handleDelete}
+              >
+                {APP.SETTINGS_PROFILE.deleteAccountConfirmCta}
+              </Button>
+              <Button
+                variant="ghost"
+                disabled={deleting}
+                onClick={() => setDeleteDialogOpen(false)}
+              >
+                {APP.COMMON.cancel}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

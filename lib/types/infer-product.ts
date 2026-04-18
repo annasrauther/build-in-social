@@ -2,7 +2,7 @@ export interface InferProductRequest {
   input: string;
 }
 
-export type InferProductSource = "og" | "title" | "freetext" | "none";
+export type InferProductSource = "og" | "title" | "freetext" | "github" | "none";
 
 export interface InferProductResponse {
   name: string;

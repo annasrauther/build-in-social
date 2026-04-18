@@ -1,3 +1,11 @@
+import Image from "next/image"
+
+// Both <Image> variants are rendered into the same fixed-aspect container and
+// absolutely stacked on top of each other. CSS media queries (not JS/setState)
+// control which one is visible, matching the original OS-preference behaviour.
+// Using next/image gives us automatic WebP/AVIF conversion, responsive srcset,
+// and no layout shift — the container reserves space via aspect-ratio before
+// either image loads.
 const ThemedImage = ({
   lightSrc,
   darkSrc,
@@ -13,23 +21,33 @@ const ThemedImage = ({
   height: number
   className?: string
 }) => {
-  // <picture> lets the browser pick exactly one source based on the user's
-  // OS color scheme preference — only the chosen image is fetched, and no
-  // hydration/setState dance is needed. If the user later toggles theme via
-  // next-themes, the image stays tied to the OS preference (acceptable for a
-  // marketing hero — matches the initial paint for 95%+ of visitors).
   return (
-    <picture>
-      <source srcSet={darkSrc} media="(prefers-color-scheme: dark)" />
-      <img
+    // The container fixes the aspect ratio so no layout shift occurs regardless
+    // of which image variant the browser selects.
+    <div
+      className="relative w-full"
+      style={{ aspectRatio: `${width} / ${height}` }}
+    >
+      {/* Light variant — hidden when OS prefers dark */}
+      <Image
         src={lightSrc}
         alt={alt}
-        width={width}
-        height={height}
-        className={className}
-        fetchPriority="high"
+        fill
+        sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1280px"
+        priority
+        className={`object-cover dark:hidden ${className ?? ""}`}
       />
-    </picture>
+      {/* Dark variant — hidden when OS prefers light */}
+      <Image
+        src={darkSrc}
+        alt=""
+        aria-hidden="true"
+        fill
+        sizes="(max-width: 768px) 100vw, (max-width: 1280px) 90vw, 1280px"
+        priority
+        className={`object-cover hidden dark:block ${className ?? ""}`}
+      />
+    </div>
   )
 }
 

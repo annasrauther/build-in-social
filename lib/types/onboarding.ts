@@ -1,7 +1,8 @@
 import type { Platform } from "./user";
 
 export type OnboardingTone = "straight-shooter" | "friendly-expert" | "technical-deep-dive" | "casual-builder";
-export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6;
+export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export type ContentMode = "manual" | "autopilot";
 export type PricingTier = "solo" | "creator" | "studio";
 
 export interface PlanPreviewVideo {
@@ -57,6 +58,9 @@ export interface OnboardingData {
 
   // Step 8 — Email
   recoveryEmail?: string;
+
+  // Mode choice (set on plan-preview step)
+  contentMode?: ContentMode;
 
   // Step 9 — Pricing
   selectedTier?: PricingTier;

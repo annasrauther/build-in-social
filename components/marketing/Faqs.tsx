@@ -5,29 +5,12 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/tremor/Accordion"
+import { LANDING } from "@/content/landing"
 
-const faqs = [
-  {
-    question: "Is the content actually good, or is it generic AI slop?",
-    answer:
-      "Every video is built for a specific platform with the right duration, hook structure, and pacing. YouTube Shorts get 30-45 seconds. Reels get 20-30. LinkedIn gets 45-60. X gets 15-20. Build In Social learns your niche, your audience, and your voice — not a one-size-fits-all template. On Creator and Studio plans, it uses your cloned voice from a 60-second recording.",
-  },
-  {
-    question: "Do I lose control over what gets posted?",
-    answer:
-      "You choose. Manual mode lets you review and approve every video before it goes live. Autopilot posts on schedule without waiting for you. You can switch between modes any week. Most founders start with manual, then move to autopilot once they trust the output.",
-  },
-  {
-    question: "What if I have nothing to share this week?",
-    answer:
-      "That is exactly what autopilot is for. Build In Social draws from your niche, trending topics in your domain, and evergreen angles that perform for your audience type. You can go weeks without touching it and your channels stay active.",
-  },
-  {
-    question: "How fast can I start posting?",
-    answer:
-      "Three minutes. Describe your niche, connect your platform accounts, and your first weekly batch is ready. No credit card for the 14-day trial. Most founders are live the same day they sign up.",
-  },
-]
+const faqs = LANDING.PRICING.faqs.map((f) => ({
+  question: f.q,
+  answer: f.a,
+}))
 
 export function Faqs() {
   return (

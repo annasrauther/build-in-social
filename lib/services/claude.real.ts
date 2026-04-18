@@ -140,9 +140,15 @@ export async function generateAutopilotAngles(params: {
   tone: string;
   weekNumber: number;
   recentTopicLabels?: string[];
+  /** Optional user hint — seed the angles without overriding AI judgement */
+  hint?: string;
 }): Promise<{ angles: string[]; rationale: string }> {
   const avoidRepeat = params.recentTopicLabels?.length
     ? `Avoid repeating these recent topic types: ${params.recentTopicLabels.join(", ")}.`
+    : "";
+
+  const hintBlock = params.hint?.trim()
+    ? `The user has a soft hint for this week: "${params.hint.trim()}". Use this as inspiration for 1-2 angles if relevant, but don't force it — domain quality beats topical relevance.`
     : "";
 
   const prompt = `You are Build In Social — a social media content engine for indie developers.
@@ -150,6 +156,8 @@ export async function generateAutopilotAngles(params: {
 The user is in the "${params.niche}" domain with a "${params.tone}" tone.
 It's week ${params.weekNumber} of the year. They have nothing specific to share this week
 but want content to keep going. Generate 5 strong content angles for this week.
+
+${hintBlock}
 
 Good angles for indie devs / SaaS founders:
 - Evergreen domain tips ("The one thing I always do before deploying")
@@ -197,7 +205,7 @@ export async function generateWeeklyPlan(params: {
   qualityGateAnswers?: [string, string, string];
   /** Autopilot mode only — from generateAutopilotAngles() */
   autopilotAngles?: string[];
-}): Promise<Pick<Video, "title" | "scriptJson" | "platform" | "dayOfWeek" | "facelessStyle" | "durationSeconds" | "contentType">[]> {
+}): Promise<(Pick<Video, "title" | "scriptJson" | "platform" | "dayOfWeek" | "facelessStyle" | "durationSeconds" | "contentType"> & { confidenceScore: number })[]> {
   const { getPlatformConfig } = await import("@/lib/utils/platform-config");
 
   const platformDetails = params.platforms
@@ -243,6 +251,7 @@ Spread across Mon-Fri. Duration MUST match platform specs exactly.`;
     facelessStyle: string;
     durationSeconds: number;
     contentType: string;
+    confidenceScore: number;
   };
 
   const result = await callWithTool<{ videos: VideoItem[] }>(
@@ -266,8 +275,9 @@ Spread across Mon-Fri. Duration MUST match platform specs exactly.`;
               facelessStyle: { type: "string", enum: ["dev-log", "documentary", "minimal-text", "slide"] },
               durationSeconds: { type: "number" },
               contentType: { type: "string" },
+              confidenceScore: { type: "integer", minimum: 1, maximum: 10, description: "How strong is this content for its platform and niche (1=weak, 10=excellent)" },
             },
-            required: ["title", "hook", "body", "cta", "platform", "dayOfWeek", "facelessStyle", "durationSeconds", "contentType"],
+            required: ["title", "hook", "body", "cta", "platform", "dayOfWeek", "facelessStyle", "durationSeconds", "contentType", "confidenceScore"],
           },
         },
       },
@@ -284,6 +294,7 @@ Spread across Mon-Fri. Duration MUST match platform specs exactly.`;
     facelessStyle: v.facelessStyle as Video["facelessStyle"],
     durationSeconds: v.durationSeconds,
     contentType: v.contentType as Video["contentType"],
+    confidenceScore: Math.min(10, Math.max(1, v.confidenceScore)),
   }));
 }
 
@@ -314,7 +325,7 @@ Requirements:
 - Meta tags + og: tags
 - VideoObject JSON-LD
 - Sections: intro, "Key Takeaways", "Why This Matters", FAQ (3 questions)
-- Max-width 760px, mobile-first, Geist font from Google Fonts
+- Max-width 760px, mobile-first, Poppins body + Montserrat headings from Google Fonts
 - Branded footer linking to buildinsocial.com`;
 
   const result = await callWithTool<{
@@ -447,6 +458,83 @@ export async function labelVideo(params: {
       },
       required: ["topicLabel", "hookType", "estimatedOptimalLength", "sentiment"],
     }
+  );
+}
+
+// ─── reviseScript ─────────────────────────────────────────────────────────────
+
+/**
+ * Rewrites an existing script in response to a short editorial note from the user.
+ *
+ * Cost: Haiku only. Typical prompt ~1500 in / 300 out tokens (~$0.0008/call).
+ * NEVER switch to Sonnet here — revisions must stay cheap.
+ *
+ * The prompt is deliberately framed as EDIT, not RESTART: we preserve the topic,
+ * niche, platform duration target, and overall content type. The note is
+ * applied as an editorial adjustment only.
+ */
+export async function reviseScript(
+  original: { hook: string; body: string; cta: string },
+  note: string,
+  context: {
+    platform: Platform;
+    durationSeconds: number;
+    niche?: string;
+    contentType?: string;
+    title?: string;
+  }
+): Promise<{ opening_hook: string; body: string; cta?: string }> {
+  const nicheLine = context.niche ? `Niche: "${context.niche}"` : "";
+  const titleLine = context.title ? `Working title: "${context.title}"` : "";
+  const contentTypeLine = context.contentType ? `Content type: ${context.contentType}` : "";
+
+  const prompt = `You are Build In Social, revising an existing short-form video script.
+
+This is a REVISION, not a new draft. Keep the same topic, niche, platform, and
+target duration. Apply the user's editorial note as an adjustment — do not
+replace the subject matter.
+
+Hard constraints (never break these):
+- Platform: ${context.platform} — keep language and pacing native to this platform.
+- Target duration: ~${context.durationSeconds}s — do NOT shrink or inflate; a 60s
+  LinkedIn script stays 60s, a 30s Reel stays 30s.
+- Preserve the topic direction and any named specifics (products, numbers, people)
+  from the original unless the note explicitly asks to change them.
+- Return strict JSON matching the schema; no prose, no markdown.
+
+${nicheLine}
+${titleLine}
+${contentTypeLine}
+
+Original script:
+  Hook: "${original.hook}"
+  Body: "${original.body}"
+  CTA:  "${original.cta}"
+
+User's revision note (editorial instruction — apply, don't replace the topic):
+"""
+${note}
+"""
+
+Rewrite the script now. Output:
+- opening_hook: 1-2 punchy sentences
+- body: 3-5 sentences, one clear insight, platform-native cadence
+- cta: 1 sentence, optional but recommended`;
+
+  return callWithTool<{ opening_hook: string; body: string; cta?: string }>(
+    prompt,
+    "revise_script",
+    "Revise an existing short-form video script based on an editorial note",
+    {
+      type: "object",
+      properties: {
+        opening_hook: { type: "string" },
+        body: { type: "string" },
+        cta: { type: "string" },
+      },
+      required: ["opening_hook", "body"],
+    },
+    HAIKU // HARD REQUIREMENT — never pass SONNET here.
   );
 }
 

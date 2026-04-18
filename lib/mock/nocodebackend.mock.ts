@@ -428,6 +428,36 @@ export async function hasVoiceConsent(userId: string): Promise<boolean> {
   return voiceConsents.has(userId);
 }
 
+// ─── GDPR: cascade delete + export (Article 17 + 20) ─────────────────────────
+
+export async function getAllUserData(userId: string): Promise<{
+  user: User | null;
+  voiceProfiles: VoiceProfile[];
+  weeks: ContentWeek[];
+  videos: Video[];
+  pseoPages: PseoPage[];
+}> {
+  await delay(50);
+  return {
+    user: store.users.get(userId) ?? null,
+    voiceProfiles: Array.from(store.voiceProfiles.values()).filter((v) => v.userId === userId),
+    weeks: Array.from(store.weeks.values()).filter((w) => w.userId === userId),
+    videos: Array.from(store.videos.values()).filter((v) => v.userId === userId),
+    pseoPages: Array.from(store.pseoPages.values()).filter((p) => p.userId === userId),
+  };
+}
+
+export async function deleteUserAndData(userId: string): Promise<void> {
+  await delay(50);
+  for (const [id, p] of store.pseoPages.entries()) if (p.userId === userId) store.pseoPages.delete(id);
+  for (const [id, j] of store.renderJobs.entries()) if (j.userId === userId) store.renderJobs.delete(id);
+  for (const [id, v] of store.videos.entries()) if (v.userId === userId) store.videos.delete(id);
+  for (const [id, w] of store.weeks.entries()) if (w.userId === userId) store.weeks.delete(id);
+  for (const [id, vp] of store.voiceProfiles.entries()) if (vp.userId === userId) store.voiceProfiles.delete(id);
+  voiceConsents.delete(userId);
+  store.users.delete(userId);
+}
+
 // ─── Avatar waitlist (lead capture for Phase 2) ───────────────────────────────
 
 interface WaitlistRecord {

@@ -2,121 +2,112 @@
 
 import { motion } from "framer-motion";
 import { ArrowAnimated } from "@/components/marketing/ArrowAnimated";
+import { Button } from "@/components/tremor/Button";
 
-/* ─── Illustrations — 96px, white ───────────────────────────────────────── */
+/* ─── Illustrations — theme-aware via currentColor, fill a 64×64 viewBox ──── */
+
+const svgBase = {
+  width: "100%",
+  height: "100%",
+  viewBox: "0 0 64 64",
+  fill: "none",
+  "aria-hidden": true as const,
+  style: { color: "var(--text-secondary)" },
+};
 
 function ErrorIllustration() {
   return (
-    <svg width="96" height="96" viewBox="0 0 80 80" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-      <path d="M12 40 A28 28 0 1 1 40 68" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M40 68 A28 28 0 0 1 68 40" stroke="rgba(255,255,255,0.05)" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M20 40 A20 20 0 1 1 40 60" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M40 60 A20 20 0 0 1 60 40" stroke="rgba(255,255,255,0.08)" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M28 40 A12 12 0 1 1 40 52" stroke="rgba(255,255,255,0.38)" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="40" cy="40" r="3.5" fill="var(--accent)" opacity="0.9" />
-      <line x1="36" y1="36" x2="44" y2="44" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="44" y1="36" x2="36" y2="44" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="14" cy="32" r="2" fill="rgba(255,255,255,0.18)" />
-      <circle cx="66" cy="52" r="1.5" fill="rgba(255,255,255,0.12)" />
-      <circle cx="22" cy="62" r="1.5" fill="rgba(255,255,255,0.08)" />
+    <svg {...svgBase}>
+      {/* Concentric rings — outer to inner */}
+      <circle cx="32" cy="32" r="28" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.15" />
+      <circle cx="32" cy="32" r="20" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.3" strokeDasharray="3 4" />
+      <circle cx="32" cy="32" r="12" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.5" />
+      {/* Accent disk with X */}
+      <circle cx="32" cy="32" r="8" fill="var(--accent)" opacity="0.9" />
+      <line x1="28" y1="28" x2="36" y2="36" stroke="white" strokeWidth="2" strokeLinecap="round" />
+      <line x1="36" y1="28" x2="28" y2="36" stroke="white" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
 
 function EmptyIllustration() {
   return (
-    <svg width="96" height="96" viewBox="0 0 80 80" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-      {[20, 32, 44, 56].map((x) =>
-        [20, 32, 44, 56].map((y) => (
-          <circle
-            key={`${x}-${y}`}
-            cx={x} cy={y} r="1.5"
-            fill={x === 44 && y === 32 ? "var(--accent)" : "rgba(255,255,255,0.12)"}
-            opacity={x === 44 && y === 32 ? 0.9 : 1}
-          />
-        ))
+    <svg {...svgBase}>
+      {/* 4×4 dot grid spanning the viewBox */}
+      {[10, 22, 34, 46].map((x) =>
+        [10, 22, 34, 46].map((y) => {
+          const isCenter = x === 34 && y === 22;
+          return (
+            <circle
+              key={`${x}-${y}`}
+              cx={x}
+              cy={y}
+              r={isCenter ? 3 : 2}
+              fill={isCenter ? "var(--accent)" : "currentColor"}
+              opacity={isCenter ? 0.95 : 0.3}
+            />
+          );
+        })
       )}
-      <circle cx="44" cy="32" r="8" stroke="rgba(255,255,255,0.2)" strokeWidth="1" fill="none" />
-      <circle cx="44" cy="32" r="14" stroke="rgba(255,255,255,0.08)" strokeWidth="1" fill="none" strokeDasharray="2 4" />
-      <path d="M50 38 L60 52 M55 52 L60 52 L60 47" stroke="rgba(255,255,255,0.28)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Halo around the accent dot */}
+      <circle cx="34" cy="22" r="8" stroke="var(--accent)" strokeWidth="1.2" strokeOpacity="0.35" fill="none" />
+      <circle cx="34" cy="22" r="14" stroke="currentColor" strokeWidth="1" strokeOpacity="0.25" strokeDasharray="2 3" fill="none" />
+      {/* Rising trend line */}
+      <path d="M38 34 L48 48 M48 48 L48 42 M48 48 L42 48" stroke="currentColor" strokeWidth="1.8" strokeOpacity="0.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   );
 }
 
 function SetupIllustration() {
   return (
-    <svg width="96" height="96" viewBox="0 0 80 80" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-      <line x1="16" y1="28" x2="64" y2="28" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-      <line x1="16" y1="40" x2="64" y2="40" stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-      <line x1="16" y1="52" x2="64" y2="52" stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
-      <line x1="24" y1="22" x2="24" y2="58" stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
-      <rect x="28" y="24" width="28" height="6" rx="3" fill="rgba(255,255,255,0.16)" />
-      <rect x="28" y="36" width="20" height="6" rx="3" fill="rgba(255,255,255,0.1)" />
-      <rect x="28" y="48" width="24" height="6" rx="3" fill="rgba(255,255,255,0.07)" />
-      <circle cx="18" cy="27" r="2.5" fill="var(--accent)" opacity="0.7" />
-      <circle cx="18" cy="39" r="2.5" fill="rgba(255,255,255,0.18)" />
-      <circle cx="18" cy="51" r="2.5" fill="rgba(255,255,255,0.1)" />
-      <path d="M56 40 L62 40 M59 37 L62 40 L59 43" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg {...svgBase}>
+      {/* 3 checklist rows, spanning full width */}
+      {[16, 32, 48].map((y, i) => (
+        <g key={y}>
+          {/* Checkbox circle */}
+          <circle
+            cx="12"
+            cy={y}
+            r="4"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeOpacity="0.5"
+            fill={i === 0 ? "var(--accent)" : "none"}
+            opacity={i === 0 ? 0.95 : 1}
+          />
+          {i === 0 && (
+            <path d="M10 16 L11.5 17.5 L14 15" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          )}
+          {/* Row text bar */}
+          <rect
+            x="22"
+            y={y - 3}
+            width={[34, 26, 30][i]}
+            height="6"
+            rx="3"
+            fill="currentColor"
+            opacity={[0.35, 0.22, 0.15][i]}
+          />
+        </g>
+      ))}
     </svg>
   );
 }
 
 function NotFoundIllustration() {
   return (
-    <svg width="96" height="96" viewBox="0 0 80 80" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
-      <circle cx="36" cy="36" r="16" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5" strokeDasharray="3 3" />
-      <circle cx="36" cy="36" r="10" stroke="rgba(255,255,255,0.14)" strokeWidth="1" />
-      <line x1="48" y1="48" x2="60" y2="60" stroke="rgba(255,255,255,0.32)" strokeWidth="2" strokeLinecap="round" />
-      <line x1="32" y1="32" x2="40" y2="40" stroke="rgba(255,255,255,0.42)" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="40" y1="32" x2="32" y2="40" stroke="rgba(255,255,255,0.42)" strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="20" cy="20" r="1.5" fill="rgba(255,255,255,0.14)" />
-      <circle cx="58" cy="24" r="1.5" fill="rgba(255,255,255,0.1)" />
-      <circle cx="18" cy="54" r="1" fill="rgba(255,255,255,0.08)" />
+    <svg {...svgBase}>
+      {/* Magnifying glass — handle */}
+      <line x1="42" y1="42" x2="56" y2="56" stroke="currentColor" strokeWidth="3" strokeOpacity="0.5" strokeLinecap="round" />
+      {/* Outer dashed search ring */}
+      <circle cx="28" cy="28" r="20" stroke="currentColor" strokeWidth="1.5" strokeOpacity="0.3" strokeDasharray="3 3" fill="none" />
+      {/* Inner solid lens */}
+      <circle cx="28" cy="28" r="14" stroke="currentColor" strokeWidth="2" strokeOpacity="0.55" fill="none" />
+      {/* Accent X at lens center */}
+      <circle cx="28" cy="28" r="5" fill="var(--accent)" opacity="0.9" />
+      <line x1="25" y1="25" x2="31" y2="31" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
+      <line x1="31" y1="25" x2="25" y2="31" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
-  );
-}
-
-/* ─── Gradient CTA ───────────────────────────────────────────────────────── */
-
-const GRADIENT = "linear-gradient(135deg, #FAFAFA 0%, #9CA3AF 100%)";
-
-function GradientCta({
-  label,
-  onClick,
-  href,
-}: {
-  label: string;
-  onClick?: () => void;
-  href?: string;
-}) {
-  const baseStyle: React.CSSProperties = {
-    background: GRADIENT,
-    color: "#141413",
-    border: "none",
-    borderRadius: "var(--radius-md)",
-    padding: "10px 18px",
-    fontSize: "var(--type-body-mobile)",
-    fontWeight: 600,
-    cursor: "pointer",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    minHeight: 44,
-    letterSpacing: "-0.01em",
-    textDecoration: "none",
-  };
-
-  if (href) {
-    return (
-      <a href={href} style={baseStyle} className="group">
-        {label}<ArrowAnimated />
-      </a>
-    );
-  }
-  return (
-    <button type="button" onClick={onClick} style={baseStyle} className="group">
-      {label}<ArrowAnimated />
-    </button>
   );
 }
 
@@ -174,24 +165,22 @@ export function StatusCard({
 }: StatusCardProps) {
   return (
     <motion.div
-      className={className}
+      className={`flex flex-col items-start gap-4 p-5 sm:flex-row sm:items-start sm:gap-6 sm:p-7 ${className}`}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
       style={{
-        display: "flex",
-        gap: 24,
-        alignItems: "flex-start",
         borderRadius: "var(--radius-lg)",
         border: `1px solid ${BORDER_COLORS[variant]}`,
         backgroundColor: BG_COLORS[variant],
-        padding: "28px 32px",
         boxShadow: "var(--shadow-sm)",
       }}
     >
-      {ILLUSTRATIONS[variant]}
+      <div className="shrink-0 [&>svg]:h-16 [&>svg]:w-16 sm:[&>svg]:h-24 sm:[&>svg]:w-24">
+        {ILLUSTRATIONS[variant]}
+      </div>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="min-w-0 flex-1">
         <p
           className="font-sans"
           style={{
@@ -217,85 +206,40 @@ export function StatusCard({
           </p>
         )}
         {(cta || secondaryCta) && (
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
-            {/* Primary CTA */}
+          <div className="flex flex-wrap items-center gap-2">
             {cta && (
-              ctaGradient ? (
-                <GradientCta label={cta} onClick={onCta} href={ctaHref} />
-              ) : ctaHref ? (
-                <a
-                  href={ctaHref}
-                  className="group inline-flex items-center gap-1.5 font-semibold"
-                  style={{
-                    padding: "10px 18px",
-                    minHeight: 44,
-                    borderRadius: "var(--radius-md)",
-                    backgroundColor: "var(--bg-elevated)",
-                    border: "1px solid var(--border-default)",
-                    color: "var(--text-primary)",
-                    fontSize: "var(--type-body-mobile)",
-                    textDecoration: "none",
-                  }}
-                >
-                  {cta}<ArrowAnimated />
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  onClick={onCta}
-                  className="group inline-flex items-center gap-1.5 font-semibold"
-                  style={{
-                    padding: "10px 18px",
-                    minHeight: 44,
-                    borderRadius: "var(--radius-md)",
-                    backgroundColor: "var(--bg-elevated)",
-                    border: "1px solid var(--border-default)",
-                    color: "var(--text-primary)",
-                    fontSize: "var(--type-body-mobile)",
-                    cursor: "pointer",
-                  }}
-                >
-                  {cta}<ArrowAnimated />
-                </button>
-              )
+              <Button
+                asChild={Boolean(ctaHref)}
+                variant={ctaGradient ? "primary" : "secondary"}
+                onClick={ctaHref ? undefined : onCta}
+                className="group"
+              >
+                {ctaHref ? (
+                  <a href={ctaHref}>
+                    {cta}
+                    <ArrowAnimated />
+                  </a>
+                ) : (
+                  <>
+                    {cta}
+                    <ArrowAnimated />
+                  </>
+                )}
+              </Button>
             )}
 
-            {/* Secondary CTA */}
             {secondaryCta && (
-              secondaryCtaHref ? (
-                <a
-                  href={secondaryCtaHref}
-                  style={{
-                    padding: "10px 14px",
-                    minHeight: 44,
-                    color: "var(--text-tertiary)",
-                    fontSize: "var(--type-body-mobile)",
-                    textDecoration: "none",
-                    display: "inline-flex",
-                    alignItems: "center",
-                  }}
-                >
-                  {secondaryCta}
-                </a>
-              ) : (
-                <button
-                  type="button"
-                  onClick={onSecondaryCta}
-                  style={{
-                    padding: "10px 14px",
-                    minHeight: 44,
-                    color: "var(--text-tertiary)",
-                    fontSize: "var(--type-body-mobile)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                  }}
-                >
-                  {secondaryCta}
-                </button>
-              )
+              <Button
+                asChild={Boolean(secondaryCtaHref)}
+                variant="ghost"
+                onClick={secondaryCtaHref ? undefined : onSecondaryCta}
+              >
+                {secondaryCtaHref ? (
+                  <a href={secondaryCtaHref}>{secondaryCta}</a>
+                ) : (
+                  <>{secondaryCta}</>
+                )}
+              </Button>
             )}
           </div>
         )}

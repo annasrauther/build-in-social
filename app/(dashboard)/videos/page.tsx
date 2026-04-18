@@ -25,11 +25,11 @@ const FILTERS: { id: Filter; label: string }[] = [
 ];
 
 const PLATFORM_COLORS: Record<Platform, string> = {
-  youtube: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+  youtube: "bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300",
   instagram:
-    "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300",
+    "bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-400",
   linkedin:
-    "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+    "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
   x: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
 };
 
@@ -70,6 +70,20 @@ export default function VideosPage() {
 
   return (
     <div className="p-4 sm:px-6 sm:pb-10 sm:pt-10 lg:px-10 lg:pt-7">
+      {/* A6: aria-live region announces async fetch state changes to screen readers */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {videos === null
+          ? APP.A11Y.loading
+          : error
+          ? error
+          : APP.A11Y.loaded}
+      </div>
+
       <header className="mb-6">
         <h1 className="text-lg font-medium text-gray-900 dark:text-gray-50">
           {APP.VIDEOS.title}
@@ -183,7 +197,7 @@ function EmptyState({ filter }: { filter: Filter }) {
       <StatusCard
         variant="notFound"
         title={filterLabels[filter] ?? `No ${filter} videos`}
-        description="Switch to a different filter or build your weekly plan to generate new content."
+        description="Switch to a different filter or build your weekly plan."
         ctaGradient
         cta="Build this week's plan"
         ctaHref="/plan/current"
@@ -195,7 +209,7 @@ function EmptyState({ filter }: { filter: Filter }) {
     <StatusCard
       variant="empty"
       title="Your library is empty"
-      description="Generate your first week of content — Build In Social will create platform-native videos for each of your connected channels."
+      description={APP.VIDEOS.emptyFirstWeekCta}
       cta={APP.VIDEOS.emptyCta}
       ctaHref="/plan/current"
       ctaGradient

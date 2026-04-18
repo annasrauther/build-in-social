@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Registered custom properties for the focus-beam animation.
+   Must live at top level (outside @layer) for browser support. */
+@property --beam-x {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 22px;
+}
+
+@property --beam-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
 /* =============================================
    BUILD IN SOCIAL DESIGN TOKENS
    Palette: Anthropic warm
@@ -72,8 +86,8 @@
   --shadow-mockup: 0 24px 64px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
 
   /* Fonts — Montserrat (headings, font-serif) + Poppins (body, font-sans) */
-  --font-heading: var(--font-montserrat), Montserrat, system-ui, -apple-system, sans-serif;
-  --font-body: var(--font-poppins), system-ui, sans-serif;
+  --font-heading: var(--font-serif), Montserrat, system-ui, -apple-system, sans-serif;
+  --font-body: var(--font-sans), Poppins, system-ui, sans-serif;
   --font-mono: ui-monospace, "Fira Code", monospace;
 
   --bg-dark-cta: #141413;
@@ -161,11 +175,6 @@
    ANIMATIONS
    ============================================================ */
 @layer utilities {
-  @keyframes spin-gradient {
-    from { transform: translate(-50%, -50%) rotate(0deg); }
-    to { transform: translate(-50%, -50%) rotate(360deg); }
-  }
-
   @keyframes bis-shimmer {
     0% {
       background-position: -600px 0;
@@ -220,6 +229,38 @@
 
   .platform-dot-connected {
     animation: platform-pulse 2s ease-in-out infinite;
+  }
+
+  /* Focus beam — a bright point traveling along the long edges and rotating
+     around the rounded ends. Apply to an absolute inset-0 layer inside a
+     padded, overflow-hidden, rounded parent to produce a gradient border. */
+  .focus-beam-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: conic-gradient(
+      from calc(var(--beam-angle) - 80deg) at var(--beam-x) 50%,
+      transparent 0%,
+      transparent 14%,
+      var(--beam-color, var(--accent)) 20%,
+      color-mix(in srgb, var(--beam-color, var(--accent)) 60%, white) 22%,
+      var(--beam-color, var(--accent)) 24%,
+      transparent 30%,
+      transparent 100%
+    );
+    animation: focus-beam-travel 3s linear infinite, focus-beam-rotate 3s linear infinite;
+  }
+
+  @keyframes focus-beam-travel {
+    0%, 86%, 100% { --beam-x: 22px; }
+    36%, 50% { --beam-x: calc(100% - 22px); }
+  }
+
+  @keyframes focus-beam-rotate {
+    0%, 36% { --beam-angle: 0deg; }
+    50%, 86% { --beam-angle: 180deg; }
+    100% { --beam-angle: 360deg; }
   }
 
   @media (prefers-reduced-motion: reduce) {

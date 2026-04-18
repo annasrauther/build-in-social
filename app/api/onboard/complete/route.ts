@@ -5,9 +5,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { requireAuth } from "@/lib/auth";
+import { getOrCreateUser } from "@/lib/auth";
 import {
-  getUserByClerkId,
   updateUser,
   createVoiceProfile,
   recordVoiceConsent,
@@ -27,9 +26,11 @@ const onboardCompleteSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  let user;
   let userId: string;
   try {
-    userId = await requireAuth();
+    user = await getOrCreateUser();
+    userId = user.clerkUserId;
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -50,12 +51,6 @@ export async function POST(request: Request) {
       productName,
       voiceConsentAt,
     } = parsed.data;
-
-    // Find the user in DB
-    const user = await getUserByClerkId(userId);
-    if (!user) {
-      return NextResponse.json({ error: "User not found. Complete signup first." }, { status: 404 });
-    }
 
     // Critical path #7: persist voice consent to DB BEFORE creating any
     // voice profile (which is the trigger for downstream ElevenLabs calls).

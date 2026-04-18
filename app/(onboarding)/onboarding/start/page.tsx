@@ -18,20 +18,9 @@ import type { InferProductResponse } from "@/lib/types/infer-product";
 
 const ease = [...EASE_SPRING] as [number, number, number, number];
 
-/* ─── Niche presets ──────────────────────────────────────────────────────── */
+/* ─── Niche presets — sourced from content/app.ts ───────────────────────── */
 
-const NICHE_PRESETS = [
-  { id: "indie-hacking",     label: "Indie hacking"        },
-  { id: "saas-growth",       label: "SaaS growth"          },
-  { id: "dev-tools",         label: "Developer tools"      },
-  { id: "no-code",           label: "No-code & automation" },
-  { id: "ai-builders",       label: "AI for builders"      },
-  { id: "b2b-gtm",           label: "B2B & GTM"            },
-  { id: "product-design",    label: "Product design"       },
-  { id: "startup-ops",       label: "Startup ops"          },
-  { id: "open-source",       label: "Open source"          },
-  { id: "technical-writing", label: "Technical writing"    },
-] as const;
+const NICHE_PRESETS = APP.NICHE_PRESETS;
 
 type NicheId = (typeof NICHE_PRESETS)[number]["id"];
 
@@ -50,6 +39,13 @@ function NicheChip({
   onRemove?: () => void;
   isCustom?: boolean;
 }) {
+  function handleKeyDown(e: React.KeyboardEvent<HTMLElement>) {
+    if (onClick && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onClick();
+    }
+  }
+
   return (
     <motion.span
       layout
@@ -57,11 +53,14 @@ function NicheChip({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.88 }}
       transition={{ type: "spring", stiffness: 500, damping: 30 }}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-pressed={onClick ? selected : undefined}
       style={{
         display: "inline-flex",
         alignItems: "center",
         gap: 5,
-        padding: isCustom ? "5px 8px 5px 12px" : "6px 12px",
+        padding: isCustom ? "7px 8px 7px 12px" : "10px 12px",
         borderRadius: 99,
         border: `1.5px solid ${selected ? "var(--accent)" : "var(--border-default)"}`,
         backgroundColor: selected
@@ -73,10 +72,11 @@ function NicheChip({
         cursor: onClick ? "pointer" : "default",
         userSelect: "none",
         transition: "border-color 130ms ease, background-color 130ms ease, color 130ms ease",
-        minHeight: 36,
+        minHeight: 44,
         whiteSpace: "nowrap",
       }}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
     >
       {selected && !isCustom && (
         <RiCheckLine style={{ width: 12, height: 12, flexShrink: 0 }} />
@@ -111,9 +111,9 @@ function NicheChip({
 /* ─── Right panel ────────────────────────────────────────────────────────── */
 
 const VALUE_PROPS = [
-  "Platform-native format for YouTube, Instagram, LinkedIn, and X",
+  "The right format for YouTube, Instagram, LinkedIn, and X",
   "Your voice and tone — consistent every week",
-  "Auto-generated SEO page for every video",
+  "A search article generated for every video",
   "Autopilot mode when you have nothing to share",
 ];
 
@@ -491,7 +491,7 @@ export default function StartPage() {
             marginBottom: 10,
           }}
         >
-          Your product
+          {APP.ONBOARDING.step1.productSectionLabel}
         </p>
 
         {!showManualFallback && (
@@ -501,7 +501,7 @@ export default function StartPage() {
             onChange={(e) => handleDomainChange(e.target.value)}
             onBlur={handleDomainBlur}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleDomainBlur(); } }}
-            placeholder="yourproduct.com"
+            placeholder={APP.ONBOARDING.step1.websitePlaceholder}
             autoFocus
           />
         )}
@@ -619,16 +619,17 @@ export default function StartPage() {
               onClick={handleShowManual}
               style={{
                 fontSize: 13,
-                color: "var(--text-tertiary)",
+                fontWeight: 500,
+                color: "var(--accent)",
                 background: "none",
                 border: "none",
                 cursor: "pointer",
                 padding: 0,
                 textDecoration: "underline",
-                textUnderlineOffset: 2,
+                textUnderlineOffset: 3,
               }}
             >
-              No domain yet? Describe it instead
+              {APP.ONBOARDING.step1.noWebsiteLink}
             </button>
           </motion.div>
         )}
@@ -652,7 +653,7 @@ export default function StartPage() {
                     setManualName(e.target.value);
                     if (manualDescription.trim()) setProductName(e.target.value.trim());
                   }}
-                  placeholder="What's it called?"
+                  placeholder={APP.ONBOARDING.step1.manualNamePlaceholder}
                 />
                 <PremiumTextarea
                   value={manualDescription}
@@ -665,7 +666,7 @@ export default function StartPage() {
                       setProductDescription("");
                     }
                   }}
-                  placeholder="Describe it in a sentence or two…"
+                  placeholder={APP.ONBOARDING.step1.manualDescriptionPlaceholder}
                   rows={3}
                 />
                 {manualName.trim() && manualDescription.trim() && (
@@ -679,7 +680,7 @@ export default function StartPage() {
         </AnimatePresence>
       </div>
 
-      {/* Phase 2: Content domain */}
+      {/* Phase 2: Expertise niche */}
       <AnimatePresence>
         {phase1Done && (
           <motion.div
@@ -701,14 +702,28 @@ export default function StartPage() {
                 marginBottom: 10,
               }}
             >
-              Content domain
+              {APP.ONBOARDING.step1.nichePhaseSectionLabel}
             </p>
 
             <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }}>
-              What do you create content about?
+              {APP.ONBOARDING.step1.nichePhaseQuestion}
             </p>
-            <p style={{ fontSize: 13, color: "var(--text-tertiary)", lineHeight: 1.5, marginBottom: 16 }}>
-              Select all that apply. Build In Social uses this to shape every video it creates for you.
+            <p style={{ fontSize: 13, color: "var(--text-tertiary)", lineHeight: 1.5, marginBottom: 10 }}>
+              {APP.ONBOARDING.step1.nichePhaseHint}
+            </p>
+            <p
+              style={{
+                fontSize: 12,
+                color: "var(--text-tertiary)",
+                lineHeight: 1.5,
+                marginBottom: 16,
+                padding: "8px 12px",
+                borderRadius: "var(--radius-md)",
+                backgroundColor: "var(--bg-elevated)",
+                border: "1px solid var(--border-subtle)",
+              }}
+            >
+              {APP.ONBOARDING.step1.noNewsReassurance}
             </p>
 
             {/* Chips */}
@@ -793,35 +808,41 @@ export default function StartPage() {
                   </button>
                 </motion.div>
               ) : (
-                <motion.button
+                <motion.div
                   key="add-btn"
-                  type="button"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  onClick={() => {
-                    setShowCustomInput(true);
-                    setTimeout(() => customInputRef.current?.focus(), 60);
-                  }}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 5,
-                    fontSize: 13,
-                    color: "var(--text-tertiary)",
-                    background: "none",
-                    border: "1.5px dashed var(--border-default)",
-                    borderRadius: 99,
-                    padding: "5px 12px",
-                    cursor: "pointer",
-                    minHeight: 36,
-                    transition: "border-color 130ms ease, color 130ms ease",
-                  }}
-                  whileHover={{ borderColor: "var(--accent)", color: "var(--accent)" } as Record<string, string>}
+                  className="flex flex-col gap-1.5"
                 >
-                  <RiAddLine style={{ width: 13, height: 13 }} />
-                  Add your own
-                </motion.button>
+                  <motion.button
+                    type="button"
+                    onClick={() => {
+                      setShowCustomInput(true);
+                      setTimeout(() => customInputRef.current?.focus(), 60);
+                    }}
+                    style={{
+                      display: "inline-flex",
+                      alignSelf: "flex-start",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: "var(--accent)",
+                      background: "rgba(217,119,87,0.06)",
+                      border: "1.5px dashed var(--accent)",
+                      borderRadius: 99,
+                      padding: "8px 14px",
+                      cursor: "pointer",
+                      minHeight: 40,
+                      transition: "border-color 130ms ease, color 130ms ease, background-color 130ms ease",
+                    }}
+                    whileHover={{ backgroundColor: "rgba(217,119,87,0.12)" } as Record<string, string>}
+                  >
+                    <RiAddLine style={{ width: 14, height: 14 }} />
+                    {APP.ONBOARDING.step1.customNicheHint}
+                  </motion.button>
+                </motion.div>
               )}
             </AnimatePresence>
 

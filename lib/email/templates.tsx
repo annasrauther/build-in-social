@@ -1,6 +1,6 @@
 /**
  * React Email templates for Build In Social transactional emails.
- * Geist font, black accent, white-first design.
+ * Poppins (body) / Montserrat (headings), black accent, white-first design.
  */
 
 import {
@@ -20,7 +20,7 @@ import * as React from "react";
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
-const main = { backgroundColor: "#ffffff", fontFamily: "'Geist', system-ui, sans-serif" };
+const main = { backgroundColor: "#ffffff", fontFamily: "Poppins, system-ui, sans-serif" };
 const container = {
   backgroundColor: "#ffffff",
   border: "1px solid rgba(0,0,0,0.10)",

@@ -48,6 +48,21 @@ export async function getPresignedUploadUrl(params: {
   return { uploadUrl, publicUrl: publicUrl(params.key) };
 }
 
+export async function uploadBuffer(params: {
+  key: string;
+  buffer: Buffer | Uint8Array;
+  contentType: string;
+}): Promise<{ publicUrl: string }> {
+  const command = new PutObjectCommand({
+    Bucket: bucket(),
+    Key: params.key,
+    Body: params.buffer,
+    ContentType: params.contentType,
+  });
+  await getClient().send(command);
+  return { publicUrl: publicUrl(params.key) };
+}
+
 export async function deleteObject(key: string): Promise<void> {
   const command = new DeleteObjectCommand({ Bucket: bucket(), Key: key });
   await getClient().send(command);

@@ -35,7 +35,7 @@ interface UserProfile {
 }
 
 const PLATFORM_META: Record<Platform, { label: string; pillClass: string }> = {
-  youtube: { label: "YouTube", pillClass: "text-[#FF4444] bg-[rgba(255,68,68,0.08)]" },
+  youtube: { label: "YouTube", pillClass: "text-[#FF0000] bg-[rgba(255,0,0,0.08)]" },
   instagram: { label: "Instagram", pillClass: "text-[#E1306C] bg-[rgba(225,48,108,0.08)]" },
   linkedin: { label: "LinkedIn", pillClass: "text-[#0A66C2] bg-[rgba(10,102,194,0.08)]" },
   x: { label: "X", pillClass: "text-[color:var(--text-secondary)] bg-[color:var(--bg-elevated)]" },
@@ -242,7 +242,7 @@ export default function CurrentPlanPage() {
         {genError && (
           <StatusCard
             variant="error"
-            title="Generation failed"
+            title={APP.COMMON.errorGenerate}
             description={genError}
             cta={APP.COMMON.retry}
             onCta={() => setGenError(null)}
@@ -324,7 +324,8 @@ function PlanShell({ children }: { children: React.ReactNode }) {
 function PlanShellSkeleton() {
   return (
     <PlanShell>
-      <div className="space-y-3">
+      <div className="space-y-3" aria-live="polite" aria-busy="true">
+        <span className="sr-only">{APP.A11Y.loading}</span>
         {[1, 2].map((i) => (
           <div key={i} className="skeleton-line h-24" />
         ))}

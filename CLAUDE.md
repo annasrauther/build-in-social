@@ -23,7 +23,7 @@ Key rules:
 1. Brand palette is the Anthropic warm palette. `brand-500 = #D97757` (Anthropic Orange) with the full 50–950 scale derived in `tailwind.config.ts`. Light bg `#FAF9F5`, dark bg `#141413`. Secondary accents: `#6A9BCC` (blue), `#788C5D` (green). Do not introduce off-palette colors. Tremor `<Button variant="primary">` deliberately stays high-contrast (gray-900 / gray-50) — brand orange is for gradients, accents, focus rings, and selection, not on filled buttons.
 2. Both dark and light modes are supported out of the box via `next-themes`.
    System preference is auto-detected. User can toggle with ThemeSwitch component.
-3. Fonts: Poppins (headings, `font-sans`) + Lora (body, `font-serif`), loaded via `next/font/google`. No Geist, no Inter, no Source Serif 4.
+3. Fonts: Montserrat (headings, `font-serif`) + Poppins (body, `font-sans`), loaded via `next/font/google`. No Geist, no Inter, no Lora, no Source Serif 4.
 4. Tailwind v3 for ALL styling. No CSS-in-JS. No Styletron.
 5. Framer Motion for page transitions and micro-interactions.
 6. Mobile-first. All touch targets ≥ 44px.
@@ -122,7 +122,7 @@ Restart `next dev` after toggling — `NEXT_PUBLIC_*` values are build-time inli
 Production builds force the flag off — `DEV_AUTH` (in `lib/env.ts`) gates on `NODE_ENV === "development"`. The `/api/dev/*` routes return 404 in any other environment. This deprecates the older `BYPASS_AUTH` / `NEXT_PUBLIC_BYPASS_AUTH` names (kept for one release).
 
 ## Phase 1 build order — strict sequence, no skipping
-1.  Token system + Poppins/Lora fonts + Tremor setup + base layout
+1.  Token system + Montserrat/Poppins fonts + Tremor setup + base layout
 2.  Landing page (all template sections, domain-presence copy)
 3.  Onboarding (domain/niche → platforms → voice → plan preview with mode choice)
 4.  Dashboard + Weekly plan generator (manual mode + autopilot mode)

@@ -7,6 +7,7 @@ import { OnboardingHeading } from "@/components/onboarding/OnboardingHeading";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import { useInteractionFeedback } from "@/lib/hooks/useInteractionFeedback";
 import { LIBRARY_VOICES, STAGGER_CARDS } from "@/lib/constants/onboarding";
+import { APP } from "@/content/app";
 
 /* ─── Waveform bars animation ─────────────────────────────────────────────── */
 
@@ -41,7 +42,7 @@ function GenderDot({ gender }: { gender: "male" | "female" }) {
         width: 6,
         height: 6,
         borderRadius: "50%",
-        backgroundColor: gender === "female" ? "#E87EA5" : "#6A9BCC",
+        backgroundColor: gender === "female" ? "#DF8F70" : "#6A9BCC",
         marginRight: 4,
         verticalAlign: "middle",
       }}
@@ -82,20 +83,12 @@ function VoiceCard({
         backgroundColor: selected ? "transparent" : "var(--bg-elevated)",
       }}
     >
-      {/* Spinning gradient border in the voice's own color */}
+      {/* Traveling beam border in the voice's own color */}
       <motion.div
         animate={{ opacity: selected ? 1 : 0 }}
         transition={{ duration: 0.22 }}
-        style={{
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          width: "200%",
-          height: "200%",
-          transform: "translate(-50%, -50%)",
-          background: `conic-gradient(from 0deg, transparent 0%, transparent 65%, ${voice.color} 78%, ${voice.color}cc 85%, ${voice.color} 93%, transparent 100%)`,
-          animation: "spin-gradient 4s linear infinite",
-        }}
+        className="focus-beam-layer"
+        style={{ ["--beam-color" as string]: voice.color }}
       />
 
     <motion.div
@@ -417,7 +410,7 @@ export default function VoicePage() {
     });
     playNavigation();
     vibrate(15);
-    goToStep(4);
+    goToStep(4); // → /onboarding/plan-preview
   }
 
   function handleBack() {
@@ -425,6 +418,19 @@ export default function VoicePage() {
     update({ libraryVoiceId: selected });
     goToStep(2);
   }
+
+  // A6: derive a human-readable status string for the aria-live region
+  const voiceStatusMessage = (() => {
+    if (loadingId) {
+      const voice = LIBRARY_VOICES.find((v) => v.id === loadingId);
+      return `Loading preview for ${voice?.name ?? loadingId}`;
+    }
+    if (playingId) {
+      const voice = LIBRARY_VOICES.find((v) => v.id === playingId);
+      return `Now playing ${voice?.name ?? playingId}`;
+    }
+    return "";
+  })();
 
   return (
     <OnboardingShell
@@ -434,10 +440,39 @@ export default function VoicePage() {
       onContinue={handleContinue}
       onBack={handleBack}
     >
+      {/* A6: aria-live region announces voice preview loading/playing state to screen readers */}
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
+        {voiceStatusMessage}
+      </div>
+
       <OnboardingHeading
         title="Choose a voice"
         subtitle="Pick the voice that narrates your videos. Click Preview to hear it first."
       />
+
+      <motion.p
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, delay: 0.05 }}
+        style={{
+          fontSize: "var(--type-supporting-mobile)",
+          color: "var(--text-tertiary)",
+          lineHeight: 1.55,
+          marginTop: -8,
+          marginBottom: 20,
+          padding: "10px 14px",
+          borderRadius: "var(--radius-md)",
+          backgroundColor: "var(--bg-elevated)",
+          border: "1px solid var(--border-subtle)",
+        }}
+      >
+        {APP.ONBOARDING.step4.libraryIntro}
+      </motion.p>
 
       <motion.div
         className="flex flex-col gap-2"

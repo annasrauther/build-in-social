@@ -33,12 +33,14 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { mode, platforms, niche, tone, qualityGateAnswers } = body as {
+    const { mode, platforms, niche, tone, qualityGateAnswers, autopilotHint } = body as {
       mode: ContentMode;
       platforms: Platform[];
       niche: string;
       tone?: string;
       qualityGateAnswers?: [string, string, string];
+      /** Optional natural-language hint for autopilot mode (max 140 chars) */
+      autopilotHint?: string;
     };
 
     if (!mode || !["manual", "autopilot"].includes(mode)) {
@@ -98,6 +100,7 @@ export async function POST(request: Request) {
         niche,
         tone: tone ?? "confident",
         weekNumber,
+        hint: autopilotHint?.trim().slice(0, 140),
       });
       autopilotAngles = anglesResult.angles;
     }
@@ -123,6 +126,7 @@ export async function POST(request: Request) {
       contentType: item.contentType,
       status: "draft" as const,
       dayOfWeek: item.dayOfWeek,
+      confidenceScore: item.confidenceScore,
     }));
 
     return NextResponse.json({ data: { videos }, error: null });

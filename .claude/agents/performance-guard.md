@@ -32,7 +32,7 @@ If render times exceed these, the user must see a live progress indicator — ne
 
 ### For every new page
 - Image optimization: Next.js `<Image>` component used for all images, no raw `<img>` tags
-- Font loading: Geist font loaded via `next/font`, not a CDN `<link>` tag
+- Font loading: Montserrat + Poppins loaded via `next/font/google`, not a CDN `<link>` tag
 - Bundle size: no new dependencies added without checking bundle impact (`pnpm build` → analyze output)
 - Route prefetching: links to common next destinations use `prefetch`
 - API route response times: every API route should respond in < 500ms (excluding render jobs)

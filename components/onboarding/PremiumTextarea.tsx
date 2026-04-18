@@ -23,17 +23,8 @@ export const PremiumTextarea = forwardRef<HTMLTextAreaElement, PremiumTextareaPr
             backgroundColor: error ? "var(--danger)" : "var(--border-default)",
           }}
         >
-          {/* Rotating conic-gradient layer */}
-          {focused && !error && (
-            <div
-              className="absolute left-1/2 top-1/2 w-[200%] h-[200%] pointer-events-none"
-              style={{
-                background:
-                  "conic-gradient(from 0deg, transparent 0%, transparent 65%, var(--accent) 78%, #F0A875 85%, var(--accent) 93%, transparent 100%)",
-                animation: "spin-gradient 5s linear infinite",
-              }}
-            />
-          )}
+          {/* Focus beam — traveling gradient border, only visible on focus */}
+          {focused && !error && <div className="focus-beam-layer" />}
 
           {/* Focused glow ring */}
           {focused && !error && (

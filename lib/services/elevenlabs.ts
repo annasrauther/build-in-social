@@ -23,3 +23,7 @@ export const synthesizeSpeech: typeof real.synthesizeSpeech = useReal
 export const cloneVoice: typeof real.cloneVoice = useReal
   ? real.cloneVoice
   : mock.cloneVoice;
+
+export const synthesizeClonePreview: typeof real.synthesizeClonePreview = useReal
+  ? real.synthesizeClonePreview
+  : mock.synthesizeClonePreview;

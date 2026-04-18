@@ -99,7 +99,8 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "pSEO generation failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    // SECURITY (M6): log full error, return generic message to client.
+    console.error("[pseo/generate] error:", error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

@@ -101,6 +101,8 @@ export interface Video {
   contentType: ContentType;
   status: VideoStatus;
   outputUrl?: string;
+  /** WebVTT caption sidecar URL stored in R2 alongside the .mp4 (A7 — WCAG 1.2.2) */
+  captionUrl?: string;
   thumbnailUrl?: string;
   renderJobId?: string;
 
@@ -118,6 +120,9 @@ export interface Video {
   trafficFromPseo?: number;
   visibilityScore?: number;
   platformVideoId?: string;
+
+  /** Number of AI rewrites applied to this video's script. Capped at 3. */
+  revisionCount?: number;
 
   createdAt: string;
   publishedAt?: string;
@@ -152,4 +157,6 @@ export interface PlanVideo {
   status: VideoStatus;
   dayOfWeek: string;
   outputUrl?: string;
+  /** AI confidence in this content piece (1–10). Shown on video cards. */
+  confidenceScore?: number;
 }

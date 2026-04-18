@@ -20,6 +20,8 @@ export interface AssembleParams {
 export interface AssembleResult {
   videoBlob: Blob;
   durationSeconds: number;
+  /** WebVTT caption track for the assembled video (A7 — WCAG 1.2.2) */
+  vttBlob: Blob;
 }
 
 // ─── Platform video specs ────────────────────────────────────────────────────
@@ -67,12 +69,25 @@ function escapeDrawtext(text: string): string {
     .replace(/%/g, "%%");
 }
 
+// ─── WebVTT generation (A7) ──────────────────────────────────────────────────
+// Builds a WCAG 1.2.2-compliant WebVTT Blob from the script and duration.
+// Delegates to lib/services/captions.ts so timing logic stays in one place.
+
+import { buildCaptionSegments, generateVTT } from "./captions";
+
+export function generateVtt(script: string, durationSeconds: number): Blob {
+  const segments = buildCaptionSegments(script, durationSeconds);
+  const vttString = generateVTT(segments);
+  return new Blob([vttString], { type: "text/vtt" });
+}
+
 // ─── Mock ────────────────────────────────────────────────────────────────────
 
 function mockAssemble(params: AssembleParams): AssembleResult {
   console.log("[MOCK ffmpeg] assembleVideo", params.style, params.platform, `${params.durationSeconds}s`);
   const placeholder = new Blob(["MOCK_VIDEO"], { type: "video/mp4" });
-  return { videoBlob: placeholder, durationSeconds: params.durationSeconds };
+  const vttBlob = generateVtt(params.script, params.durationSeconds);
+  return { videoBlob: placeholder, durationSeconds: params.durationSeconds, vttBlob };
 }
 
 // ─── Real assembly ───────────────────────────────────────────────────────────
@@ -119,7 +134,10 @@ async function realAssemble(params: AssembleParams): Promise<AssembleResult> {
     const outputData = await ff.readFile("output.mp4");
     const videoBlob = new Blob([outputData as BlobPart], { type: "video/mp4" });
 
-    return { videoBlob, durationSeconds: params.durationSeconds };
+    // A7: Generate WebVTT caption track aligned to script segments
+    const vttBlob = generateVtt(params.script, params.durationSeconds);
+
+    return { videoBlob, durationSeconds: params.durationSeconds, vttBlob };
   } finally {
     ff.terminate();
   }

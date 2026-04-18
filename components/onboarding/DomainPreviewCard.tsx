@@ -12,6 +12,7 @@ const SOURCE_LABELS: Record<InferProductSource, string> = {
   og: "Open Graph",
   title: "Page title",
   freetext: "Manual",
+  github: "GitHub",
   none: "",
 };
 

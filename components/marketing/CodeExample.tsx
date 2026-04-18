@@ -41,10 +41,10 @@ export default function CodeExample() {
         How it works
       </h2>
       <p className="mt-6 max-w-2xl text-lg text-gray-600 dark:text-gray-400">
-        Three steps. Three minutes. Up to 23 platform-native videos scheduled
-        for the week across YouTube Shorts, Instagram Reels, LinkedIn, and X.
+        Three steps. Three minutes. Up to 23 videos — formatted for YouTube
+        Shorts, Instagram Reels, LinkedIn, and X — scheduled for the week.
       </p>
-      <dl className="mt-10 grid grid-cols-1 gap-10 sm:grid-cols-3">
+      <dl className="mt-10 grid grid-cols-1 gap-8 sm:gap-10 sm:grid-cols-3">
         {steps.map((item) => (
           <div
             key={item.num}

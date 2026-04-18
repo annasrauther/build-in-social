@@ -14,7 +14,24 @@ import { updateRenderJob } from "@/lib/services/queue";
 import { getRenderJob as dbGetRenderJob, updateRenderJob as dbUpdateRenderJob, updateVideo, getVideo } from "@/lib/services/db";
 import { sendEmail } from "@/lib/services/resend";
 import { refundCreditForRender } from "@/lib/services/credits";
-import { APP_URL, INTERNAL_SECRET } from "@/lib/env";
+import { APP_URL, INTERNAL_SECRET, R2_PUBLIC_URL } from "@/lib/env";
+
+/**
+ * SECURITY (S3): Reject any `outputUrl` that does not start with the
+ * configured R2 public prefix. Prevents a compromised worker from storing
+ * attacker-controlled URLs that would later be served to users.
+ */
+function isAllowedOutputUrl(candidate: string): boolean {
+  if (!R2_PUBLIC_URL) return false;
+  const prefix = R2_PUBLIC_URL.endsWith("/") ? R2_PUBLIC_URL : `${R2_PUBLIC_URL}/`;
+  try {
+    const parsed = new URL(candidate);
+    if (parsed.protocol !== "https:") return false;
+  } catch {
+    return false;
+  }
+  return candidate.startsWith(prefix);
+}
 
 export async function POST(req: NextRequest) {
   // ── Internal secret check (fail closed) ────────────────────────────────────
@@ -77,6 +94,19 @@ export async function POST(req: NextRequest) {
     if (!outputUrl) {
       return NextResponse.json(
         { error: "outputUrl is required for status=complete" },
+        { status: 400 }
+      );
+    }
+
+    // SECURITY (S3): restrict outputUrl to the configured R2 prefix so a
+    // compromised worker cannot ship arbitrary attacker-controlled URLs.
+    if (!isAllowedOutputUrl(outputUrl)) {
+      console.error(
+        "[render/complete] rejected outputUrl not in R2 prefix:",
+        outputUrl
+      );
+      return NextResponse.json(
+        { error: "outputUrl must originate from the configured R2 bucket" },
         { status: 400 }
       );
     }
@@ -146,7 +176,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ data: { ok: true } });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to process render completion";
-    return NextResponse.json({ error: message }, { status: 500 });
+    // SECURITY (M6): log the full error server-side, return a generic message.
+    console.error("[render/complete] error:", error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

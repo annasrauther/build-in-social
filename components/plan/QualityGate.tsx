@@ -94,7 +94,7 @@ export function QualityGate({ onSubmit, onAutopilot, loading, serverPushback }: 
   const specLabel = getSpecificityLabel(score);
 
   return (
-    <div className="rounded-[var(--radius-lg)] p-8 bg-[color:var(--bg-elevated)]">
+    <div className="rounded-[var(--radius-lg)] p-5 sm:p-8 bg-[color:var(--bg-elevated)]">
       {/* Header */}
       <div className="flex flex-col tablet-sm:flex-row tablet-sm:items-start tablet-sm:justify-between gap-2 mb-6">
         <div>

@@ -7,6 +7,7 @@ export default function Layout({
 }>) {
   return (
     <main
+      id="main-content"
       className="mx-auto mt-36 max-w-3xl animate-slide-up-fade px-3"
       style={{
         animationDuration: "600ms",

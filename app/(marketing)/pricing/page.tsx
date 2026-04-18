@@ -100,7 +100,7 @@ const sections: Section[] = [
         plans: { Solo: true, Creator: true, Studio: true },
       },
       {
-        name: "Platform-native formatting",
+        name: "Formatted for each platform",
         plans: { Solo: "2 platforms", Creator: "3 platforms", Studio: "All 4 platforms" },
       },
       {
@@ -134,7 +134,7 @@ const sections: Section[] = [
     name: "Distribution & SEO",
     features: [
       {
-        name: "pSEO page per video",
+        name: "Search article per video",
         plans: { Solo: true, Creator: true, Studio: true },
       },
       {
