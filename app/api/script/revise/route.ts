@@ -17,6 +17,7 @@ import { getOrCreateUser } from "@/lib/auth";
 import { getVideo, updateVideo } from "@/lib/services/db";
 import { reviseScript } from "@/lib/services/claude";
 import { checkRateLimit } from "@/lib/services/rate-limit";
+import { fireWebhookEventNonBlocking } from "@/lib/services/webhooks";
 import type { User } from "@/lib/types/user";
 
 const MAX_REVISIONS_PER_VIDEO = 3;
@@ -160,6 +161,14 @@ export async function POST(req: NextRequest) {
   }
 
   const newCount = updated.revisionCount ?? currentCount + 1;
+
+  // Fire outbound webhook — non-blocking, never throws.
+  fireWebhookEventNonBlocking(user.id, "revision.requested", {
+    videoId,
+    note,
+    revisionCount: newCount,
+  });
+
   return NextResponse.json({
     data: {
       video: updated,

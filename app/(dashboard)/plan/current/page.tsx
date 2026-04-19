@@ -2,14 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { RiCalendarLine, RiListUnordered } from "@remixicon/react";
 import { Button } from "@/components/tremor/Button";
 import { Badge } from "@/components/tremor/Badge";
 import { ArrowAnimated } from "@/components/marketing/ArrowAnimated";
 import { QualityGate } from "@/components/plan/QualityGate";
 import { StatusCard } from "@/components/ui/StatusCard";
+import { WeekCalendar } from "@/components/plan/WeekCalendar";
 import { APP } from "@/content/app";
 import { cx } from "@/lib/utils";
 import type { Platform } from "@/lib/types/user";
+import type { ScheduledVideo } from "@/lib/types/schedule";
 
 type Mode = "choose" | "manual" | "autopilot";
 
@@ -51,6 +54,7 @@ export default function CurrentPlanPage() {
   const [loading, setLoading] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
   const [pushback, setPushback] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
 
   useEffect(() => {
     let cancelled = false;
@@ -147,6 +151,22 @@ export default function CurrentPlanPage() {
 
   if (videos) {
     const approvedCount = videos.filter((v) => v.status === "approved").length;
+
+    // Map PlanVideos → ScheduledVideo for calendar
+    const scheduledVideos: ScheduledVideo[] = videos.map((v) => {
+      const dayMap: Record<string, ScheduledVideo["scheduledDay"]> = {
+        mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu",
+        fri: "Fri", sat: "Sat", sun: "Sun",
+      };
+      return {
+        videoId: v.id,
+        title: v.title,
+        platform: v.platform,
+        scheduledDay: dayMap[v.dayOfWeek.toLowerCase()] ?? "Mon",
+        status: v.status,
+      };
+    });
+
     return (
       <PlanShell>
         {/* Week header */}
@@ -163,75 +183,122 @@ export default function CurrentPlanPage() {
             </p>
           </div>
           <div className="flex gap-2">
+            {/* View toggle */}
+            <div className="flex items-center rounded-[var(--radius-md)] border border-[color:var(--border-default)] overflow-hidden">
+              <button
+                onClick={() => setViewMode("list")}
+                className={cx(
+                  "flex items-center gap-1.5 px-3 min-h-[36px] text-[12px] font-medium transition-colors duration-150",
+                  viewMode === "list"
+                    ? "bg-[color:var(--bg-elevated)] text-[color:var(--text-primary)]"
+                    : "bg-transparent text-[color:var(--text-tertiary)] hover:text-[color:var(--text-secondary)]"
+                )}
+                aria-label={APP.PLAN_UI.listView}
+                title={APP.PLAN_UI.listView}
+              >
+                <RiListUnordered className="h-3.5 w-3.5" aria-hidden="true" />
+                <span className="hidden sm:inline">{APP.PLAN_UI.listView}</span>
+              </button>
+              <button
+                onClick={() => setViewMode("calendar")}
+                className={cx(
+                  "flex items-center gap-1.5 px-3 min-h-[36px] text-[12px] font-medium transition-colors duration-150",
+                  viewMode === "calendar"
+                    ? "bg-[color:var(--bg-elevated)] text-[color:var(--text-primary)]"
+                    : "bg-transparent text-[color:var(--text-tertiary)] hover:text-[color:var(--text-secondary)]"
+                )}
+                aria-label={APP.PLAN_UI.calendarView}
+                title={APP.PLAN_UI.calendarView}
+              >
+                <RiCalendarLine className="h-3.5 w-3.5" aria-hidden="true" />
+                <span className="hidden sm:inline">{APP.PLAN_UI.calendarView}</span>
+              </button>
+            </div>
             <Button variant="secondary" onClick={startFresh}>{APP.PLAN.startFresh}</Button>
             <Button onClick={approveAll} disabled={approvedCount === videos.length}>{APP.PLAN.approveAll}</Button>
           </div>
         </div>
 
-        <ul className="space-y-3">
-          <AnimatePresence initial={false}>
-            {videos.map((v, i) => {
-              const meta = PLATFORM_META[v.platform];
-              return (
-                <motion.li
-                  key={v.id}
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.22, ease: SPRING, delay: i * 0.04 }}
-                >
-                  <div
-                    className={cx(
-                      "rounded-[var(--radius-lg)] px-5 py-4 shadow-[var(--shadow-sm)] border transition-[border-color,background-color] duration-200",
-                      v.status === "approved"
-                        ? "border-[rgba(120,140,93,0.35)] bg-[rgba(120,140,93,0.04)]"
-                        : "border-[color:var(--border-default)] bg-[color:var(--bg-surface)]",
-                    )}
+        {/* Calendar view */}
+        {viewMode === "calendar" && (
+          <motion.div
+            key="calendar"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <WeekCalendar initialVideos={scheduledVideos} />
+          </motion.div>
+        )}
+
+        {/* List view */}
+        {viewMode === "list" && (
+          <ul className="space-y-3">
+            <AnimatePresence initial={false}>
+              {videos.map((v, i) => {
+                const meta = PLATFORM_META[v.platform];
+                return (
+                  <motion.li
+                    key={v.id}
+                    layout
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.22, ease: SPRING, delay: i * 0.04 }}
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0 flex-1">
-                        {/* Meta row */}
-                        <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <span
-                            className={cx(
-                              "text-[11px] font-semibold uppercase tracking-[0.04em] px-2 py-0.5 rounded-full",
-                              meta.pillClass,
-                            )}
-                          >
-                            {meta.label}
-                          </span>
-                          <span className="text-[12px] text-[color:var(--text-tertiary)]">
-                            {v.dayOfWeek} · {v.durationSeconds}s
-                          </span>
-                          {v.status === "approved" && (
-                            <span className="text-[11px] font-semibold text-[color:var(--accent-green)]">
-                              ✓ {APP.PLAN_UI.approvedStatus}
+                    <div
+                      className={cx(
+                        "rounded-[var(--radius-lg)] px-5 py-4 shadow-[var(--shadow-sm)] border transition-[border-color,background-color] duration-200",
+                        v.status === "approved"
+                          ? "border-[rgba(120,140,93,0.35)] bg-[rgba(120,140,93,0.04)]"
+                          : "border-[color:var(--border-default)] bg-[color:var(--bg-surface)]",
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          {/* Meta row */}
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <span
+                              className={cx(
+                                "text-[11px] font-semibold uppercase tracking-[0.04em] px-2 py-0.5 rounded-full",
+                                meta.pillClass,
+                              )}
+                            >
+                              {meta.label}
                             </span>
-                          )}
+                            <span className="text-[12px] text-[color:var(--text-tertiary)]">
+                              {v.dayOfWeek} · {v.durationSeconds}s
+                            </span>
+                            {v.status === "approved" && (
+                              <span className="text-[11px] font-semibold text-[color:var(--accent-green)]">
+                                ✓ {APP.PLAN_UI.approvedStatus}
+                              </span>
+                            )}
+                          </div>
+                          <p className="truncate text-[15px] font-semibold leading-[1.4] text-[color:var(--text-primary)]">
+                            {v.title}
+                          </p>
+                          <p className="mt-1 line-clamp-2 text-[13px] leading-[1.6] text-[color:var(--text-secondary)]">
+                            {v.hook}
+                          </p>
                         </div>
-                        <p className="truncate text-[15px] font-semibold leading-[1.4] text-[color:var(--text-primary)]">
-                          {v.title}
-                        </p>
-                        <p className="mt-1 line-clamp-2 text-[13px] leading-[1.6] text-[color:var(--text-secondary)]">
-                          {v.hook}
-                        </p>
+                        <Button
+                          variant={v.status === "approved" ? "secondary" : "primary"}
+                          onClick={() => approveVideo(v.id)}
+                          disabled={v.status === "approved"}
+                          className="shrink-0"
+                        >
+                          {v.status === "approved" ? APP.PLAN_UI.approvedStatus : "Approve"}
+                        </Button>
                       </div>
-                      <Button
-                        variant={v.status === "approved" ? "secondary" : "primary"}
-                        onClick={() => approveVideo(v.id)}
-                        disabled={v.status === "approved"}
-                        className="shrink-0"
-                      >
-                        {v.status === "approved" ? APP.PLAN_UI.approvedStatus : "Approve"}
-                      </Button>
                     </div>
-                  </div>
-                </motion.li>
-              );
-            })}
-          </AnimatePresence>
-        </ul>
+                  </motion.li>
+                );
+              })}
+            </AnimatePresence>
+          </ul>
+        )}
       </PlanShell>
     );
   }

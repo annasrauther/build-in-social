@@ -118,6 +118,19 @@ export const APP = {
     revisionDailyCap:
       "Daily revision limit reached \u2014 try again tomorrow.",
     revisionError: "Build In Social couldn't rewrite this. Try again shortly.",
+
+    // Thread preview (X platform)
+    threadLabel: "Thread preview",
+    threadTweetCount: (n: number) => `${n} tweets`,
+    threadCharCount: (n: number) => `${n}/280`,
+
+    // Inline script editor
+    editScript: "Edit script",
+    editScriptCancel: "Cancel",
+    editScriptSave: "Save changes",
+    editScriptSaved: "Saved",
+    editScriptCharCount: (n: number) => `${n}/2000`,
+    editScriptPlaceholder: "Edit your script directly\u2026",
   },
 
   INTELLIGENCE: {
@@ -146,6 +159,108 @@ export const APP = {
     voiceDescription: "Manage your narration clone or library selection",
     billingLabel: "Billing",
     billingDescription: "Subscription and payment management",
+    webhooksLabel: "Webhooks",
+    webhooksDescription: "Pipe Build In Social events into your own stack.",
+    brandLabel: "Brand kit",
+    brandDescription: "Colors, logo, watermark, and caption font.",
+  },
+
+  SETTINGS_BRAND: {
+    title: "Brand kit",
+    description: "Customize how your videos look across all platforms.",
+    primaryColor: "Primary color",
+    accentColor: "Accent color",
+    logoLabel: "Logo",
+    logoHint: "PNG, SVG or JPG \u00b7 max 2 MB",
+    logoUpload: "Upload logo",
+    watermarkLabel: "Watermark position",
+    fontStyleLabel: "Caption font style",
+    saveLabel: "Save brand kit",
+    savedLabel: "Saved",
+    fontStyles: {
+      modern: "Modern",
+      bold: "Bold",
+      minimal: "Minimal",
+      playful: "Playful",
+    } as Record<string, string>,
+    watermarkPositions: {
+      "top-left": "Top left",
+      "top-right": "Top right",
+      "bottom-left": "Bottom left",
+      "bottom-right": "Bottom right",
+      none: "No watermark",
+    } as Record<string, string>,
+  },
+
+  CAPTION_STYLES: {
+    label: "Caption style",
+    none: "No captions",
+    minimal: "Minimal",
+    bold: "Bold",
+    gradient: "Gradient",
+    outline: "Outline",
+    preview: "Preview",
+  },
+
+  SETTINGS_WEBHOOKS: {
+    title: "Webhooks",
+    subtitle:
+      "Build In Social will post a signed JSON payload to your endpoint every time a tracked event happens. Use this to pipe events into your own stack.",
+    partnerNote:
+      "You are the partner. We deliver the event \u2014 your stack decides what to do with it.",
+    emptyTitle: "No webhooks yet",
+    emptyDescription:
+      "Add an endpoint to start receiving signed events. Every delivery is HMAC-SHA256 signed with your subscription secret.",
+    addCta: "Add webhook",
+    addDialogTitle: "Add a webhook endpoint",
+    addDialogSubtitle:
+      "We\u2019ll POST a signed JSON payload to this URL every time an event fires.",
+    urlLabel: "Endpoint URL",
+    urlPlaceholder: "https://your-app.example.com/webhooks/build-in-social",
+    eventsLabel: "Events to subscribe to",
+    eventsHint: "Pick at least one. You can change this later.",
+    saveCta: "Create webhook",
+    saving: "Build In Social is registering your endpoint...",
+    cancelCta: "Cancel",
+    secretRevealTitle: "Copy your signing secret",
+    secretRevealDescription:
+      "This is the only time we\u2019ll show this secret. Store it somewhere safe \u2014 you\u2019ll need it to verify every delivery.",
+    secretCopy: "Copy",
+    secretCopied: "Copied",
+    secretDoneCta: "I\u2019ve saved my secret",
+    columnUrl: "Endpoint",
+    columnEvents: "Events",
+    columnStatus: "Status",
+    columnLastDelivered: "Last delivered",
+    columnActions: "",
+    statusActive: "Active",
+    statusDegraded: "Degraded",
+    statusDisabled: "Disabled",
+    lastDeliveredNever: "Never",
+    eventLabels: {
+      "video.rendered": "Video rendered",
+      "video.posted": "Video posted",
+      "revision.requested": "Revision requested",
+      "plan.generated": "Plan generated",
+    } as Record<string, string>,
+    testCta: "Send test",
+    testSending: "Build In Social is sending a test payload...",
+    testSuccess: "Test delivered successfully",
+    testFailure: "Test failed \u2014 we couldn\u2019t reach your endpoint.",
+    deleteCta: "Delete",
+    deleteConfirmTitle: "Delete this webhook?",
+    deleteConfirmDescription:
+      "We\u2019ll stop delivering events to this endpoint. This cannot be undone.",
+    deleteConfirmCta: "Delete webhook",
+    deleteError: "Build In Social couldn\u2019t delete this webhook.",
+    loadError: "Couldn\u2019t load your webhooks. Please try again.",
+    createError:
+      "Build In Social couldn\u2019t register that endpoint. Check the URL and try again.",
+    signatureHint:
+      "Every request includes an X-Build-In-Social-Signature header \u2014 an HMAC-SHA256 of the body signed with your secret.",
+    retryHint:
+      "Non-2xx responses retry 3 times (1s, 5s, 30s). If all fail, the webhook is marked degraded and surfaced here.",
+    developersLink: "See the developer docs \u2192",
   },
 
   SETTINGS_PROFILE: {
@@ -404,6 +519,11 @@ export const APP = {
     shareWhatsNew: "Share what\u2019s new",
     approvedStatus: "Approved",
     back: "Back",
+    calendarView: "Calendar view",
+    listView: "List view",
+    unscheduled: "Unscheduled",
+    dropToSchedule: "Drop to schedule",
+    scheduledDay: (day: string) => `Scheduled for ${day}`,
   },
 
   DASHBOARD_UI: {

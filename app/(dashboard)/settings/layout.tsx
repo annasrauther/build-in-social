@@ -8,7 +8,9 @@ const navigationSettings = [
   { name: "Profile", href: "/settings/profile" },
   { name: "Platforms", href: "/settings/platforms" },
   { name: "Voice", href: "/settings/voice" },
+  { name: "Brand kit", href: "/settings/brand" },
   { name: "Billing", href: "/settings/billing" },
+  { name: "Webhooks", href: "/settings/webhooks" },
 ]
 
 export default function SettingsLayout({

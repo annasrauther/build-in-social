@@ -303,6 +303,27 @@ export async function updateVideo(videoId: string, data: Partial<Video>): Promis
   return updated;
 }
 
+export async function updateVideoSchedule(
+  videoId: string,
+  day: string,
+  time?: string
+): Promise<void> {
+  await delay(80);
+  const existing = store.videos.get(videoId);
+  if (!existing) throw new Error(`Video ${videoId} not found`);
+  // Store scheduled_day as a custom property via type cast
+  const updated = { ...existing, scheduledDay: day, scheduledTime: time };
+  store.videos.set(videoId, updated as Video);
+}
+
+export async function updateVideoScript(videoId: string, script: string): Promise<void> {
+  await delay(100);
+  const existing = store.videos.get(videoId);
+  if (!existing) throw new Error(`Video ${videoId} not found`);
+  const updatedScript = { ...existing.scriptJson, body: script };
+  store.videos.set(videoId, { ...existing, scriptJson: updatedScript });
+}
+
 export async function approveVideo(videoId: string): Promise<Video> {
   return updateVideo(videoId, { status: "approved" });
 }
@@ -487,3 +508,83 @@ export async function addToAvatarWaitlist(email: string): Promise<{
   });
   return { added: true, position: waitlist.size };
 }
+
+// ─── Webhook subscriptions ────────────────────────────────────────────────────
+
+import type {
+  WebhookSubscription,
+  WebhookEventType,
+  WebhookStatus,
+} from "@/lib/types/webhook";
+
+const webhookSubs = new Map<string, WebhookSubscription>();
+let webhookIdCounter = 1;
+
+export async function listWebhookSubscriptions(
+  userId: string
+): Promise<WebhookSubscription[]> {
+  await delay(30);
+  return Array.from(webhookSubs.values())
+    .filter((w) => w.userId === userId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function getWebhookSubscription(
+  id: string
+): Promise<WebhookSubscription | null> {
+  await delay(20);
+  return webhookSubs.get(id) ?? null;
+}
+
+export async function createWebhookSubscription(
+  data: Omit<WebhookSubscription, "id" | "createdAt">
+): Promise<WebhookSubscription> {
+  await delay(40);
+  const id = `whk_${webhookIdCounter++}`;
+  const record: WebhookSubscription = {
+    ...data,
+    id,
+    createdAt: new Date().toISOString(),
+  };
+  webhookSubs.set(id, record);
+  return record;
+}
+
+export async function updateWebhookSubscription(
+  id: string,
+  patch: Partial<
+    Pick<
+      WebhookSubscription,
+      "url" | "events" | "status" | "lastDeliveredAt" | "lastErrorMessage"
+    >
+  >
+): Promise<WebhookSubscription | null> {
+  await delay(20);
+  const existing = webhookSubs.get(id);
+  if (!existing) return null;
+  const updated = { ...existing, ...patch };
+  webhookSubs.set(id, updated);
+  return updated;
+}
+
+export async function deleteWebhookSubscription(id: string): Promise<boolean> {
+  await delay(20);
+  return webhookSubs.delete(id);
+}
+
+export async function findWebhookSubscriptionsForEvent(
+  userId: string,
+  event: WebhookEventType
+): Promise<WebhookSubscription[]> {
+  await delay(20);
+  return Array.from(webhookSubs.values()).filter(
+    (w) =>
+      w.userId === userId &&
+      w.status !== "disabled" &&
+      w.events.includes(event)
+  );
+}
+
+// Keeps the TS compiler happy when imports reference WebhookStatus implicitly.
+export type { WebhookStatus };
+

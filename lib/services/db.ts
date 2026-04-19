@@ -32,6 +32,8 @@ export const getVideo = useReal ? real.getVideo : mock.getVideo;
 export const getVideos = useReal ? real.getVideos : mock.getVideos;
 export const createVideo = useReal ? real.createVideo : mock.createVideo;
 export const updateVideo = useReal ? real.updateVideo : mock.updateVideo;
+export const updateVideoScript = useReal ? real.updateVideoScript : mock.updateVideoScript;
+export const updateVideoSchedule = useReal ? real.updateVideoSchedule : mock.updateVideoSchedule;
 export const approveVideo = useReal ? real.approveVideo : mock.approveVideo;
 export const approveAllForWeek = useReal ? real.approveAllForWeek : mock.approveAllForWeek;
 export const getTopPerformingVideos = useReal ? real.getTopPerformingVideos : mock.getTopPerformingVideos;
@@ -55,6 +57,26 @@ export const hasVoiceConsent = useReal ? real.hasVoiceConsent : mock.hasVoiceCon
 
 // ── Avatar waitlist (Phase 2 lead capture) ──
 export const addToAvatarWaitlist = useReal ? real.addToAvatarWaitlist : mock.addToAvatarWaitlist;
+
+// ── Webhook subscriptions ──
+export const listWebhookSubscriptions = useReal
+  ? real.listWebhookSubscriptions
+  : mock.listWebhookSubscriptions;
+export const getWebhookSubscription = useReal
+  ? real.getWebhookSubscription
+  : mock.getWebhookSubscription;
+export const createWebhookSubscription = useReal
+  ? real.createWebhookSubscription
+  : mock.createWebhookSubscription;
+export const updateWebhookSubscription = useReal
+  ? real.updateWebhookSubscription
+  : mock.updateWebhookSubscription;
+export const deleteWebhookSubscription = useReal
+  ? real.deleteWebhookSubscription
+  : mock.deleteWebhookSubscription;
+export const findWebhookSubscriptionsForEvent = useReal
+  ? real.findWebhookSubscriptionsForEvent
+  : mock.findWebhookSubscriptionsForEvent;
 
 // ── GDPR: cascade delete + export (Article 17 + 20) ──
 export const getAllUserData = useReal ? real.getAllUserData : mock.getAllUserData;

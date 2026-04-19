@@ -532,6 +532,26 @@ export async function updateVideo(videoId: string, data: Partial<Video>): Promis
   return updated;
 }
 
+export async function updateVideoSchedule(
+  videoId: string,
+  day: string,
+  time?: string
+): Promise<void> {
+  const sets: string[] = [`scheduled_day = ${escString(day)}`];
+  if (time !== undefined) sets.push(`scheduled_time = ${escString(time)}`);
+  await sql(`UPDATE videos SET ${sets.join(", ")} WHERE id = ${escUuid(videoId)}`);
+}
+
+export async function updateVideoScript(videoId: string, script: string): Promise<void> {
+  // Load existing video to preserve hook and cta in script_json
+  const video = await getVideo(videoId);
+  if (!video) throw new Error(`Video ${videoId} not found`);
+  const updatedScript = { ...video.scriptJson, body: script };
+  await sql(
+    `UPDATE videos SET script_json = ${esc(JSON.stringify(updatedScript))} WHERE id = ${esc(videoId)}`
+  );
+}
+
 export async function approveVideo(videoId: string): Promise<Video> {
   return updateVideo(videoId, { status: "approved" });
 }
@@ -750,6 +770,158 @@ export async function deleteUserAndData(userId: string): Promise<void> {
   await sql(`DELETE FROM voice_consent_records WHERE user_id = ${uid}`).catch(() => undefined);
   // User row last
   await sql(`DELETE FROM users WHERE id = ${uid}`);
+}
+
+// ─── Webhook subscriptions ────────────────────────────────────────────────────
+
+/**
+ * TODO(migration): create table `webhook_subscriptions`:
+ *
+ *   CREATE TABLE webhook_subscriptions (
+ *     id             VARCHAR(64)  NOT NULL PRIMARY KEY,
+ *     user_id        VARCHAR(255) NOT NULL,
+ *     url            VARCHAR(500) NOT NULL,
+ *     events         TEXT         NOT NULL,  -- JSON array of event strings
+ *     secret         VARCHAR(128) NOT NULL,
+ *     status         VARCHAR(32)  NOT NULL DEFAULT 'active',
+ *     last_delivered_at DATETIME,
+ *     last_error_message VARCHAR(500),
+ *     created_at     DATETIME     NOT NULL,
+ *     INDEX user_idx (user_id)
+ *   );
+ *
+ * Until the migration lands every call is wrapped in try/catch + no-op so
+ * the feature degrades gracefully (mock path is authoritative in dev).
+ */
+
+import type {
+  WebhookSubscription,
+  WebhookEventType,
+  WebhookStatus,
+} from "@/lib/types/webhook";
+
+const WEBHOOK_STATUSES = ["active", "degraded", "disabled"] as const;
+
+function rowToWebhook(row: NcbRow): WebhookSubscription {
+  return {
+    id: str(row.id),
+    userId: str(row.user_id),
+    url: str(row.url),
+    events: parseJson<WebhookEventType[]>(row.events, []),
+    secret: str(row.secret),
+    status: (row.status as WebhookStatus) ?? "active",
+    lastDeliveredAt: maybe(row.last_delivered_at, str),
+    lastErrorMessage: maybe(row.last_error_message, str),
+    createdAt: str(row.created_at) || new Date().toISOString(),
+  };
+}
+
+export async function listWebhookSubscriptions(
+  userId: string
+): Promise<WebhookSubscription[]> {
+  try {
+    const rows = await sql(
+      `SELECT * FROM webhook_subscriptions WHERE user_id = ${escUuid(userId)} ORDER BY created_at DESC`
+    );
+    return rows.map(rowToWebhook);
+  } catch (err) {
+    console.warn("[webhooks] listWebhookSubscriptions failed (migration pending?):", err);
+    return [];
+  }
+}
+
+export async function getWebhookSubscription(
+  id: string
+): Promise<WebhookSubscription | null> {
+  try {
+    const rows = await sql(
+      `SELECT * FROM webhook_subscriptions WHERE id = ${escUuid(id)} LIMIT 1`
+    );
+    return rows.length > 0 ? rowToWebhook(rows[0]) : null;
+  } catch (err) {
+    console.warn("[webhooks] getWebhookSubscription failed:", err);
+    return null;
+  }
+}
+
+export async function createWebhookSubscription(
+  data: Omit<WebhookSubscription, "id" | "createdAt">
+): Promise<WebhookSubscription> {
+  const id = `whk_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  const createdAt = new Date().toISOString();
+  try {
+    await sqlInsert(
+      `INSERT INTO webhook_subscriptions (id, user_id, url, events, secret, status, created_at)
+       VALUES (${escUuid(id)}, ${escUuid(data.userId)}, ${escString(data.url)},
+               ${escString(JSON.stringify(data.events))},
+               ${escString(data.secret)},
+               ${escEnum(data.status, WEBHOOK_STATUSES)},
+               ${escString(nowSql())})`
+    );
+  } catch (err) {
+    console.warn("[webhooks] createWebhookSubscription insert failed:", err);
+  }
+  return { ...data, id, createdAt };
+}
+
+export async function updateWebhookSubscription(
+  id: string,
+  patch: Partial<
+    Pick<
+      WebhookSubscription,
+      "url" | "events" | "status" | "lastDeliveredAt" | "lastErrorMessage"
+    >
+  >
+): Promise<WebhookSubscription | null> {
+  try {
+    const sets: string[] = [];
+    if (patch.url !== undefined) sets.push(`url = ${escString(patch.url)}`);
+    if (patch.events !== undefined)
+      sets.push(`events = ${escString(JSON.stringify(patch.events))}`);
+    if (patch.status !== undefined)
+      sets.push(`status = ${escEnum(patch.status, WEBHOOK_STATUSES)}`);
+    if (patch.lastDeliveredAt !== undefined)
+      sets.push(`last_delivered_at = ${escString(patch.lastDeliveredAt)}`);
+    if (patch.lastErrorMessage !== undefined)
+      sets.push(`last_error_message = ${escString(patch.lastErrorMessage)}`);
+    if (sets.length > 0) {
+      await sql(
+        `UPDATE webhook_subscriptions SET ${sets.join(", ")} WHERE id = ${escUuid(id)}`
+      );
+    }
+    return await getWebhookSubscription(id);
+  } catch (err) {
+    console.warn("[webhooks] updateWebhookSubscription failed:", err);
+    return null;
+  }
+}
+
+export async function deleteWebhookSubscription(id: string): Promise<boolean> {
+  try {
+    await sql(`DELETE FROM webhook_subscriptions WHERE id = ${escUuid(id)}`);
+    return true;
+  } catch (err) {
+    console.warn("[webhooks] deleteWebhookSubscription failed:", err);
+    return false;
+  }
+}
+
+export async function findWebhookSubscriptionsForEvent(
+  userId: string,
+  event: WebhookEventType
+): Promise<WebhookSubscription[]> {
+  try {
+    const rows = await sql(
+      `SELECT * FROM webhook_subscriptions
+         WHERE user_id = ${escUuid(userId)}
+           AND status <> 'disabled'
+           AND events LIKE ${escString(`%"${event}"%`)}`
+    );
+    return rows.map(rowToWebhook).filter((w) => w.events.includes(event));
+  } catch (err) {
+    console.warn("[webhooks] findWebhookSubscriptionsForEvent failed:", err);
+    return [];
+  }
 }
 
 // ─── Avatar waitlist (Phase 2 lead capture) ───────────────────────────────────

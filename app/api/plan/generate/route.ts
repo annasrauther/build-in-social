@@ -6,6 +6,7 @@ import {
 } from "@/lib/services/claude";
 import { requireAuth } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/services/rate-limit";
+import { fireWebhookEventNonBlocking } from "@/lib/services/webhooks";
 import { clampDurationForPlatform } from "@/lib/utils/platform-config";
 import type { ContentMode } from "@/lib/types/video";
 import type { Platform } from "@/lib/types/user";
@@ -128,6 +129,14 @@ export async function POST(request: Request) {
       dayOfWeek: item.dayOfWeek,
       confidenceScore: item.confidenceScore,
     }));
+
+    // Fire outbound webhook — non-blocking, never throws.
+    fireWebhookEventNonBlocking(userId, "plan.generated", {
+      mode,
+      videoCount: videos.length,
+      weekNumber,
+      platforms,
+    });
 
     return NextResponse.json({ data: { videos }, error: null });
   } catch (err) {

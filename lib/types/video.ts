@@ -124,6 +124,9 @@ export interface Video {
   /** Number of AI rewrites applied to this video's script. Capped at 3. */
   revisionCount?: number;
 
+  /** X (Twitter) thread split — only present when platform = "x" and thread mode is active. */
+  thread?: Array<{ index: number; text: string }>;
+
   createdAt: string;
   publishedAt?: string;
 }

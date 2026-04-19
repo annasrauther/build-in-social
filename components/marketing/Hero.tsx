@@ -1,5 +1,8 @@
+"use client";
+
 import { RiPlayCircleFill } from "@remixicon/react"
 import Link from "next/link"
+import { motion } from "framer-motion"
 import { Button } from "@/components/tremor/Button"
 import { ArrowAnimated } from "@/components/marketing/ArrowAnimated"
 import HeroImage from "./HeroImage"
@@ -70,6 +73,35 @@ export default function Hero() {
       >
         {/* Radial Glow */}
         <div className="bg-radial-glow absolute inset-0 -top-20 -z-10 h-[150%] w-full opacity-50 dark:opacity-20" />
+
+        {/* Demo video placeholder */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+          className="mb-8 mx-auto w-full max-w-2xl"
+        >
+          <div className="relative w-full overflow-hidden rounded-2xl shadow-[0_8px_48px_rgba(217,119,87,0.15)] ring-1 ring-brand-200/40 dark:ring-brand-900/30"
+            style={{ aspectRatio: "16/9" }}
+          >
+            {/* TODO: replace /demo-placeholder.mp4 with real product demo */}
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              src="/demo-placeholder.mp4"
+              className="absolute inset-0 h-full w-full object-cover"
+              aria-label="Build In Social product demo"
+            />
+            {/* Subtle gradient overlay for polish */}
+            <div
+              className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none"
+              aria-hidden="true"
+            />
+          </div>
+        </motion.div>
+
         <HeroImage />
         <div
           className="absolute inset-x-0 -bottom-20 -mx-10 h-2/4 bg-gradient-to-t from-white via-white to-transparent lg:h-1/4 dark:from-gray-950 dark:via-gray-950"

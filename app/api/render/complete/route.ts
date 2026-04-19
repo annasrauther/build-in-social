@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { updateRenderJob } from "@/lib/services/queue";
 import { getRenderJob as dbGetRenderJob, updateRenderJob as dbUpdateRenderJob, updateVideo, getVideo } from "@/lib/services/db";
 import { sendEmail } from "@/lib/services/resend";
+import { fireWebhookEventNonBlocking } from "@/lib/services/webhooks";
 import { refundCreditForRender } from "@/lib/services/credits";
 import { APP_URL, INTERNAL_SECRET, R2_PUBLIC_URL } from "@/lib/env";
 
@@ -137,6 +138,14 @@ export async function POST(req: NextRequest) {
           status: "ready",
           outputUrl,
           ...(durationSeconds > 0 ? { durationSeconds } : {}),
+        });
+
+        // Fire outbound webhook — non-blocking, never throws.
+        fireWebhookEventNonBlocking(video.userId, "video.rendered", {
+          videoId: video.id,
+          outputUrl,
+          platform: video.platform,
+          durationSeconds: durationSeconds > 0 ? durationSeconds : video.durationSeconds,
         });
 
         // ── Trigger pSEO generation ───────────────────────────────────────

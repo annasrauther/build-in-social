@@ -7,8 +7,13 @@ import { Button } from "@/components/tremor/Button";
 import { StatusCard } from "@/components/ui/StatusCard";
 import { Badge } from "@/components/tremor/Badge";
 import { Divider } from "@/components/tremor/Divider";
+import { ThreadPreview } from "@/components/plan/ThreadPreview";
+import { InlineScriptEditor } from "@/components/plan/InlineScriptEditor";
+import { CaptionStylePicker } from "@/components/plan/CaptionStylePicker";
+import { splitScriptIntoThread } from "@/lib/services/thread";
 import { APP } from "@/content/app";
 import type { Video } from "@/lib/types/video";
+import type { CaptionStyle } from "@/lib/types/caption";
 
 const MAX_REVISIONS_PER_VIDEO = 3;
 const NOTE_MAX = 500;
@@ -23,12 +28,18 @@ export default function VideoDetailPage({ params }: PageProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Script state (updated optimistically by InlineScriptEditor)
+  const [scriptBody, setScriptBody] = useState<string | null>(null);
+
   // Revision flow state
   const [revisionOpen, setRevisionOpen] = useState(false);
   const [revisionNote, setRevisionNote] = useState("");
   const [revisionSubmitting, setRevisionSubmitting] = useState(false);
   const [revisionError, setRevisionError] = useState<string | null>(null);
   const [revisionFlash, setRevisionFlash] = useState<string | null>(null);
+
+  // Caption style state — Phase 1: local only, will be sent with render job in Phase 2
+  const [captionStyle, setCaptionStyle] = useState<CaptionStyle>("minimal");
 
   const revisionCount = video?.revisionCount ?? 0;
   const revisionsRemaining = Math.max(0, MAX_REVISIONS_PER_VIDEO - revisionCount);
@@ -84,7 +95,9 @@ export default function VideoDetailPage({ params }: PageProps) {
           setError(j.error ?? APP.VIDEO_DETAIL.notFound);
           setVideo(null);
         } else {
-          setVideo((j.data as Video) ?? null);
+          const v = (j.data as Video) ?? null;
+          setVideo(v);
+          if (v) setScriptBody(v.scriptJson.body);
           setError(null);
         }
       })
@@ -169,15 +182,49 @@ export default function VideoDetailPage({ params }: PageProps) {
                   {video.scriptJson.hook}
                 </p>
                 <Divider />
-                <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  {APP.VIDEO_DETAIL.script}
-                </h2>
-                <p className="mt-2 whitespace-pre-line text-sm text-gray-900 dark:text-gray-50">
-                  {video.scriptJson.body}
-                </p>
-                <p className="mt-3 text-sm font-medium text-gray-900 dark:text-gray-50">
-                  {video.scriptJson.cta}
-                </p>
+                {/* Script section — for X platform with thread data, show ThreadPreview; else plain text */}
+                {video.platform === "x" ? (
+                  <div className="mt-4">
+                    <ThreadPreview
+                      tweets={
+                        video.thread && video.thread.length > 0
+                          ? video.thread
+                          : splitScriptIntoThread(
+                              [video.scriptJson.hook, scriptBody ?? video.scriptJson.body, video.scriptJson.cta]
+                                .filter(Boolean)
+                                .join("\n\n")
+                            )
+                      }
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      {APP.VIDEO_DETAIL.script}
+                    </h2>
+                    <p className="mt-2 whitespace-pre-line text-sm text-gray-900 dark:text-gray-50">
+                      {scriptBody ?? video.scriptJson.body}
+                    </p>
+                    <p className="mt-3 text-sm font-medium text-gray-900 dark:text-gray-50">
+                      {video.scriptJson.cta}
+                    </p>
+                  </>
+                )}
+
+                {/* Inline script editor — direct edit, not an AI revision */}
+                <InlineScriptEditor
+                  videoId={video.id}
+                  initialScript={scriptBody ?? video.scriptJson.body}
+                  onSaved={(newScript) => setScriptBody(newScript)}
+                />
+
+                {/* Caption style picker — Phase 1: local state only; sent with render job in Phase 2 */}
+                <div className="mt-6 border-t border-gray-100 pt-5 dark:border-gray-800">
+                  <CaptionStylePicker
+                    selected={captionStyle}
+                    onSelect={setCaptionStyle}
+                  />
+                </div>
 
                 {/* Revision flow — Haiku-backed rewrite, capped 3/video. */}
                 <div className="mt-6 border-t border-gray-100 pt-4 dark:border-gray-800">
