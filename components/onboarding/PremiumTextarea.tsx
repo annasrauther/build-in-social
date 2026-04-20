@@ -1,21 +1,44 @@
 "use client";
 
-import { forwardRef, useState } from "react";
+import { forwardRef, useId, useState } from "react";
 
 interface PremiumTextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   error?: string;
+  /** Optional visible label rendered above the textarea with `htmlFor` pairing. */
+  label?: string;
+  /** Accessible label when a visible label is not used. Passed through to the textarea. */
+  "aria-label"?: string;
 }
 
 /**
  * Premium textarea — same rotating gradient border as PremiumInput on focus.
  */
 export const PremiumTextarea = forwardRef<HTMLTextAreaElement, PremiumTextareaProps>(
-  function PremiumTextarea({ error, className = "", onFocus, onBlur, style, ...props }, ref) {
+  function PremiumTextarea(
+    { error, className = "", onFocus, onBlur, style, label, id: idProp, ...props },
+    ref,
+  ) {
     const [focused, setFocused] = useState(false);
+    const reactId = useId();
+    const id = idProp ?? reactId;
 
     return (
       <div className={className}>
+        {label && (
+          <label
+            htmlFor={id}
+            className="mb-1.5 block"
+            style={{
+              fontSize: "var(--type-supporting-mobile)",
+              fontWeight: 500,
+              color: "var(--text-primary)",
+            }}
+          >
+            {label}
+          </label>
+        )}
+
         {/* Outer clipping wrapper */}
         <div
           className="relative overflow-hidden p-[1.5px] rounded-[calc(var(--radius-md)+1.5px)]"
@@ -43,8 +66,10 @@ export const PremiumTextarea = forwardRef<HTMLTextAreaElement, PremiumTextareaPr
           >
             <textarea
               ref={ref}
+              id={id}
+              aria-invalid={error ? true : undefined}
               {...props}
-              className="focus:outline-none focus:ring-0 focus:border-transparent w-full font-normal bg-transparent border-none outline-none px-[14px] py-[12px] appearance-none resize-none leading-relaxed"
+              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface)] w-full font-normal bg-transparent border-none px-[14px] py-[12px] appearance-none resize-none leading-relaxed"
               onFocus={(e) => {
                 setFocused(true);
                 onFocus?.(e);

@@ -16,6 +16,7 @@ import { sendEmail } from "@/lib/services/resend";
 import { fireWebhookEventNonBlocking } from "@/lib/services/webhooks";
 import { refundCreditForRender } from "@/lib/services/credits";
 import { APP_URL, INTERNAL_SECRET, R2_PUBLIC_URL } from "@/lib/env";
+import { timingSafeStringEquals } from "@/lib/security/compare";
 
 /**
  * SECURITY (S3): Reject any `outputUrl` that does not start with the
@@ -43,8 +44,8 @@ export async function POST(req: NextRequest) {
       { status: 503 }
     );
   }
-  const provided = req.headers.get("x-internal-secret");
-  if (provided !== internalSecret) {
+  const provided = req.headers.get("x-internal-secret") ?? "";
+  if (!timingSafeStringEquals(provided, internalSecret)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

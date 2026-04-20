@@ -12,6 +12,13 @@ interface SelectionCardProps {
   description?: string;
   /** Optional trailing content (e.g. badge, extra info) */
   trailing?: React.ReactNode;
+  /**
+   * ARIA variant — determines semantic role.
+   *  - "radio"    → role="radio" + aria-checked (single-select groups)
+   *  - "checkbox" → role="checkbox" + aria-checked (multi-select groups)
+   * Defaults to "radio".
+   */
+  variant?: "radio" | "checkbox";
 }
 
 export function SelectionCard({
@@ -21,6 +28,7 @@ export function SelectionCard({
   title,
   description,
   trailing,
+  variant = "radio",
 }: SelectionCardProps) {
   const controls = useAnimationControls();
   const prevSelected = useRef(selected);
@@ -57,8 +65,9 @@ export function SelectionCard({
       <motion.button
         type="button"
         onClick={onSelect}
-        aria-pressed={selected}
-        className="relative w-full text-left min-h-[44px] px-5 py-4 cursor-pointer outline-none z-[1] rounded-[var(--radius-lg)]"
+        role={variant}
+        aria-checked={selected}
+        className="relative w-full text-left min-h-[44px] px-5 py-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-page)] z-[1] rounded-[var(--radius-lg)]"
         style={{
           backgroundColor: "var(--bg-elevated)",
           border: selected ? "none" : "1px solid var(--border-default)",

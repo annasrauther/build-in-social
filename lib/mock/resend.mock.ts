@@ -11,7 +11,9 @@ export type EmailTemplate =
   | "video-complete"
   | "voice-ready"
   | "billing-confirmed"
-  | "render-failed";
+  | "render-failed"
+  | "publish-success"
+  | "quota-warning";
 
 export async function sendEmail(params: {
   to: string;

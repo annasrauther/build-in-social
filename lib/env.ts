@@ -31,35 +31,40 @@ const EnvSchema = z.object({
   CLERK_SECRET_KEY: requiredInProd("CLERK_SECRET_KEY"),
   CLERK_WEBHOOK_SECRET: requiredInProd("CLERK_WEBHOOK_SECRET"),
 
-  // ── Database ──
+  // ── Database ── (required in prod — app is useless without it)
   NCB_DATA_API_URL: optional(),
-  NCB_INSTANCE: optional(),
-  NOCODEBACKEND_SECRET_KEY: optional(),
+  NCB_INSTANCE: requiredInProd("NCB_INSTANCE"),
+  NOCODEBACKEND_SECRET_KEY: requiredInProd("NOCODEBACKEND_SECRET_KEY"),
 
-  // ── AI ──
-  ANTHROPIC_API_KEY: optional(),
+  // ── AI ── (required in prod — core generation path)
+  ANTHROPIC_API_KEY: requiredInProd("ANTHROPIC_API_KEY"),
 
-  // ── Voice / B-roll / Storage ──
-  ELEVENLABS_API_KEY: optional(),
-  PEXELS_API_KEY: optional(),
-  R2_ACCESS_KEY_ID: optional(),
-  R2_SECRET_ACCESS_KEY: optional(),
-  R2_BUCKET_NAME: optional(),
-  R2_PUBLIC_URL: optional(),
-  CLOUDFLARE_ACCOUNT_ID: optional(),
+  // ── Voice / B-roll / Storage ── (required in prod — render pipeline)
+  ELEVENLABS_API_KEY: requiredInProd("ELEVENLABS_API_KEY"),
+  PEXELS_API_KEY: requiredInProd("PEXELS_API_KEY"),
+  R2_ACCESS_KEY_ID: requiredInProd("R2_ACCESS_KEY_ID"),
+  R2_SECRET_ACCESS_KEY: requiredInProd("R2_SECRET_ACCESS_KEY"),
+  R2_BUCKET_NAME: requiredInProd("R2_BUCKET_NAME"),
+  R2_PUBLIC_URL: requiredInProd("R2_PUBLIC_URL"),
+  CLOUDFLARE_ACCOUNT_ID: requiredInProd("CLOUDFLARE_ACCOUNT_ID"),
 
   // ── Payments ── (required in prod for billing flows)
   STRIPE_SECRET_KEY: requiredInProd("STRIPE_SECRET_KEY"),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: requiredInProd("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"),
   STRIPE_WEBHOOK_SECRET: requiredInProd("STRIPE_WEBHOOK_SECRET"),
+  STRIPE_PRICE_STARTER_MONTHLY: optional(),
+  STRIPE_PRICE_STARTER_ANNUAL: optional(),
   STRIPE_PRICE_SOLO: optional(),
+  STRIPE_PRICE_SOLO_ANNUAL: optional(),
   STRIPE_PRICE_CREATOR: optional(),
+  STRIPE_PRICE_CREATOR_ANNUAL: optional(),
   STRIPE_PRICE_STUDIO: optional(),
+  STRIPE_PRICE_STUDIO_ANNUAL: optional(),
 
-  // ── Email / Queue ──
-  RESEND_API_KEY: optional(),
-  UPSTASH_REDIS_REST_URL: optional(),
-  UPSTASH_REDIS_REST_TOKEN: optional(),
+  // ── Email / Queue ── (required in prod — notifications + rate limits)
+  RESEND_API_KEY: requiredInProd("RESEND_API_KEY"),
+  UPSTASH_REDIS_REST_URL: requiredInProd("UPSTASH_REDIS_REST_URL"),
+  UPSTASH_REDIS_REST_TOKEN: requiredInProd("UPSTASH_REDIS_REST_TOKEN"),
 
   // ── App ──
   NEXT_PUBLIC_APP_URL: z.string().default("http://localhost:3000"),
@@ -67,6 +72,9 @@ const EnvSchema = z.object({
   // ── Internal secrets ── (required in prod — fail closed without them)
   INTERNAL_SECRET: requiredInProd("INTERNAL_SECRET"),
   CRON_SECRET: requiredInProd("CRON_SECRET"),
+
+  // ── WordPress publishing ── (required in prod to encrypt app passwords)
+  WORDPRESS_ENCRYPTION_KEY: requiredInProd("WORDPRESS_ENCRYPTION_KEY"),
 
   // ── Dev flags ──
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
@@ -84,6 +92,23 @@ if (!parsed.success && isProduction && !isBuildPhase) {
     parsed.error.flatten().fieldErrors
   );
   throw new Error("Environment validation failed in production. See log above.");
+}
+
+// Dev-mode visibility: warn once at boot about services that will silently fall
+// back to mocks. Easy to miss otherwise.
+if (!isProduction && typeof window === "undefined") {
+  const missing: string[] = [];
+  if (!process.env.ANTHROPIC_API_KEY) missing.push("ANTHROPIC_API_KEY (Claude → mock)");
+  if (!process.env.STRIPE_SECRET_KEY) missing.push("STRIPE_SECRET_KEY (Stripe → mock)");
+  if (!process.env.NOCODEBACKEND_SECRET_KEY) missing.push("NOCODEBACKEND_SECRET_KEY (DB → in-memory)");
+  if (!process.env.R2_ACCESS_KEY_ID) missing.push("R2_ACCESS_KEY_ID (R2 → in-memory)");
+  if (!process.env.ELEVENLABS_API_KEY) missing.push("ELEVENLABS_API_KEY (voice → mock)");
+  if (!process.env.PEXELS_API_KEY) missing.push("PEXELS_API_KEY (b-roll → mock)");
+  if (missing.length > 0) {
+    console.warn(
+      "\n[env] Running in dev with mocked services:\n  - " + missing.join("\n  - ") + "\n"
+    );
+  }
 }
 
 const env = parsed.success ? parsed.data : (process.env as unknown as z.infer<typeof EnvSchema>);
@@ -112,9 +137,14 @@ export const CLOUDFLARE_ACCOUNT_ID = env.CLOUDFLARE_ACCOUNT_ID;
 export const STRIPE_SECRET_KEY = env.STRIPE_SECRET_KEY;
 export const STRIPE_PUBLISHABLE_KEY = env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 export const STRIPE_WEBHOOK_SECRET = env.STRIPE_WEBHOOK_SECRET;
+export const STRIPE_PRICE_STARTER_MONTHLY = env.STRIPE_PRICE_STARTER_MONTHLY;
+export const STRIPE_PRICE_STARTER_ANNUAL = env.STRIPE_PRICE_STARTER_ANNUAL;
 export const STRIPE_PRICE_SOLO = env.STRIPE_PRICE_SOLO;
+export const STRIPE_PRICE_SOLO_ANNUAL = env.STRIPE_PRICE_SOLO_ANNUAL;
 export const STRIPE_PRICE_CREATOR = env.STRIPE_PRICE_CREATOR;
+export const STRIPE_PRICE_CREATOR_ANNUAL = env.STRIPE_PRICE_CREATOR_ANNUAL;
 export const STRIPE_PRICE_STUDIO = env.STRIPE_PRICE_STUDIO;
+export const STRIPE_PRICE_STUDIO_ANNUAL = env.STRIPE_PRICE_STUDIO_ANNUAL;
 
 export const RESEND_API_KEY = env.RESEND_API_KEY;
 
@@ -125,6 +155,8 @@ export const APP_URL = env.NEXT_PUBLIC_APP_URL;
 
 export const INTERNAL_SECRET = env.INTERNAL_SECRET;
 export const CRON_SECRET = env.CRON_SECRET;
+
+export const WORDPRESS_ENCRYPTION_KEY = env.WORDPRESS_ENCRYPTION_KEY;
 
 /** @deprecated use NEXT_PUBLIC_DEV_AUTH=1. Kept for one release. */
 export const BYPASS_AUTH =

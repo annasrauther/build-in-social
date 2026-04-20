@@ -14,7 +14,7 @@ import { getUserByClerkId, updateUser } from "@/lib/services/db";
 import { sendEmail } from "@/lib/services/resend";
 import type { SubscriptionTier } from "@/lib/types/user";
 
-const VALID_TIERS = new Set<SubscriptionTier>(["solo", "creator", "studio"]);
+const VALID_TIERS = new Set<SubscriptionTier>(["starter", "solo", "creator", "studio"]);
 
 export async function GET(req: NextRequest) {
   if (process.env.NODE_ENV !== "development") {

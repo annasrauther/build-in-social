@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "build-in-social",
-      "runtimeExecutable": "npm",
+      "runtimeExecutable": "/Users/annasrauther/.nvm/versions/node/v20.20.2/bin/npm",
       "runtimeArgs": ["run", "dev"],
       "cwd": "/Users/annasrauther/Projects/video-auto-pilot/build_in_social",
       "port": 3000

@@ -198,6 +198,66 @@ export function BillingConfirmedEmail({ displayName, tier }: { displayName: stri
   );
 }
 
+// ─── PublishSuccess ───────────────────────────────────────────────────────────
+
+export function PublishSuccessEmail({ displayName, videoTitle, platform, videoId }: { displayName: string; videoTitle: string; platform: string; videoId: string }) {
+  return (
+    <Html>
+      <Head />
+      <Preview>Posted: {videoTitle}</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          <Text style={brand}>Build In Social</Text>
+          <Heading style={h1}>Your video is live on {platform}.</Heading>
+          <Text style={body}>Hey {displayName}, Build In Social just published your video to {platform}.</Text>
+          <Text style={{ ...body, color: "#0a0a0a", fontWeight: "600" }}>{videoTitle}</Text>
+          <Section style={{ margin: "24px 0" }}>
+            <Button href={`${appUrl}/videos/${videoId}`} style={btn}>
+              View post →
+            </Button>
+          </Section>
+          <Hr style={hr} />
+          <Text style={footer}>
+            <Link href={appUrl} style={{ color: "#a1a1aa" }}>buildinsocial.com</Link>
+          </Text>
+        </Container>
+      </Body>
+    </Html>
+  );
+}
+
+// ─── QuotaWarning ─────────────────────────────────────────────────────────────
+
+export function QuotaWarningEmail({ displayName, used, cap, tier }: { displayName: string; used: number; cap: number; tier: string }) {
+  return (
+    <Html>
+      <Head />
+      <Preview>{`You've used ${used} of ${cap} videos this month.`}</Preview>
+      <Body style={main}>
+        <Container style={container}>
+          <Text style={brand}>Build In Social</Text>
+          <Heading style={h1}>You&apos;re approaching your video limit.</Heading>
+          <Text style={body}>
+            Hey {displayName}, you&apos;ve used {used} of your {cap} videos this month on the {tier} plan.
+            Once you hit the cap, Build In Social pauses new renders until your quota resets.
+          </Text>
+          <Section style={{ margin: "24px 0" }}>
+            <Button href={`${appUrl}/settings/billing`} style={btn}>
+              Upgrade for more →
+            </Button>
+          </Section>
+          <Hr style={hr} />
+          <Text style={footer}>
+            <Link href={`${appUrl}/settings/billing`} style={{ color: "#a1a1aa" }}>Billing settings</Link>
+            {" · "}
+            <Link href={appUrl} style={{ color: "#a1a1aa" }}>buildinsocial.com</Link>
+          </Text>
+        </Container>
+      </Body>
+    </Html>
+  );
+}
+
 // ─── RenderFailed ─────────────────────────────────────────────────────────────
 
 export function RenderFailedEmail({ displayName, videoTitle, videoId }: { displayName: string; videoTitle: string; videoId: string }) {

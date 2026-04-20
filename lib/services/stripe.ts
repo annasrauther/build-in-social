@@ -1,21 +1,33 @@
 /**
  * Stripe service — subscription model.
  * Falls back to mock responses if STRIPE_SECRET_KEY is not set (local dev without Stripe).
+ *
+ * Four paid tiers: starter ($19), solo ($39), creator ($79), studio ($149).
+ * Each has a monthly and annual Stripe price id resolved through env.
  */
 
 import {
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
+  STRIPE_PRICE_STARTER_MONTHLY,
+  STRIPE_PRICE_STARTER_ANNUAL,
   STRIPE_PRICE_SOLO,
+  STRIPE_PRICE_SOLO_ANNUAL,
   STRIPE_PRICE_CREATOR,
+  STRIPE_PRICE_CREATOR_ANNUAL,
   STRIPE_PRICE_STUDIO,
+  STRIPE_PRICE_STUDIO_ANNUAL,
   APP_URL,
 } from "@/lib/env";
 
-const PRICE_IDS: Record<"solo" | "creator" | "studio", string | undefined> = {
-  solo: STRIPE_PRICE_SOLO,
-  creator: STRIPE_PRICE_CREATOR,
-  studio: STRIPE_PRICE_STUDIO,
+export type PaidTier = "starter" | "solo" | "creator" | "studio";
+export type BillingCycle = "monthly" | "annual";
+
+const PRICE_IDS: Record<PaidTier, { monthly: string | undefined; annual: string | undefined }> = {
+  starter: { monthly: STRIPE_PRICE_STARTER_MONTHLY, annual: STRIPE_PRICE_STARTER_ANNUAL },
+  solo: { monthly: STRIPE_PRICE_SOLO, annual: STRIPE_PRICE_SOLO_ANNUAL },
+  creator: { monthly: STRIPE_PRICE_CREATOR, annual: STRIPE_PRICE_CREATOR_ANNUAL },
+  studio: { monthly: STRIPE_PRICE_STUDIO, annual: STRIPE_PRICE_STUDIO_ANNUAL },
 };
 
 function getStripe() {
@@ -28,12 +40,14 @@ function getStripe() {
 // ── Checkout ──────────────────────────────────────────────────────────────────
 
 export async function createSubscriptionCheckout(params: {
-  packageId: "solo" | "creator" | "studio";
+  packageId: PaidTier;
   userId: string;
   userEmail?: string;
   trialDays?: number;
+  cycle?: BillingCycle;
 }): Promise<{ sessionUrl: string; sessionId: string }> {
   const stripe = getStripe();
+  const cycle: BillingCycle = params.cycle ?? "monthly";
 
   if (!stripe) {
     const activateUrl = `/api/dev/billing/activate?tier=${params.packageId}&userId=${params.userId}`;
@@ -43,10 +57,12 @@ export async function createSubscriptionCheckout(params: {
     };
   }
 
-  const priceId = PRICE_IDS[params.packageId];
+  const priceId = PRICE_IDS[params.packageId]?.[cycle];
   if (!priceId) {
     throw new Error(
-      `STRIPE_PRICE_${params.packageId.toUpperCase()} env var is not configured`
+      `STRIPE_PRICE_${params.packageId.toUpperCase()}${
+        cycle === "annual" ? "_ANNUAL" : "_MONTHLY"
+      } env var is not configured`
     );
   }
 
@@ -61,11 +77,13 @@ export async function createSubscriptionCheckout(params: {
       metadata: {
         userId: params.userId,
         tier: params.packageId,
+        cycle,
       },
     },
     metadata: {
       userId: params.userId,
       tier: params.packageId,
+      cycle,
     },
     ...(params.userEmail ? { customer_email: params.userEmail } : {}),
     success_url: `${APP_URL}/settings/billing?upgrade_success=true&tier=${params.packageId}`,
@@ -113,7 +131,7 @@ export async function cancelSubscription(
 
 export async function getSubscriptionStatus(customerId: string): Promise<{
   status: "active" | "trialing" | "canceled" | "past_due" | "none";
-  tier: "solo" | "creator" | "studio" | null;
+  tier: PaidTier | null;
   currentPeriodEnd: string | null;
 }> {
   const stripe = getStripe();
@@ -144,12 +162,16 @@ export async function getSubscriptionStatus(customerId: string): Promise<{
       : "none";
 
   const priceId = sub.items.data[0]?.price.id ?? "";
-  const tierEntry = (
-    Object.entries(PRICE_IDS) as Array<
-      ["solo" | "creator" | "studio", string | undefined]
-    >
-  ).find(([, id]) => id === priceId);
-  const tier = tierEntry ? tierEntry[0] : null;
+  // Resolve by scanning all (tier, cycle) entries.
+  let tier: PaidTier | null = null;
+  for (const [tierKey, prices] of Object.entries(PRICE_IDS) as Array<
+    [PaidTier, { monthly?: string; annual?: string }]
+  >) {
+    if (prices.monthly === priceId || prices.annual === priceId) {
+      tier = tierKey;
+      break;
+    }
+  }
 
   // Stripe v22 exposes current_period_end on the billing phase; access via cast
   const subAny = sub as unknown as { current_period_end?: number };
@@ -159,6 +181,19 @@ export async function getSubscriptionStatus(customerId: string): Promise<{
       : null;
 
   return { status, tier, currentPeriodEnd };
+}
+
+// ── Price-id → tier helper (used by webhook route) ─────────────────────────────
+
+export function tierForPriceId(priceId: string): PaidTier | null {
+  for (const [tierKey, prices] of Object.entries(PRICE_IDS) as Array<
+    [PaidTier, { monthly?: string; annual?: string }]
+  >) {
+    if (prices.monthly === priceId || prices.annual === priceId) {
+      return tierKey;
+    }
+  }
+  return null;
 }
 
 // ── Webhook helper (kept for webhook route) ────────────────────────────────────

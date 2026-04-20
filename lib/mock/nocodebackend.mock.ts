@@ -588,3 +588,161 @@ export async function findWebhookSubscriptionsForEvent(
 // Keeps the TS compiler happy when imports reference WebhookStatus implicitly.
 export type { WebhookStatus };
 
+// ─── WordPress connections ────────────────────────────────────────────────────
+//
+// Stubbed collection (`wordpress_connections`) — single record per userId.
+// Schema mirrors WordPressConnectionRecord in @/lib/types/wordpress. When the
+// real NCB-backed implementation lands in db.real.ts, it should create the
+// table and map rows through a similar shape. The mock stores records in
+// process memory so dev flows work without a database.
+
+import type { WordPressConnectionRecord } from "@/lib/types/wordpress";
+
+const wordpressConnections = new Map<string, WordPressConnectionRecord>();
+
+export async function getWordPressConnection(
+  userId: string
+): Promise<WordPressConnectionRecord | null> {
+  await delay(30);
+  return wordpressConnections.get(userId) ?? null;
+}
+
+export async function upsertWordPressConnection(
+  data: Omit<WordPressConnectionRecord, "id" | "createdAt" | "updatedAt"> & {
+    id?: string;
+  }
+): Promise<WordPressConnectionRecord> {
+  await delay(40);
+  const now = new Date().toISOString();
+  const existing = wordpressConnections.get(data.userId);
+  const record: WordPressConnectionRecord = {
+    id: existing?.id ?? data.id ?? `wpc_${Date.now()}`,
+    userId: data.userId,
+    siteUrl: data.siteUrl,
+    username: data.username,
+    encryptedAppPassword: data.encryptedAppPassword,
+    wpUserId: data.wpUserId,
+    lastTestedAt: data.lastTestedAt,
+    lastPublishedAt: data.lastPublishedAt,
+    enabled: data.enabled,
+    createdAt: existing?.createdAt ?? now,
+    updatedAt: now,
+  };
+  wordpressConnections.set(data.userId, record);
+  return record;
+}
+
+export async function updateWordPressConnection(
+  userId: string,
+  patch: Partial<
+    Pick<
+      WordPressConnectionRecord,
+      | "siteUrl"
+      | "username"
+      | "encryptedAppPassword"
+      | "wpUserId"
+      | "lastTestedAt"
+      | "lastPublishedAt"
+      | "enabled"
+    >
+  >
+): Promise<WordPressConnectionRecord | null> {
+  await delay(30);
+  const existing = wordpressConnections.get(userId);
+  if (!existing) return null;
+  const updated: WordPressConnectionRecord = {
+    ...existing,
+    ...patch,
+    updatedAt: new Date().toISOString(),
+  };
+  wordpressConnections.set(userId, updated);
+  return updated;
+}
+
+export async function deleteWordPressConnection(userId: string): Promise<boolean> {
+  await delay(20);
+  return wordpressConnections.delete(userId);
+}
+
+// ─── Monthly video renders (credits) ─────────────────────────────────────────
+//
+// Mock backing for the hard-cap credits service. Real impl in db.real.ts uses
+// `monthly_video_renders` with a unique index on (clerk_user_id, year_month,
+// video_id). The mock mirrors that shape so behavior is identical under test.
+//
+// Call shapes align with credits.ts. The mock keeps a Map of Sets keyed by
+// `${clerkUserId}:${yearMonth}`. No cross-process concurrency to worry about.
+
+const monthlyVideoRenders = new Map<string, Set<string>>();
+
+function monthKey(clerkUserId: string, yearMonth: string): string {
+  return `${clerkUserId}:${yearMonth}`;
+}
+
+export async function getMonthlyVideoUsage(
+  clerkUserId: string,
+  yearMonth: string
+): Promise<number> {
+  await delay(20);
+  return monthlyVideoRenders.get(monthKey(clerkUserId, yearMonth))?.size ?? 0;
+}
+
+export async function hasMonthlyVideoRender(
+  clerkUserId: string,
+  yearMonth: string,
+  videoId: string
+): Promise<boolean> {
+  await delay(10);
+  return monthlyVideoRenders.get(monthKey(clerkUserId, yearMonth))?.has(videoId) ?? false;
+}
+
+/**
+ * Attempt to add a render for (clerkUserId, yearMonth, videoId) under a hard cap.
+ * Returns the resulting count after the operation, or `cap + 1` sentinel to
+ * indicate the attempt was rejected because the user is at cap. The idempotency
+ * contract: if videoId is already present for this month, returns the current
+ * count without double-counting.
+ */
+export async function addMonthlyVideoRender(
+  clerkUserId: string,
+  yearMonth: string,
+  videoId: string,
+  cap: number
+): Promise<{ added: boolean; count: number; atCap: boolean }> {
+  await delay(30);
+  const k = monthKey(clerkUserId, yearMonth);
+  let set = monthlyVideoRenders.get(k);
+  if (!set) {
+    set = new Set();
+    monthlyVideoRenders.set(k, set);
+  }
+  if (set.has(videoId)) {
+    return { added: false, count: set.size, atCap: false };
+  }
+  if (set.size >= cap) {
+    return { added: false, count: set.size, atCap: true };
+  }
+  set.add(videoId);
+  return { added: true, count: set.size, atCap: false };
+}
+
+export async function removeMonthlyVideoRender(
+  clerkUserId: string,
+  yearMonth: string,
+  videoId: string
+): Promise<{ removed: boolean; count: number }> {
+  await delay(20);
+  const k = monthKey(clerkUserId, yearMonth);
+  const set = monthlyVideoRenders.get(k);
+  if (!set || !set.has(videoId)) {
+    return { removed: false, count: set?.size ?? 0 };
+  }
+  set.delete(videoId);
+  return { removed: true, count: set.size };
+}
+
+/** Test-only: clear monthly renders across all users. */
+export function _resetMonthlyVideoRenders(): void {
+  monthlyVideoRenders.clear();
+}
+

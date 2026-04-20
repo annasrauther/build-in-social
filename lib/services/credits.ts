@@ -1,29 +1,38 @@
 /**
- * Credits service — enforces critical path #1.
+ * Credits service — enforces critical path #1 (HARD cap per tier).
  *
  * Spec rule: deduct credit BEFORE submitting a render job. Refund on render
  * failure. Idempotent per (userId, videoId) so retries never double-deduct.
  *
- * Plan budgets come from knowledge-center.md §9:
- *   - Solo:    ~40 videos/month
- *   - Creator: ~65 videos/month
- *   - Studio:  ~92 videos/month
- *   - Trial:   23 videos (one full week)
+ * Caps are HARD — never pay-per-extra, never surprise charges. When a user
+ * reaches their cap, we pause (402) and ask them to upgrade.
  *
- * Storage model: a `month_video_usage` table keyed by (user_id, year_month)
- * with a JSON `videoIds` column tracking which videos have been deducted
- * this month. The set is the idempotency key.
+ *   - Starter: 15 videos/month
+ *   - Solo:    40 videos/month
+ *   - Creator: 65 videos/month
+ *   - Studio:  92 videos/month
+ *   - Trial:   23 videos (one full week of Studio)
  *
- * Implementation: thin in-memory mock now, NCB-backed implementation when
- * NOCODEBACKEND_SECRET_KEY is set. The mock is good enough for tests AND
- * for the no-key dev workflow the rest of the app uses.
+ * Storage:
+ *   - Dev (no NOCODEBACKEND_SECRET_KEY): in-memory mock in nocodebackend.mock.
+ *   - Prod: `monthly_video_renders` table via db.real. Atomicity comes from a
+ *     unique index on (clerk_user_id, year_month, video_id) + INSERT-IGNORE +
+ *     post-count + conditional DELETE rollback when a race pushed us over cap.
+ *     See comments in db.real.ts for the full protocol.
  */
 
-import { getUserByClerkId } from "@/lib/services/db";
+import {
+  addMonthlyVideoRender,
+  getMonthlyVideoUsage,
+  getUserByClerkId,
+  hasMonthlyVideoRender,
+  removeMonthlyVideoRender,
+} from "@/lib/services/db";
 import type { SubscriptionTier } from "@/lib/types/user";
 
 export const MONTHLY_VIDEO_BUDGET: Record<SubscriptionTier, number> = {
   trial: 23,
+  starter: 15,
   solo: 40,
   creator: 65,
   studio: 92,
@@ -38,30 +47,8 @@ export type RefundResult =
   | { ok: true; refunded: boolean; remaining: number }
   | { ok: false; reason: "USER_NOT_FOUND" };
 
-interface UsageRecord {
-  userId: string;
-  yearMonth: string; // e.g. "2026-04"
-  videoIds: Set<string>;
-}
-
-const usage = new Map<string, UsageRecord>();
-
-function key(userId: string, yearMonth: string): string {
-  return `${userId}:${yearMonth}`;
-}
-
 function currentYearMonth(now = new Date()): string {
   return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
-}
-
-function getOrCreate(userId: string, yearMonth: string): UsageRecord {
-  const k = key(userId, yearMonth);
-  let record = usage.get(k);
-  if (!record) {
-    record = { userId, yearMonth, videoIds: new Set() };
-    usage.set(k, record);
-  }
-  return record;
 }
 
 /**
@@ -83,20 +70,10 @@ export async function deductCreditForRender(
 
   const budget = MONTHLY_VIDEO_BUDGET[user.subscriptionTier];
   const yearMonth = currentYearMonth();
-  const record = getOrCreate(userId, yearMonth);
 
-  // Idempotency: same video already deducted this month → return existing balance.
-  if (record.videoIds.has(videoId)) {
-    return {
-      ok: true,
-      alreadyDeducted: true,
-      remaining: Math.max(0, budget - record.videoIds.size),
-      budget,
-    };
-  }
+  const result = await addMonthlyVideoRender(userId, yearMonth, videoId, budget);
 
-  // Budget check.
-  if (record.videoIds.size >= budget) {
+  if (result.atCap) {
     return {
       ok: false,
       reason: "INSUFFICIENT_CREDITS",
@@ -105,11 +82,10 @@ export async function deductCreditForRender(
     };
   }
 
-  record.videoIds.add(videoId);
   return {
     ok: true,
-    alreadyDeducted: false,
-    remaining: Math.max(0, budget - record.videoIds.size),
+    alreadyDeducted: !result.added,
+    remaining: Math.max(0, budget - result.count),
     budget,
   };
 }
@@ -137,21 +113,57 @@ export async function refundCreditForRender(
 
   const budget = MONTHLY_VIDEO_BUDGET[user.subscriptionTier];
   const yearMonth = currentYearMonth();
-  const record = usage.get(key(userId, yearMonth));
 
-  if (!record || !record.videoIds.has(videoId)) {
-    return { ok: true, refunded: false, remaining: budget - (record?.videoIds.size ?? 0) };
-  }
+  const result = await removeMonthlyVideoRender(userId, yearMonth, videoId);
 
-  record.videoIds.delete(videoId);
   return {
     ok: true,
-    refunded: true,
-    remaining: Math.max(0, budget - record.videoIds.size),
+    refunded: result.removed,
+    remaining: Math.max(0, budget - result.count),
   };
 }
 
-/** Test-only helper: clear in-memory state. */
-export function _resetCreditsForTests(): void {
-  usage.clear();
+/**
+ * Read-only: current month usage for a user. Used by the dashboard header
+ * and billing-settings usage panel. Does NOT mutate state.
+ */
+export async function getUsageForUser(
+  clerkUserId: string
+): Promise<{ used: number; cap: number; tier: SubscriptionTier; resetAt: string } | null> {
+  if (!clerkUserId) return null;
+  const user = await getUserByClerkId(clerkUserId).catch(() => null);
+  if (!user) return null;
+  const tier = user.subscriptionTier;
+  const cap = MONTHLY_VIDEO_BUDGET[tier];
+  const yearMonth = currentYearMonth();
+  const used = await getMonthlyVideoUsage(clerkUserId, yearMonth).catch(() => 0);
+  return { used, cap, tier, resetAt: nextMonthResetIso() };
+}
+
+/**
+ * ISO timestamp for the first instant of next month (UTC). Used in
+ * quota-exhausted responses so clients can render "wait until {resetAt}".
+ */
+export function nextMonthResetIso(now = new Date()): string {
+  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0, 0));
+  return next.toISOString();
+}
+
+/**
+ * Test-only helper: clear in-memory state.
+ * In prod this is a no-op — state lives in the DB and should be cleaned via
+ * SQL directly. The mock exports its own _resetMonthlyVideoRenders but we
+ * can't import it here without creating a prod dependency on the mock module,
+ * so we go through a dynamic import guarded by NODE_ENV.
+ */
+export async function _resetCreditsForTests(): Promise<void> {
+  // Imported lazily so production bundles don't pull in the mock.
+  if (process.env.NODE_ENV === "production") return;
+  // Silence ts/eslint on the dynamic import — the mock is dev/test-only.
+  const m = await import("@/lib/mock/nocodebackend.mock");
+  if (typeof m._resetMonthlyVideoRenders === "function") {
+    m._resetMonthlyVideoRenders();
+  }
+  // Also silence Node's "hasMonthlyVideoRender" by accessing — no-op call not needed.
+  void hasMonthlyVideoRender;
 }

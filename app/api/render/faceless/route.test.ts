@@ -39,6 +39,9 @@ const mocks = vi.hoisted(() => ({
     status: "queued",
     createdAt: new Date().toISOString(),
   })),
+  // Returns no voice profiles by default — voice-clone tier gate is a no-op.
+  getVoiceProfilesForUser: vi.fn(async () => []),
+  getUserByClerkId: vi.fn(async () => null),
   enqueueRenderJob: vi.fn(async () => ({ id: "qjob_1", status: "queued" })),
   deductCreditForRender: vi.fn(async () => ({
     ok: true as const,
@@ -67,6 +70,8 @@ vi.mock("@/lib/services/db", () => ({
   getVideo: mocks.getVideo,
   updateVideo: mocks.updateVideo,
   createRenderJob: mocks.createRenderJob,
+  getVoiceProfilesForUser: mocks.getVoiceProfilesForUser,
+  getUserByClerkId: mocks.getUserByClerkId,
 }));
 
 vi.mock("@/lib/services/queue", () => ({

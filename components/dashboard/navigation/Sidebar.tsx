@@ -6,6 +6,7 @@ import {
   RiVideoLine,
   RiSettings5Line,
   RiQuestionLine,
+  RiUser3Line,
 } from "@remixicon/react"
 import { Wordmark } from "@/components/ui/Wordmark"
 import Link from "next/link"
@@ -67,6 +68,23 @@ export function Sidebar() {
                 Quick links
               </span>
               <ul aria-label="quick links" role="list" className="space-y-0.5">
+                {/* Avatar Mode — Phase 1 waitlist. No HeyGen code. */}
+                <li>
+                  <Link
+                    href="/waitlist"
+                    className={cx(
+                      "text-gray-700 hover:text-gray-900 dark:text-gray-400 hover:dark:text-gray-50",
+                      "flex items-center gap-x-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition hover:bg-gray-100 hover:dark:bg-gray-900",
+                      focusRing,
+                    )}
+                  >
+                    <RiUser3Line className="size-4 shrink-0" aria-hidden="true" />
+                    Avatar Mode
+                    <span className="ml-auto rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-600 dark:bg-brand-950/60 dark:text-brand-300">
+                      Soon
+                    </span>
+                  </Link>
+                </li>
                 <li>
                   <a
                     href="https://buildinsocial.com"
@@ -90,8 +108,11 @@ export function Sidebar() {
           </div>
         </aside>
       </nav>
-      {/* top navbar (xs-lg) */}
-      <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between px-3 shadow-sm sm:gap-x-6 sm:px-4 lg:hidden border-b border-[color:var(--border-default)] bg-[color:var(--bg-surface)]">
+      {/* top navbar (xs-lg) — P2-18: respect safe-area inset (notch/dynamic island) */}
+      <div
+        className="sticky top-0 z-40 flex h-16 shrink-0 items-center justify-between px-3 shadow-sm sm:gap-x-6 sm:px-4 lg:hidden border-b border-[color:var(--border-default)] bg-[color:var(--bg-surface)]"
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
         <Link href="/dashboard" className="flex items-center">
           <Wordmark size={20} />
         </Link>

@@ -2,22 +2,33 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Public routes — no auth required
-const isPublicRoute = createRouteMatcher([
-  "/",
-  "/login(.*)",
-  "/signup(.*)",
-  "/onboarding(.*)",
-  "/p/(.*)",
-  "/privacy",
-  "/terms",
-  "/pricing",
-  "/about",
-  "/changelog",
-  "/waitlist",
-  "/api/webhooks/(.*)",
-  "/api/mock-download",
-  "/api/infer-product",
+// Protected routes — everything else is public or renders 404.
+// We invert the match (protect known app/API paths only) so unknown URLs
+// show the real 404 page instead of bouncing anonymous visitors to /login.
+const isProtectedRoute = createRouteMatcher([
+  "/dashboard(.*)",
+  "/plan(.*)",
+  "/videos(.*)",
+  "/settings(.*)",
+  "/api/user/(.*)",
+  "/api/videos(.*)",
+  "/api/plan/(.*)",
+  "/api/generate/(.*)",
+  "/api/script/(.*)",
+  "/api/render-jobs/(.*)",
+  // /api/render/* and /api/cron/* self-authenticate via INTERNAL_SECRET; keep out of Clerk.
+  "/api/billing/(.*)",
+  "/api/brand(.*)",
+  "/api/upload/(.*)",
+  "/api/voice/(.*)",
+  "/api/publishing/(.*)",
+  "/api/settings/(.*)",
+  "/api/automation/(.*)",
+  "/api/schedule/(.*)",
+  "/api/pseo/(.*)",
+  "/api/ingest",
+  "/api/webhooks/outbound(.*)",
+  "/api/onboard/complete",
 ]);
 
 // When Clerk keys are not configured, OR when NEXT_PUBLIC_DEV_AUTH=1 is set
@@ -36,7 +47,7 @@ function bypassMiddleware(_req: NextRequest) {
 }
 
 const clerkHandler = clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) {
+  if (isProtectedRoute(req)) {
     await auth.protect();
   }
 });

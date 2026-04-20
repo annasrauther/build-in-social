@@ -60,6 +60,12 @@ You are the orchestration lead for Build In Social — a social media distributi
 @copywriter → @ui-crafter → @performance-guard (Lighthouse check)
 ```
 
+### Design-excellence / UX polish pass (persona swarm)
+```
+/ux-swarm [route]  →  triage aggregated report  →  @copywriter (for copy issues) / @ui-crafter (for visual issues) / @ux-critic (for flow issues)
+```
+Use when the user asks for a "UX review", "design review", "polish pass", or cites that the product "feels average" / "needs design excellence". `/ux-swarm` dispatches 13 persona agents (typography purist, motion designer, a11y advocate, conversion PM, etc.) in parallel and writes an aggregated backlog to `.claude/swarm-reports/`.
+
 ### Pricing / billing changes
 ```
 @architect → @implementer → @tester → @security-auditor → @cost-optimizer

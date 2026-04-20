@@ -5,9 +5,14 @@ import { sendEmail } from "@/lib/services/resend";
 import {
   STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET,
+  STRIPE_PRICE_STARTER_MONTHLY,
+  STRIPE_PRICE_STARTER_ANNUAL,
   STRIPE_PRICE_SOLO,
+  STRIPE_PRICE_SOLO_ANNUAL,
   STRIPE_PRICE_CREATOR,
+  STRIPE_PRICE_CREATOR_ANNUAL,
   STRIPE_PRICE_STUDIO,
+  STRIPE_PRICE_STUDIO_ANNUAL,
 } from "@/lib/env";
 import type { SubscriptionTier } from "@/lib/types/user";
 
@@ -25,9 +30,14 @@ export const runtime = "nodejs";
 function buildPriceToTierMap(): Record<string, SubscriptionTier> {
   const map: Record<string, SubscriptionTier> = {};
   const entries: Array<[string | undefined, SubscriptionTier]> = [
+    [STRIPE_PRICE_STARTER_MONTHLY, "starter"],
+    [STRIPE_PRICE_STARTER_ANNUAL, "starter"],
     [STRIPE_PRICE_SOLO, "solo"],
+    [STRIPE_PRICE_SOLO_ANNUAL, "solo"],
     [STRIPE_PRICE_CREATOR, "creator"],
+    [STRIPE_PRICE_CREATOR_ANNUAL, "creator"],
     [STRIPE_PRICE_STUDIO, "studio"],
+    [STRIPE_PRICE_STUDIO_ANNUAL, "studio"],
   ];
   for (const [priceId, tier] of entries) {
     if (priceId && priceId.trim()) map[priceId] = tier;
@@ -116,8 +126,34 @@ export async function POST(req: NextRequest) {
     if (!user) return NextResponse.json({ ok: true });
 
     const priceId = sub.items.data[0]?.price.id ?? "";
-    const tier = PRICE_TO_TIER[priceId] ?? "trial";
-    await updateUser(user.id, { subscriptionTier: tier });
+
+    // MED-4: if Stripe sends a priceId we don't know, don't nuke the user to
+    // trial — that would demote every Creator/Studio customer on a misconfigured
+    // env var. Log and ack; real operator intervention needed.
+    if (priceId && !(priceId in PRICE_TO_TIER)) {
+      console.warn("[stripe-webhook] unknown priceId:", priceId, "— not mutating user tier");
+      return NextResponse.json({ ok: true, reason: "unknown_price" });
+    }
+
+    // HIGH-1: honor sub.status. past_due / paused / unpaid / incomplete_expired
+    // should not retain paid access. Keep paid tier only when actively paying
+    // (active / trialing) OR scheduled to cancel at period end AND still inside
+    // the paid window.
+    const nowMs = Date.now();
+    // Stripe v22: current_period_end moved to SubscriptionItem.
+    const itemPeriodEnd = sub.items.data[0]?.current_period_end ?? 0;
+    const periodEndMs = itemPeriodEnd ? itemPeriodEnd * 1000 : 0;
+    const isPaying = sub.status === "active" || sub.status === "trialing";
+    const isScheduledCancelStillValid =
+      sub.cancel_at_period_end === true && periodEndMs > nowMs;
+    const mappedTier = PRICE_TO_TIER[priceId];
+    const nextTier: SubscriptionTier =
+      mappedTier && (isPaying || isScheduledCancelStillValid) ? mappedTier : "trial";
+
+    await updateUser(user.id, {
+      subscriptionTier: nextTier,
+      currentPeriodEnd: periodEndMs || null,
+    });
   }
 
   if (event.type === "customer.subscription.deleted") {
@@ -126,8 +162,24 @@ export async function POST(req: NextRequest) {
     if (!userId) return NextResponse.json({ ok: true });
 
     const user = await getUserByClerkId(userId);
-    if (user) {
-      await updateUser(user.id, { subscriptionTier: "trial" });
+    if (!user) return NextResponse.json({ ok: true });
+
+    // HIGH-2: honor access-through-period-end. Stripe usually fires .deleted at
+    // period end for cancel_at_period_end=true, so current_period_end is
+    // typically in the past. If somehow still in the future (immediate cancel
+    // with pro-rata), keep paid tier until the period actually ends.
+    const nowMs = Date.now();
+    const itemPeriodEnd = sub.items.data[0]?.current_period_end ?? 0;
+    const periodEndMs = itemPeriodEnd ? itemPeriodEnd * 1000 : 0;
+    if (periodEndMs > nowMs) {
+      console.warn(
+        "[stripe-webhook] .deleted received but current_period_end is in the future; keeping paid tier until",
+        new Date(periodEndMs).toISOString()
+      );
+      // Leave subscriptionTier unchanged; persist periodEnd so downstream can gate.
+      await updateUser(user.id, { currentPeriodEnd: periodEndMs });
+    } else {
+      await updateUser(user.id, { subscriptionTier: "trial", currentPeriodEnd: null });
     }
   }
 

@@ -6,17 +6,19 @@ import { createSubscriptionCheckout } from "@/lib/services/stripe";
 import { requireAuth } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/services/rate-limit";
 import { PACKAGES } from "@/lib/types/billing";
+import { assertSameOrigin } from "@/lib/security/csrf";
 
-const validPackageIds = Object.keys(PACKAGES) as [
-  "solo" | "creator" | "studio",
-  ...("solo" | "creator" | "studio")[],
-];
+type PaidTier = "starter" | "solo" | "creator" | "studio";
+const validPackageIds = Object.keys(PACKAGES) as [PaidTier, ...PaidTier[]];
 
 const CheckoutBodySchema = z.object({
   packageId: z.enum(validPackageIds),
+  cycle: z.enum(["monthly", "annual"]).optional(),
 });
 
 export async function POST(req: NextRequest) {
+  const csrf = assertSameOrigin(req);
+  if (csrf) return csrf;
   let body: unknown;
   try {
     body = await req.json();
@@ -40,7 +42,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { packageId } = parsed.data;
+  const { packageId, cycle } = parsed.data;
 
   let userId: string;
   try {
@@ -57,6 +59,7 @@ export async function POST(req: NextRequest) {
       packageId,
       userId,
       trialDays: 14,
+      cycle,
     });
 
     return NextResponse.json({ data: { sessionUrl }, error: null });

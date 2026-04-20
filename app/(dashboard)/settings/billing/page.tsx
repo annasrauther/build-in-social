@@ -15,15 +15,24 @@ interface ProfileLite {
   platforms?: string[];
 }
 
-const TIER_LABELS: Record<SubscriptionTier, { label: string; price: number }> = {
-  trial: { label: "Trial", price: 0 },
-  solo: { label: "Solo", price: 39 },
-  creator: { label: "Creator", price: 79 },
-  studio: { label: "Studio", price: 149 },
+const TIER_LABELS: Record<SubscriptionTier, { label: string; price: number; cap: number }> = {
+  trial: { label: "Trial", price: 0, cap: 23 },
+  starter: { label: "Starter", price: 19, cap: 15 },
+  solo: { label: "Solo", price: 39, cap: 40 },
+  creator: { label: "Creator", price: 79, cap: 65 },
+  studio: { label: "Studio", price: 149, cap: 92 },
 };
+
+interface UsageResponse {
+  used: number;
+  cap: number;
+  tier: SubscriptionTier;
+  resetAt: string;
+}
 
 export default function BillingSettings() {
   const [profile, setProfile] = useState<ProfileLite | null>(null);
+  const [usage, setUsage] = useState<UsageResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openingPortal, setOpeningPortal] = useState(false);
   const [switchingTo, setSwitchingTo] = useState<SubscriptionTier | null>(null);
@@ -40,6 +49,12 @@ export default function BillingSettings() {
       .catch(() => {
         if (!cancelled) setError(APP.COMMON.errorGeneric);
       });
+    fetch("/api/billing/usage")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!cancelled && j?.data) setUsage(j.data as UsageResponse);
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -157,11 +172,16 @@ export default function BillingSettings() {
                 <dl className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
                   <div className="flex items-center justify-between">
                     <dt className="text-gray-500">
-                      {APP.SETTINGS_BILLING.usageVideos(0, 40).replace(
-                        /^0/,
-                        "—"
-                      )}
+                      {usage
+                        ? APP.SETTINGS_BILLING.usageVideos(usage.used, usage.cap)
+                        : APP.SETTINGS_BILLING.usageVideos(0, tier.cap).replace(
+                            /^0/,
+                            "—",
+                          )}
                     </dt>
+                    {usage && usage.used >= usage.cap && (
+                      <Badge variant="warning">Cap reached</Badge>
+                    )}
                   </div>
                   <div className="flex items-center justify-between">
                     <dt className="text-gray-500">
@@ -171,7 +191,16 @@ export default function BillingSettings() {
                       )}
                     </dt>
                   </div>
-                  {profile.trialEndsAt && (
+                  {usage?.resetAt && (
+                    <div className="flex items-center justify-between">
+                      <dt className="text-gray-500">
+                        {APP.SETTINGS_BILLING.usageRenews(
+                          new Date(usage.resetAt).toLocaleDateString()
+                        )}
+                      </dt>
+                    </div>
+                  )}
+                  {!usage?.resetAt && profile.trialEndsAt && (
                     <div className="flex items-center justify-between">
                       <dt className="text-gray-500">
                         {APP.SETTINGS_BILLING.usageRenews(
@@ -181,6 +210,9 @@ export default function BillingSettings() {
                     </div>
                   )}
                 </dl>
+                <p className="mt-3 text-xs leading-5 text-gray-500">
+                  {APP.SETTINGS_BILLING.hardCapExplainer}
+                </p>
               </Card>
             </div>
           </div>
@@ -261,8 +293,8 @@ export default function BillingSettings() {
                 cycle.
               </p>
             </div>
-            <div className="md:col-span-2 grid gap-3 tablet-sm:grid-cols-3">
-              {(["solo", "creator", "studio"] as const).map((id) => {
+            <div className="md:col-span-2 grid gap-3 tablet-sm:grid-cols-2 lg:grid-cols-4">
+              {(["starter", "solo", "creator", "studio"] as const).map((id) => {
                 const t = TIER_LABELS[id];
                 const isCurrent = profile.subscriptionTier === id;
                 return (
@@ -275,6 +307,9 @@ export default function BillingSettings() {
                       <span className="ml-1 text-sm font-normal text-gray-500">
                         {APP.SETTINGS_BILLING.perMonth}
                       </span>
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {t.cap} videos / month
                     </p>
                     <div className="flex-1" />
                     <Button

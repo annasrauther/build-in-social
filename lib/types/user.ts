@@ -1,7 +1,7 @@
 export type ContentTone = "casual" | "professional" | "nerdy-warm" | "fun-energetic";
 export type Platform = "youtube" | "instagram" | "linkedin" | "x";
 export type FacelessStyle = "dev-log" | "documentary" | "minimal-text" | "slide";
-export type SubscriptionTier = "trial" | "solo" | "creator" | "studio";
+export type SubscriptionTier = "trial" | "starter" | "solo" | "creator" | "studio";
 
 export interface VoiceProfile {
   id: string;
@@ -23,6 +23,7 @@ export interface User {
   platforms: Platform[];
   onboardingComplete: boolean;
   subscriptionTier: SubscriptionTier;
+  currentPeriodEnd?: number | null;
   trialStartedAt?: string;
   trialEndsAt?: string;
   voiceProfileId?: string;

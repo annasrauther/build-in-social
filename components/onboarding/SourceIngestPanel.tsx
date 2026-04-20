@@ -200,6 +200,7 @@ export function SourceIngestPanel({
               {/* Input */}
               {sourceType === "transcript" ? (
                 <PremiumTextarea
+                  aria-label="Paste transcript text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={placeholder}
@@ -209,6 +210,11 @@ export function SourceIngestPanel({
               ) : (
                 <PremiumInput
                   type="text"
+                  aria-label={
+                    sourceType === "notion"
+                      ? "Notion page URL"
+                      : "RSS feed URL"
+                  }
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={placeholder}

@@ -314,7 +314,7 @@ export function WeekCalendar({ initialVideos }: WeekCalendarProps) {
     }
   }
 
-  const allColumns: ColumnId[] = [...DAYS, "Unscheduled"];
+  const _allColumns: ColumnId[] = [...DAYS, "Unscheduled"];
 
   return (
     <DndContext

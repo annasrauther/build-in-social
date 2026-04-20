@@ -14,9 +14,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 vi.mock("@/lib/env", () => ({
   STRIPE_SECRET_KEY: "sk_test_dummy",
   STRIPE_WEBHOOK_SECRET: "whsec_dummy",
+  STRIPE_PRICE_STARTER_MONTHLY: "price_starter_m_test",
+  STRIPE_PRICE_STARTER_ANNUAL: "price_starter_a_test",
   STRIPE_PRICE_SOLO: "price_solo_test",
+  STRIPE_PRICE_SOLO_ANNUAL: "price_solo_a_test",
   STRIPE_PRICE_CREATOR: "price_creator_test",
+  STRIPE_PRICE_CREATOR_ANNUAL: "price_creator_a_test",
   STRIPE_PRICE_STUDIO: "price_studio_test",
+  STRIPE_PRICE_STUDIO_ANNUAL: "price_studio_a_test",
 }));
 
 // vi.mock is hoisted; use vi.hoisted so mock vars are also hoisted and

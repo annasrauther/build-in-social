@@ -9,9 +9,13 @@ import { ArrowAnimated } from "@/components/marketing/ArrowAnimated";
 import { QualityGate } from "@/components/plan/QualityGate";
 import { StatusCard } from "@/components/ui/StatusCard";
 import { WeekCalendar } from "@/components/plan/WeekCalendar";
+import {
+  QuotaExhaustedDialog,
+  type QuotaExhaustedDetails,
+} from "@/components/dashboard/QuotaExhaustedDialog";
 import { APP } from "@/content/app";
 import { cx } from "@/lib/utils";
-import type { Platform } from "@/lib/types/user";
+import type { Platform, SubscriptionTier } from "@/lib/types/user";
 import type { ScheduledVideo } from "@/lib/types/schedule";
 
 type Mode = "choose" | "manual" | "autopilot";
@@ -55,6 +59,40 @@ export default function CurrentPlanPage() {
   const [genError, setGenError] = useState<string | null>(null);
   const [pushback, setPushback] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+  const [quotaDetails, setQuotaDetails] = useState<QuotaExhaustedDetails | null>(null);
+
+  // Call /api/render/faceless for a video; return true on success.
+  // Surfaces the hard-cap dialog when the API responds 402 quota_exhausted.
+  async function triggerRender(videoId: string): Promise<boolean> {
+    try {
+      const res = await fetch("/api/render/faceless", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ videoId }),
+      });
+      if (res.status === 402) {
+        const j = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          tier?: SubscriptionTier;
+          cap?: number;
+          resetAt?: string;
+          upgradeTo?: SubscriptionTier | null;
+        };
+        if (j.error === "quota_exhausted" && j.tier && j.cap && j.resetAt) {
+          setQuotaDetails({
+            tier: j.tier,
+            cap: j.cap,
+            resetAt: j.resetAt,
+            upgradeTo: j.upgradeTo ?? null,
+          });
+          return false;
+        }
+      }
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -104,11 +142,44 @@ export default function CurrentPlanPage() {
     }
   }
 
-  function approveVideo(id: string) {
-    setVideos((prev) => prev?.map((v) => (v.id === id ? { ...v, status: "approved" as const } : v)) ?? null);
+  async function approveVideo(id: string) {
+    // Approve optimistically; fire the render and revert on quota rejection.
+    setVideos((prev) =>
+      prev?.map((v) => (v.id === id ? { ...v, status: "approved" as const } : v)) ?? null,
+    );
+    const ok = await triggerRender(id);
+    if (!ok) {
+      setVideos((prev) =>
+        prev?.map((v) => (v.id === id ? { ...v, status: "draft" as const } : v)) ?? null,
+      );
+    }
   }
-  function approveAll() {
+  async function approveAll() {
+    if (!videos) return;
+    const targets = videos.filter((v) => v.status !== "approved");
+    // Flip all to approved first; back out any that the quota rejects.
     setVideos((prev) => prev?.map((v) => ({ ...v, status: "approved" as const })) ?? null);
+    for (const v of targets) {
+      const ok = await triggerRender(v.id);
+      if (!ok) {
+        // Quota dialog has been shown — revert the remaining videos we haven't
+        // rendered yet back to draft so the user can upgrade and retry.
+        setVideos((prev) =>
+          prev?.map((x) =>
+            targets.some((t) => t.id === x.id) && x.status === "approved" && x.id === v.id
+              ? { ...x, status: "draft" as const }
+              : x,
+          ) ?? null,
+        );
+        break;
+      }
+    }
+  }
+  // P1-16: In autopilot mode, videos publish automatically.
+  // "Hold for review" is the inverted default — user intervenes only to stop.
+  // Reverts status to "draft" on all videos so the autopilot loop won't publish.
+  function holdWeekForReview() {
+    setVideos((prev) => prev?.map((v) => ({ ...v, status: "draft" as const })) ?? null);
   }
   function startFresh() {
     setVideos(null);
@@ -215,7 +286,19 @@ export default function CurrentPlanPage() {
               </button>
             </div>
             <Button variant="secondary" onClick={startFresh}>{APP.PLAN.startFresh}</Button>
-            <Button onClick={approveAll} disabled={approvedCount === videos.length}>{APP.PLAN.approveAll}</Button>
+            {/* P1-16: autopilot publishes automatically — show "Hold" (inverted default).
+                Manual mode keeps Approve All. */}
+            {mode === "autopilot" ? (
+              <Button
+                variant="secondary"
+                onClick={holdWeekForReview}
+                disabled={videos.every((v) => v.status === "draft")}
+              >
+                Hold this week for review
+              </Button>
+            ) : (
+              <Button onClick={approveAll} disabled={approvedCount === videos.length}>{APP.PLAN.approveAll}</Button>
+            )}
           </div>
         </div>
 
@@ -231,6 +314,13 @@ export default function CurrentPlanPage() {
             <WeekCalendar initialVideos={scheduledVideos} />
           </motion.div>
         )}
+
+        {/* Quota-exhausted dialog — shown when the render API returns 402. */}
+        <QuotaExhaustedDialog
+          open={quotaDetails !== null}
+          onOpenChange={(o) => { if (!o) setQuotaDetails(null); }}
+          details={quotaDetails}
+        />
 
         {/* List view */}
         {viewMode === "list" && (
@@ -283,14 +373,17 @@ export default function CurrentPlanPage() {
                             {v.hook}
                           </p>
                         </div>
-                        <Button
-                          variant={v.status === "approved" ? "secondary" : "primary"}
-                          onClick={() => approveVideo(v.id)}
-                          disabled={v.status === "approved"}
-                          className="shrink-0"
-                        >
-                          {v.status === "approved" ? APP.PLAN_UI.approvedStatus : "Approve"}
-                        </Button>
+                        {/* P1-16: hide per-video approve in autopilot mode — videos publish automatically. */}
+                        {mode === "autopilot" ? null : (
+                          <Button
+                            variant={v.status === "approved" ? "secondary" : "primary"}
+                            onClick={() => approveVideo(v.id)}
+                            disabled={v.status === "approved"}
+                            className="shrink-0"
+                          >
+                            {v.status === "approved" ? APP.PLAN_UI.approvedStatus : "Approve"}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </motion.li>
@@ -387,6 +480,10 @@ function PlanShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
+// Keep the quota dialog mounted at the root of the page so it fires no matter
+// which branch of the render tree produced the 402. Imported and used in the
+// exported default component below via the closure.
 
 function PlanShellSkeleton() {
   return (

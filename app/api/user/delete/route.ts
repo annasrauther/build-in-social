@@ -39,7 +39,7 @@ import {
 } from "@/lib/services/db";
 import { cancelSubscription } from "@/lib/services/stripe";
 import { deleteObject } from "@/lib/services/r2";
-import { CLERK_SECRET_KEY, DEV_AUTH, ELEVENLABS_API_KEY } from "@/lib/env";
+import { CLERK_SECRET_KEY, DEV_AUTH, ELEVENLABS_API_KEY, R2_PUBLIC_URL as R2_PUBLIC_BASE_URL } from "@/lib/env";
 
 const bodySchema = z.object({
   confirm: z.literal("DELETE"),
@@ -89,7 +89,7 @@ async function deleteElevenLabsVoices(
 function r2KeysFromVideos(
   videos: Array<{ outputUrl?: string; thumbnailUrl?: string }>
 ): string[] {
-  const publicBase = process.env.R2_PUBLIC_URL ?? "";
+  const publicBase = R2_PUBLIC_BASE_URL ?? "";
   const keys: string[] = [];
   for (const v of videos) {
     for (const url of [v.outputUrl, v.thumbnailUrl]) {

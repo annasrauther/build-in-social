@@ -99,10 +99,10 @@ export function QualityGate({ onSubmit, onAutopilot, loading, serverPushback }: 
       <div className="flex flex-col tablet-sm:flex-row tablet-sm:items-start tablet-sm:justify-between gap-2 mb-6">
         <div>
           <h3 className="text-[20px] mb-1 font-normal tracking-[-0.02em] text-[color:var(--text-primary)]">
-            What happened this week?
+            {APP.QUALITY_GATE.title}
           </h3>
           <p className="text-[14px] text-[color:var(--text-secondary)]">
-            Three specific questions. The more detail, the better the content.
+            {APP.QUALITY_GATE.subtitle}
           </p>
         </div>
         <Button

@@ -9,12 +9,25 @@
 export const runtime = "nodejs";
 
 import { NextRequest, NextResponse } from "next/server";
-import { getVideo, updateVideo, createRenderJob } from "@/lib/services/db";
+import { getVideo, updateVideo, createRenderJob, getVoiceProfilesForUser } from "@/lib/services/db";
 import { enqueueRenderJob } from "@/lib/services/queue";
 import { requireAuth } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/services/rate-limit";
-import { deductCreditForRender, refundCreditForRender } from "@/lib/services/credits";
+import {
+  deductCreditForRender,
+  refundCreditForRender,
+  nextMonthResetIso,
+  MONTHLY_VIDEO_BUDGET,
+} from "@/lib/services/credits";
+import { UPGRADE_PATH } from "@/lib/types/billing";
+import { getUserByClerkId } from "@/lib/services/db";
+import { canUseFeature } from "@/lib/billing/capabilities";
 import { INTERNAL_SECRET, APP_URL } from "@/lib/env";
+import { z } from "zod";
+
+const BodySchema = z.object({
+  videoId: z.string().min(1).max(120),
+});
 
 export async function POST(req: NextRequest) {
   // SECURITY (S2): Fail closed — refuse to enqueue work we can't authenticate
@@ -36,12 +49,12 @@ export async function POST(req: NextRequest) {
   if (limited) return limited;
 
   try {
-    const body = await req.json() as Record<string, unknown>;
-    const videoId = typeof body.videoId === "string" ? body.videoId.trim() : "";
-
-    if (!videoId) {
-      return NextResponse.json({ error: "videoId is required" }, { status: 400 });
+    const rawBody = await req.json().catch(() => null);
+    const parsed = BodySchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "invalid_request" }, { status: 400 });
     }
+    const videoId = parsed.data.videoId.trim();
 
     const video = await getVideo(videoId);
     if (!video) {
@@ -51,17 +64,57 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // ── Tier gate: voice clone requires Creator+ ──────────────────────────
+    // The render worker uses the user's first voice profile if present. If
+    // that profile is a clone (isClone=true), enforce the tier requirement
+    // here before consuming a credit.
+    {
+      const voiceProfiles = await getVoiceProfilesForUser(userId).catch(() => []);
+      const usesClone = voiceProfiles.some((vp) => vp.isClone);
+      if (usesClone) {
+        const owner = await getUserByClerkId(userId).catch(() => null);
+        const tier = owner?.subscriptionTier ?? "starter";
+        if (!canUseFeature(tier, "voice_clone")) {
+          return NextResponse.json(
+            {
+              error: "feature_not_available",
+              feature: "voice_clone",
+              tier,
+              message:
+                "Voice cloning is available on Creator and Studio plans. Your video will use a library voice instead, or upgrade to use your cloned voice.",
+            },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     // ── Critical path #1: deduct BEFORE submitting render ────────────────
+    //
+    // Hard-cap policy: when a user is at cap, we return 402 with
+    // { error: "quota_exhausted", tier, cap, resetAt }. We NEVER auto-charge
+    // for extras — the client surfaces an "Upgrade to {nextTier}" CTA instead.
     const deduction = await deductCreditForRender(userId, videoId);
     if (!deduction.ok) {
       if (deduction.reason === "INSUFFICIENT_CREDITS") {
+        const user = await getUserByClerkId(userId).catch(() => null);
+        const tier = user?.subscriptionTier ?? "trial";
+        const cap = MONTHLY_VIDEO_BUDGET[tier];
+        const upgradeTo =
+          tier === "trial" || tier === "studio"
+            ? null
+            : UPGRADE_PATH[tier as keyof typeof UPGRADE_PATH] ?? null;
         return NextResponse.json(
           {
-            error: "insufficient_credits",
-            message:
-              "You've used your monthly video budget. Upgrade your plan or wait until next month.",
-            remaining: deduction.remaining,
-            budget: deduction.budget,
+            error: "quota_exhausted",
+            tier,
+            cap,
+            used: cap,
+            resetAt: nextMonthResetIso(),
+            upgradeTo,
+            message: `You've used this month's ${cap} videos. Upgrade${
+              upgradeTo ? ` to ${upgradeTo}` : ""
+            } for more, or wait until the reset date. You'll keep access to previous videos.`,
           },
           { status: 402 }
         );

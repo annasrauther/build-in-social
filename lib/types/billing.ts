@@ -7,12 +7,35 @@ export interface Package {
   priceAnnual?: number;
   platforms: number;
   videosPerWeek: number;
+  /** HARD cap per month. Render API returns 402 once count reaches this number. */
   videosPerMonth: number;
   features: string[];
   popular?: boolean;
 }
 
+/**
+ * Hard caps by tier. Overage policy: hard-pause at cap. Never pay-per-extra,
+ * never surprise charges. These numbers are load-bearing — do not hedge with
+ * "~" in any user-facing copy.
+ */
 export const PACKAGES: Record<Exclude<SubscriptionTier, "trial">, Package> = {
+  starter: {
+    id: "starter",
+    name: "Starter",
+    price: 19,
+    priceAnnual: 15,
+    platforms: 1,
+    videosPerWeek: 4,
+    videosPerMonth: 15,
+    features: [
+      "1 platform",
+      "15 videos/month",
+      "Weekly content plan",
+      "Quality gate",
+      "Faceless Mode",
+      "Library voice",
+    ],
+  },
   solo: {
     id: "solo",
     name: "Solo",
@@ -23,7 +46,7 @@ export const PACKAGES: Record<Exclude<SubscriptionTier, "trial">, Package> = {
     videosPerMonth: 40,
     features: [
       "2 platforms",
-      "~40 videos/month",
+      "40 videos/month",
       "Weekly content plan",
       "Quality gate",
       "Faceless Mode",
@@ -40,8 +63,9 @@ export const PACKAGES: Record<Exclude<SubscriptionTier, "trial">, Package> = {
     videosPerMonth: 65,
     features: [
       "3 platforms",
-      "~65 videos/month",
+      "65 videos/month",
       "Everything in Solo",
+      "Voice clone",
       "Intelligence panel",
       "Hook variant testing",
     ],
@@ -57,8 +81,9 @@ export const PACKAGES: Record<Exclude<SubscriptionTier, "trial">, Package> = {
     videosPerMonth: 92,
     features: [
       "All 4 platforms",
-      "~92 videos/month",
+      "92 videos/month",
       "Everything in Creator",
+      "Autopilot scheduling",
       "Priority rendering",
       "Dedicated support",
     ],
@@ -66,3 +91,10 @@ export const PACKAGES: Record<Exclude<SubscriptionTier, "trial">, Package> = {
 };
 
 export const TRIAL_DAYS = 14;
+
+/** Upgrade ladder — which tier to suggest when a user hits their cap. */
+export const UPGRADE_PATH: Record<Exclude<SubscriptionTier, "trial" | "studio">, Exclude<SubscriptionTier, "trial">> = {
+  starter: "solo",
+  solo: "creator",
+  creator: "studio",
+};

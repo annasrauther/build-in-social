@@ -51,6 +51,9 @@ export default function DashboardClient({ profile, videos }: DashboardClientProp
   );
   const total = videos.length;
   const ready = videos.filter((v) => v.status === "ready");
+  // Intelligence panel: spec rule — hidden until user has 5+ published videos with metrics.
+  const publishedCount = videos.filter((v) => v.status === "posted").length;
+  const showIntelligencePanel = publishedCount >= 5;
   const onboardingDone = profile.onboardingComplete;
   const isAutopilot = weekMode === "autopilot";
 
@@ -236,29 +239,50 @@ export default function DashboardClient({ profile, videos }: DashboardClientProp
           )}
         </motion.div>
 
-        {/* Top performer */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-          style={{
-            borderRadius: "var(--radius-lg)",
-            border: "1px solid var(--border-default)",
-            backgroundColor: "var(--bg-surface)",
-            padding: 24,
-            boxShadow: "var(--shadow-sm)",
-          }}
-        >
-          <p style={{ fontSize: "var(--type-supporting-desktop)", color: "var(--text-tertiary)", marginBottom: 12 }}>
-            {APP.DASHBOARD.topPerformer}
-          </p>
-          <p style={{ fontSize: "var(--type-body-mobile)", color: "var(--text-tertiary)" }}>
-            {APP.DASHBOARD.topPerformerEmpty}
-          </p>
-          <p style={{ fontSize: "var(--type-micro)", color: "var(--text-disabled)", marginTop: 6 }}>
-            {APP.DASHBOARD.topPerformerSub}
-          </p>
-        </motion.div>
+        {/* Intelligence panel — spec rule: hidden until 5+ published videos */}
+        {showIntelligencePanel ? (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+            style={{
+              borderRadius: "var(--radius-lg)",
+              border: "1px solid var(--border-default)",
+              backgroundColor: "var(--bg-surface)",
+              padding: 24,
+              boxShadow: "var(--shadow-sm)",
+            }}
+          >
+            <p style={{ fontSize: "var(--type-supporting-desktop)", color: "var(--text-tertiary)", marginBottom: 12 }}>
+              {APP.DASHBOARD.topPerformer}
+            </p>
+            <p style={{ fontSize: "var(--type-body-mobile)", color: "var(--text-tertiary)" }}>
+              {APP.DASHBOARD.topPerformerEmpty}
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+            style={{
+              borderRadius: "var(--radius-lg)",
+              border: "1px solid var(--border-default)",
+              backgroundColor: "var(--bg-surface)",
+              padding: 24,
+              boxShadow: "var(--shadow-sm)",
+              opacity: 0.6,
+            }}
+            aria-hidden="true"
+          >
+            <p style={{ fontSize: "var(--type-supporting-desktop)", color: "var(--text-tertiary)", marginBottom: 12 }}>
+              {APP.DASHBOARD.topPerformer}
+            </p>
+            <p style={{ fontSize: "var(--type-body-mobile)", color: "var(--text-tertiary)" }}>
+              {APP.DASHBOARD.topPerformerSub}
+            </p>
+          </motion.div>
+        )}
       </div>
     </Shell>
   );

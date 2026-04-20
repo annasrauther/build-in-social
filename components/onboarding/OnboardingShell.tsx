@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/tremor/Button";
 import { StepProgressBar } from "./StepProgressBar";
 import { APP } from "@/content/app";
+import { useSafeMotion } from "@/lib/hooks/useSafeMotion";
 
 interface OnboardingShellProps {
   step: number;
@@ -25,20 +26,22 @@ interface OnboardingShellProps {
   wide?: boolean;
 }
 
-const slideVariants = {
-  enter: (direction: "forward" | "back") => ({
-    x: direction === "forward" ? 32 : -32,
-    opacity: 0,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-  },
-  exit: (direction: "forward" | "back") => ({
-    x: direction === "forward" ? -32 : 32,
-    opacity: 0,
-  }),
-};
+function makeSlideVariants(offset: number) {
+  return {
+    enter: (direction: "forward" | "back") => ({
+      x: direction === "forward" ? offset : -offset,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: "forward" | "back") => ({
+      x: direction === "forward" ? -offset : offset,
+      opacity: 0,
+    }),
+  };
+}
 
 export function OnboardingShell({
   step,
@@ -54,6 +57,15 @@ export function OnboardingShell({
   direction = "forward",
   wide = false,
 }: OnboardingShellProps) {
+  const { reduced, slide } = useSafeMotion();
+  const slideVariants = makeSlideVariants(slide(32));
+  const slideTransition = reduced
+    ? { duration: 0 }
+    : {
+        x: { type: "spring", stiffness: 400, damping: 35 },
+        opacity: { duration: 0.12 },
+      };
+
   return (
     <div className="h-dvh flex flex-col relative bg-anthropic-light dark:bg-anthropic-dark">
       {/* ─── Header ─── */}
@@ -74,10 +86,7 @@ export function OnboardingShell({
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{
-                x: { type: "spring", stiffness: 400, damping: 35 },
-                opacity: { duration: 0.12 },
-              }}
+              transition={slideTransition}
               className={
                 wide
                   ? "w-full px-4 tablet-sm:px-6 mx-auto max-w-[960px]"

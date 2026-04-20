@@ -236,6 +236,7 @@ function rowToUser(row: NcbRow): User {
     platforms: parseJson(row.platforms, []),
     onboardingComplete: bool(row.onboarding_complete),
     subscriptionTier: (row.subscription_tier as User["subscriptionTier"]) ?? "trial",
+    currentPeriodEnd: maybe(row.current_period_end, num),
     trialStartedAt: maybe(row.trial_started_at, str),
     trialEndsAt: maybe(row.trial_ends_at, str),
     voiceProfileId: maybe(row.voice_profile_id, str),
@@ -396,6 +397,14 @@ export async function updateUser(userId: string, data: Partial<User>): Promise<U
   if (data.onboardingComplete !== undefined) sets.push(`onboarding_complete = ${data.onboardingComplete ? 1 : 0}`);
   if (data.subscriptionTier !== undefined) sets.push(`subscription_tier = ${esc(data.subscriptionTier)}`);
   if (data.voiceProfileId !== undefined) sets.push(`voice_profile_id = ${esc(data.voiceProfileId)}`);
+  // Requires column: `current_period_end BIGINT NULL`. Falls through harmlessly
+  // until the migration lands in prod (the SQL error would surface but the
+  // happy path — fresh subscriptions without a recorded periodEnd — won't set it).
+  if (data.currentPeriodEnd !== undefined) {
+    sets.push(
+      `current_period_end = ${data.currentPeriodEnd === null ? "NULL" : escInt(data.currentPeriodEnd)}`
+    );
+  }
   if (sets.length > 0) {
     await sql(`UPDATE users SET ${sets.join(", ")} WHERE id = ${esc(userId)}`);
   }
@@ -967,4 +976,274 @@ export async function addToAvatarWaitlist(email: string): Promise<{
   ).catch(() => [{ c: 1 }] as NcbRow[]);
   const position = Number((total[0]?.c as number | string) ?? 1) || 1;
   return { added: true, position };
+}
+
+// ─── WordPress connections ────────────────────────────────────────────────────
+//
+// REQUIRED TABLE (run once in NCB):
+//   CREATE TABLE wordpress_connections (
+//     id                       VARCHAR(64)  NOT NULL PRIMARY KEY,
+//     user_id                  VARCHAR(64)  NOT NULL UNIQUE,
+//     site_url                 VARCHAR(500) NOT NULL,
+//     username                 VARCHAR(255) NOT NULL,
+//     encrypted_app_password   TEXT         NOT NULL,
+//     wp_user_id               INT          NULL,
+//     last_tested_at           DATETIME     NOT NULL,
+//     last_published_at        DATETIME     NULL,
+//     enabled                  TINYINT(1)   NOT NULL DEFAULT 1,
+//     created_at               DATETIME     NOT NULL,
+//     updated_at               DATETIME     NOT NULL
+//   );
+//
+// SECURITY: `encrypted_app_password` stores base64url(IV || CT || TAG) from
+// AES-256-GCM. Plaintext never leaves the API route that processes /connect.
+
+import type { WordPressConnectionRecord } from "@/lib/types/wordpress";
+
+function rowToWordPress(row: NcbRow): WordPressConnectionRecord {
+  return {
+    id: str(row.id),
+    userId: str(row.user_id),
+    siteUrl: str(row.site_url),
+    username: str(row.username),
+    encryptedAppPassword: str(row.encrypted_app_password),
+    wpUserId: row.wp_user_id == null ? undefined : num(row.wp_user_id),
+    lastTestedAt: str(row.last_tested_at),
+    lastPublishedAt: maybe(row.last_published_at, str),
+    enabled: bool(row.enabled),
+    createdAt: str(row.created_at) || new Date().toISOString(),
+    updatedAt: str(row.updated_at) || new Date().toISOString(),
+  };
+}
+
+export async function getWordPressConnection(
+  userId: string
+): Promise<WordPressConnectionRecord | null> {
+  try {
+    const rows = await sql(
+      `SELECT * FROM wordpress_connections WHERE user_id = ${escUuid(userId)} LIMIT 1`
+    );
+    const row = rows[0];
+    return row ? rowToWordPress(row) : null;
+  } catch (err) {
+    console.warn("[wordpress] getWordPressConnection failed:", err);
+    return null;
+  }
+}
+
+export async function upsertWordPressConnection(
+  data: Omit<WordPressConnectionRecord, "id" | "createdAt" | "updatedAt"> & {
+    id?: string;
+  }
+): Promise<WordPressConnectionRecord> {
+  const existing = await getWordPressConnection(data.userId);
+  const now = nowSql();
+  const id = existing?.id ?? data.id ?? `wpc_${Date.now()}`;
+
+  if (existing) {
+    await sql(
+      `UPDATE wordpress_connections SET
+          site_url               = ${escString(data.siteUrl)},
+          username               = ${escString(data.username)},
+          encrypted_app_password = ${escString(data.encryptedAppPassword)},
+          wp_user_id             = ${escInt(data.wpUserId ?? null)},
+          last_tested_at         = ${escString(data.lastTestedAt)},
+          last_published_at      = ${data.lastPublishedAt ? escString(data.lastPublishedAt) : "NULL"},
+          enabled                = ${escBool(data.enabled)},
+          updated_at             = ${escString(now)}
+         WHERE id = ${escUuid(id)}`
+    );
+  } else {
+    await sqlInsert(
+      `INSERT INTO wordpress_connections
+         (id, user_id, site_url, username, encrypted_app_password,
+          wp_user_id, last_tested_at, last_published_at, enabled,
+          created_at, updated_at)
+       VALUES (${escUuid(id)}, ${escUuid(data.userId)},
+               ${escString(data.siteUrl)}, ${escString(data.username)},
+               ${escString(data.encryptedAppPassword)},
+               ${escInt(data.wpUserId ?? null)},
+               ${escString(data.lastTestedAt)},
+               ${data.lastPublishedAt ? escString(data.lastPublishedAt) : "NULL"},
+               ${escBool(data.enabled)},
+               ${escString(now)}, ${escString(now)})`
+    );
+  }
+
+  const refreshed = await getWordPressConnection(data.userId);
+  if (!refreshed) throw new Error("Failed to persist WordPress connection");
+  return refreshed;
+}
+
+export async function updateWordPressConnection(
+  userId: string,
+  patch: Partial<
+    Pick<
+      WordPressConnectionRecord,
+      | "siteUrl"
+      | "username"
+      | "encryptedAppPassword"
+      | "wpUserId"
+      | "lastTestedAt"
+      | "lastPublishedAt"
+      | "enabled"
+    >
+  >
+): Promise<WordPressConnectionRecord | null> {
+  const existing = await getWordPressConnection(userId);
+  if (!existing) return null;
+
+  const sets: string[] = [];
+  if (patch.siteUrl !== undefined) sets.push(`site_url = ${escString(patch.siteUrl)}`);
+  if (patch.username !== undefined) sets.push(`username = ${escString(patch.username)}`);
+  if (patch.encryptedAppPassword !== undefined)
+    sets.push(`encrypted_app_password = ${escString(patch.encryptedAppPassword)}`);
+  if (patch.wpUserId !== undefined)
+    sets.push(`wp_user_id = ${escInt(patch.wpUserId ?? null)}`);
+  if (patch.lastTestedAt !== undefined)
+    sets.push(`last_tested_at = ${escString(patch.lastTestedAt)}`);
+  if (patch.lastPublishedAt !== undefined)
+    sets.push(
+      `last_published_at = ${patch.lastPublishedAt ? escString(patch.lastPublishedAt) : "NULL"}`
+    );
+  if (patch.enabled !== undefined) sets.push(`enabled = ${escBool(patch.enabled)}`);
+
+  if (sets.length === 0) return existing;
+  sets.push(`updated_at = ${escString(nowSql())}`);
+
+  await sql(
+    `UPDATE wordpress_connections SET ${sets.join(", ")} WHERE id = ${escUuid(existing.id)}`
+  );
+  return getWordPressConnection(userId);
+}
+
+export async function deleteWordPressConnection(userId: string): Promise<boolean> {
+  try {
+    await sql(`DELETE FROM wordpress_connections WHERE user_id = ${escUuid(userId)}`);
+    return true;
+  } catch (err) {
+    console.warn("[wordpress] deleteWordPressConnection failed:", err);
+    return false;
+  }
+}
+
+// ─── Monthly video renders (credits / hard-cap enforcement) ──────────────────
+//
+// Schema (operator must create once):
+//
+//   CREATE TABLE monthly_video_renders (
+//     id             INT AUTO_INCREMENT PRIMARY KEY,
+//     clerk_user_id  VARCHAR(64)  NOT NULL,
+//     year_month     CHAR(7)      NOT NULL,  -- "2026-04"
+//     video_id       VARCHAR(64)  NOT NULL,
+//     created_at     DATETIME     NOT NULL,
+//     UNIQUE KEY uniq_user_month_video (clerk_user_id, year_month, video_id),
+//     KEY idx_user_month (clerk_user_id, year_month)
+//   );
+//
+// Atomicity contract: INSERT IGNORE relies on the unique index to make
+// idempotent writes a no-op when the same (user, month, video) already
+// exists. For the hard-cap check we rely on an INSERT-then-COUNT-then-
+// conditional-DELETE pattern. Under concurrent requests at cap-1 multiple
+// inserts may land, one or more will over-commit, and each racing request
+// independently sees count > cap and rolls back its own row. Worst case we
+// under-allow by a small number of races, never over-allow (hard cap safety).
+
+function escYearMonth(val: unknown): string {
+  const s = String(val ?? "");
+  if (!/^\d{4}-\d{2}$/.test(s)) {
+    throw new Error("Invalid year_month (expected YYYY-MM)");
+  }
+  return `'${s}'`;
+}
+
+export async function getMonthlyVideoUsage(
+  clerkUserId: string,
+  yearMonth: string
+): Promise<number> {
+  const rows = await sql(
+    `SELECT COUNT(*) AS c FROM monthly_video_renders ` +
+      `WHERE clerk_user_id = ${escUuid(clerkUserId)} ` +
+      `AND year_month = ${escYearMonth(yearMonth)}`
+  );
+  const n = Number(rows[0]?.c ?? 0);
+  return Number.isFinite(n) ? n : 0;
+}
+
+export async function hasMonthlyVideoRender(
+  clerkUserId: string,
+  yearMonth: string,
+  videoId: string
+): Promise<boolean> {
+  const rows = await sql(
+    `SELECT 1 FROM monthly_video_renders ` +
+      `WHERE clerk_user_id = ${escUuid(clerkUserId)} ` +
+      `AND year_month = ${escYearMonth(yearMonth)} ` +
+      `AND video_id = ${escUuid(videoId)} LIMIT 1`
+  );
+  return rows.length > 0;
+}
+
+/**
+ * Attempt to add a render row under a hard cap.
+ * - INSERT IGNORE handles idempotency: duplicate (user, month, video) is a no-op.
+ * - After insert, COUNT rows in the month. If over cap, DELETE the row we just
+ *   inserted and return atCap=true.
+ * - Races under concurrency can cause transient over-count that each racing
+ *   request corrects by deleting its own row. This is safer than the opposite
+ *   failure mode (over-allowing renders past the hard cap).
+ */
+export async function addMonthlyVideoRender(
+  clerkUserId: string,
+  yearMonth: string,
+  videoId: string,
+  cap: number
+): Promise<{ added: boolean; count: number; atCap: boolean }> {
+  const existed = await hasMonthlyVideoRender(clerkUserId, yearMonth, videoId);
+
+  if (!existed) {
+    // Attempt insert; unique index serializes concurrent duplicate writes.
+    await sqlInsert(
+      `INSERT IGNORE INTO monthly_video_renders ` +
+        `(clerk_user_id, year_month, video_id, created_at) VALUES (` +
+        `${escUuid(clerkUserId)}, ${escYearMonth(yearMonth)}, ` +
+        `${escUuid(videoId)}, ${escString(nowSql())})`
+    );
+  }
+
+  const count = await getMonthlyVideoUsage(clerkUserId, yearMonth);
+
+  if (!existed && count > cap) {
+    // Over-cap: roll back our own write. Use narrow WHERE so we don't nuke
+    // anyone else's row.
+    await sql(
+      `DELETE FROM monthly_video_renders ` +
+        `WHERE clerk_user_id = ${escUuid(clerkUserId)} ` +
+        `AND year_month = ${escYearMonth(yearMonth)} ` +
+        `AND video_id = ${escUuid(videoId)}`
+    );
+    return { added: false, count: count - 1, atCap: true };
+  }
+
+  return { added: !existed, count, atCap: false };
+}
+
+export async function removeMonthlyVideoRender(
+  clerkUserId: string,
+  yearMonth: string,
+  videoId: string
+): Promise<{ removed: boolean; count: number }> {
+  const existed = await hasMonthlyVideoRender(clerkUserId, yearMonth, videoId);
+  if (!existed) {
+    const count = await getMonthlyVideoUsage(clerkUserId, yearMonth);
+    return { removed: false, count };
+  }
+  await sql(
+    `DELETE FROM monthly_video_renders ` +
+      `WHERE clerk_user_id = ${escUuid(clerkUserId)} ` +
+      `AND year_month = ${escYearMonth(yearMonth)} ` +
+      `AND video_id = ${escUuid(videoId)}`
+  );
+  const count = await getMonthlyVideoUsage(clerkUserId, yearMonth);
+  return { removed: true, count };
 }

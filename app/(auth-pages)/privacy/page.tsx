@@ -9,14 +9,13 @@ export const metadata: Metadata = {
 
 const P = LEGAL.PRIVACY;
 const META = LEGAL.META;
-const BANNER = LEGAL.DRAFT_BANNER;
 const SUBPROCESSORS = LEGAL.SUBPROCESSORS;
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[color:var(--bg-page)] text-[color:var(--text-primary)]">
       {/* Nav */}
-      <header className="border-b border-black/[0.07] bg-white/90 backdrop-blur-sm sticky top-0 z-40">
+      <header className="border-b border-[color:var(--border-default)] bg-[color:var(--bg-surface)]/90 backdrop-blur-sm sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
             <div
@@ -58,42 +57,6 @@ export default function PrivacyPage() {
 
       {/* Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
-        {/* Draft banner — must be visually prominent */}
-        <div
-          role="alert"
-          aria-label="Legal draft warning"
-          className="mb-10 flex gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900"
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            aria-hidden="true"
-            className="mt-0.5 shrink-0"
-          >
-            <path
-              d="M10 2L18 17H2L10 2z"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M10 8v4"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <circle cx="10" cy="14.5" r="0.75" fill="currentColor" />
-          </svg>
-          <div>
-            <p className="font-semibold text-[13px] tracking-wide uppercase">
-              {BANNER.title}
-            </p>
-            <p className="mt-1 text-[14px] leading-relaxed">{BANNER.body}</p>
-          </div>
-        </div>
-
         <div className="mb-10">
           <h1
             className="text-3xl sm:text-4xl font-semibold tracking-tight mb-3"

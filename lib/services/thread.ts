@@ -15,16 +15,6 @@
 
 const TWEET_MAX = 280;
 
-/** Reserve characters for the counter suffix " {n}/{total}" */
-function counterLen(n: number, total: number): number {
-  return ` ${n}/${total}`.length;
-}
-
-/** Max body length for tweet at position `index` of `total` */
-function budget(index: number, total: number): number {
-  return TWEET_MAX - counterLen(index, total);
-}
-
 /** Split text into paragraphs on one-or-more blank lines */
 function toParagraphs(text: string): string[] {
   return text

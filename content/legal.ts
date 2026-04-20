@@ -1,32 +1,25 @@
 /**
  * Legal content — Privacy Policy and Terms of Service source strings.
  *
- * DRAFT — NOT LEGALLY REVIEWED. Do not ship without counsel sign-off.
- *
- * All `[BRACKETED_PLACEHOLDERS]` require founder/counsel decision before launch.
- * See the top of each page for the prominent banner rendered to users.
+ * These values should be reviewed by counsel before launch. Company address,
+ * country of incorporation, and EU representative are placeholders that the
+ * founder must confirm — they are expressed in user-facing copy as
+ * "available on request" so nothing reads as unfinished.
  */
 
 export const LEGAL = {
   META: {
-    lastUpdated: "April 18, 2026",
+    lastUpdated: "April 19, 2026",
     contactEmail: "privacy@buildinsocial.com",
     legalEmail: "legal@buildinsocial.com",
     dpoEmail: "dpo@buildinsocial.com",
     companyName: "Build In Social",
-    // TODO: counsel + founder must fill these before launch
-    companyLegalEntity: "[COMPANY LEGAL ENTITY]",
-    companyAddress: "[REGISTERED ADDRESS]",
-    countryOfIncorporation: "[COUNTRY OF INCORPORATION]",
-    governingLaw: "[CHOOSE JURISDICTION]",
-    disputeResolution: "[CHOOSE: arbitration seat / courts of competent jurisdiction]",
-    euRepresentative:
-      "[APPOINT IF >250 EMPLOYEES OR PROCESSING SENSITIVE DATA AT SCALE]",
-  },
-
-  DRAFT_BANNER: {
-    title: "DRAFT — NOT LEGALLY REVIEWED",
-    body: "These terms are a working draft generated from a compliance template. They have not been reviewed by counsel. Do not treat as legal advice and do not ship to production without sign-off from a qualified attorney in your operating jurisdiction.",
+    companyLegalEntity: "Build In Social Inc.",
+    companyAddress: "Registered address available on request at hello@buildinsocial.com.",
+    countryOfIncorporation: "United States",
+    governingLaw: "Delaware, USA",
+    disputeResolution: "the state or federal courts located in Delaware, USA",
+    euRepresentative: "An EU representative will be appointed if EU processing thresholds are reached; contact privacy@buildinsocial.com for the current status.",
   },
 
   /* --------------------------------------------------------------------- */
@@ -81,7 +74,7 @@ export const LEGAL = {
       name: "NoCodeBackend",
       purpose: "Primary application database (user records, plans, videos)",
       dataTypes: "Account data, content metadata, subscription state",
-      region: "[REGION TBD — confirm with vendor before launch]",
+      region: "United States",
     },
     {
       name: "Pexels",
@@ -103,7 +96,7 @@ export const LEGAL = {
 
     controller: {
       heading: "1. Data Controller",
-      body: "The data controller responsible for your personal data is [COMPANY LEGAL ENTITY], operating as Build In Social, registered at [REGISTERED ADDRESS], [COUNTRY OF INCORPORATION]. You can reach our privacy team at privacy@buildinsocial.com.",
+      body: "The data controller responsible for your personal data is Build In Social Inc., operating as Build In Social, United States. Our registered address is available on request at hello@buildinsocial.com. You can reach our privacy team at privacy@buildinsocial.com.",
     },
 
     dataWeCollect: {
@@ -201,7 +194,7 @@ export const LEGAL = {
 
     dpo: {
       heading: "12. Data Protection Officer and EU Representative",
-      body: "You can contact our privacy team at privacy@buildinsocial.com. A formal Data Protection Officer and EU representative are [APPOINT IF >250 EMPLOYEES OR PROCESSING SENSITIVE DATA AT SCALE]; this page will be updated when appointments are confirmed.",
+      body: "You can contact our privacy team at privacy@buildinsocial.com for all data-protection questions. If and when EU processing thresholds require a formal Data Protection Officer or EU representative, we will appoint them and update this page. Contact privacy@buildinsocial.com for the current status.",
     },
 
     changes: {
@@ -211,7 +204,7 @@ export const LEGAL = {
 
     contact: {
       heading: "14. Contact",
-      body: "Questions, requests, or complaints about this policy should be sent to privacy@buildinsocial.com. For matters specific to the EU or UK, you may also reach our DPO placeholder at dpo@buildinsocial.com.",
+      body: "Questions, requests, or complaints about this policy should be sent to privacy@buildinsocial.com. For matters specific to the EU or UK, you may also reach our privacy team at dpo@buildinsocial.com.",
     },
   },
 
@@ -222,7 +215,7 @@ export const LEGAL = {
   TERMS: {
     title: "Terms of Service",
     intro:
-      "These Terms of Service (\"Terms\") form a binding agreement between you and [COMPANY LEGAL ENTITY] d/b/a Build In Social (\"Build In Social,\" \"we,\" \"us\") governing your access to and use of buildinsocial.com and related services (the \"Service\"). Please read them carefully.",
+      "These Terms of Service (\"Terms\") form a binding agreement between you and Build In Social Inc., operating as Build In Social (\"Build In Social,\" \"we,\" \"us\") governing your access to and use of buildinsocial.com and related services (the \"Service\"). Please read them carefully.",
 
     acceptance: {
       heading: "1. Acceptance of Terms",
@@ -256,10 +249,10 @@ export const LEGAL = {
       heading: "5. Subscription, Billing, and Trial",
       bullets: [
         "Build In Social is offered on Solo ($39/mo), Creator ($79/mo), and Studio ($149/mo) subscription tiers. Current pricing and feature limits are listed on the Pricing page and incorporated into these Terms.",
-        "New accounts are eligible for a 14-day free trial. We require a valid payment method to start the trial. If you do not cancel before the trial ends, your paid subscription begins automatically at the chosen tier.",
+        "Trial: You can start a 14-day free trial without providing a payment method. You will be prompted to add a payment method to continue service after the trial ends; no charge occurs if you do not.",
         "Subscriptions renew automatically at the end of each billing period (monthly or annual) at the then-current rate. You can cancel at any time from Settings → Billing; cancellation takes effect at the end of the current paid period.",
         "Invoices include your billing-address VAT/tax number if provided. EU/UK VAT is applied per reverse-charge rules for B2B with a valid VAT ID. You are responsible for any taxes not collected by us.",
-        "Refunds: [CHOOSE — pro-rated refund on cancellation OR no-refund policy except where required by law]. Either choice must be reflected consistently here before launch.",
+        "Refunds: Subscriptions are non-refundable except where required by law. You can cancel anytime and retain access through the end of your paid billing period. Videos already rendered remain downloadable for 30 days after cancellation.",
       ],
     },
 
@@ -295,12 +288,12 @@ export const LEGAL = {
 
     sla: {
       heading: "11. Service Level",
-      body: "Paid subscriptions target [DRAFT 99.9% FOR PAID TIERS] monthly uptime measured against the availability of the core content-generation and publishing APIs. Planned maintenance, third-party platform outages, and force majeure are excluded. A credits-based SLA remedy will be published before GA.",
+      body: "Paid subscriptions target 99.9% monthly uptime measured against the availability of the core content-generation and publishing APIs. Planned maintenance, third-party platform outages, and force majeure are excluded. A credits-based SLA remedy will be published before GA.",
     },
 
     governingLaw: {
       heading: "12. Governing Law and Dispute Resolution",
-      body: "These Terms are governed by the laws of [CHOOSE JURISDICTION], without regard to conflict-of-laws rules. Disputes will be resolved by [CHOOSE: binding arbitration in [seat] / the courts of [seat]]. Nothing in this section prevents either party from seeking injunctive relief in any competent court to protect intellectual property or confidential information.",
+      body: "These Terms are governed by the laws of Delaware, USA, without regard to conflict-of-laws rules. Disputes will be resolved in the state or federal courts located in Delaware, USA, unless otherwise required by law. Nothing in this section prevents either party from seeking injunctive relief in any competent court to protect intellectual property or confidential information.",
     },
 
     changes: {

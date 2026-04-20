@@ -37,21 +37,25 @@ interface Plan {
   buttonLink: string
 }
 
-const CAPACITY_BY_ID: Record<"solo" | "creator" | "studio", string[]> = {
-  solo: ["~40 videos per month", "Up to 2 platforms"],
-  creator: ["~65 videos per month", "Up to 3 platforms"],
-  studio: ["~92 videos per month", "All 4 platforms"],
+const CAPACITY_BY_ID: Record<"starter" | "solo" | "creator" | "studio", string[]> = {
+  starter: ["15 videos per month (hard cap)", "1 platform"],
+  solo: ["40 videos per month (hard cap)", "Up to 2 platforms"],
+  creator: ["65 videos per month (hard cap)", "Up to 3 platforms"],
+  studio: ["92 videos per month (hard cap)", "All 4 platforms"],
 }
 
-const EXTRA_FEATURES_BY_ID: Record<"solo" | "creator" | "studio", string[]> = {
-  solo: ["Distribution intelligence from week 4"],
+const EXTRA_FEATURES_BY_ID: Record<"starter" | "solo" | "creator" | "studio", string[]> = {
+  starter: ["Hard cap \u2014 no surprise charges"],
+  solo: ["Everything in Starter, plus:", "pSEO page per video", "Distribution intelligence from week 4"],
   creator: [
     "Everything in Solo, plus:",
+    "Voice cloning",
     "One-click weekly plan approval",
     "Best-performing pattern insights",
   ],
   studio: [
     "Everything in Creator, plus:",
+    "Autopilot scheduling",
     "Priority rendering",
     "Avatar Mode add-on available",
   ],
@@ -66,7 +70,7 @@ const plans: Plan[] = LANDING.PRICING.plans.map((plan) => ({
   description: plan.description,
   capacity: CAPACITY_BY_ID[plan.id],
   features: [...plan.bullets, ...EXTRA_FEATURES_BY_ID[plan.id]],
-  isStarter: plan.id === "solo",
+  isStarter: plan.id === "starter",
   isRecommended: Boolean(plan.popular),
   buttonText: plan.ctaLabel,
   buttonLink: "/signup",
@@ -89,23 +93,23 @@ const sections: Section[] = [
     features: [
       {
         name: "Weekly content batches",
-        plans: { Solo: true, Creator: true, Studio: true },
+        plans: { Starter: true, Solo: true, Creator: true, Studio: true },
       },
       {
         name: "Manual mode (quality gate)",
-        plans: { Solo: true, Creator: true, Studio: true },
+        plans: { Starter: true, Solo: true, Creator: true, Studio: true },
       },
       {
         name: "Autopilot mode",
-        plans: { Solo: true, Creator: true, Studio: true },
+        plans: { Starter: true, Solo: true, Creator: true, Studio: true },
       },
       {
         name: "Formatted for each platform",
-        plans: { Solo: "2 platforms", Creator: "3 platforms", Studio: "All 4 platforms" },
+        plans: { Starter: "1 platform", Solo: "2 platforms", Creator: "3 platforms", Studio: "All 4 platforms" },
       },
       {
-        name: "Videos per month",
-        plans: { Solo: "~40", Creator: "~65", Studio: "~92" },
+        name: "Videos per month (hard cap)",
+        plans: { Starter: "15", Solo: "40", Creator: "65", Studio: "92" },
       },
     ],
   },
@@ -114,7 +118,7 @@ const sections: Section[] = [
     features: [
       {
         name: "Library voices (6 curated)",
-        plans: { Solo: true, Creator: true, Studio: true },
+        plans: { Starter: true, Solo: true, Creator: true, Studio: true },
       },
       {
         name: "Voice cloning",
@@ -126,7 +130,7 @@ const sections: Section[] = [
       },
       {
         name: "Content tone customization",
-        plans: { Solo: true, Creator: true, Studio: true },
+        plans: { Starter: true, Solo: true, Creator: true, Studio: true },
       },
     ],
   },
@@ -173,11 +177,11 @@ const sections: Section[] = [
     features: [
       {
         name: "Email support",
-        plans: { Solo: "Standard", Creator: "Priority", Studio: "Priority" },
+        plans: { Starter: "Standard", Solo: "Standard", Creator: "Priority", Studio: "Priority" },
       },
       {
         name: "Onboarding help",
-        plans: { Solo: true, Creator: true, Studio: true },
+        plans: { Starter: true, Solo: true, Creator: true, Studio: true },
       },
     ],
   },
@@ -234,7 +238,7 @@ export default function Pricing() {
             Yearly (-20%)
           </Label>
         </div>
-        <div className="grid grid-cols-1 gap-x-8 gap-y-8 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-6 gap-y-8 tablet-sm:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan, planIdx) => (
             <div key={planIdx} className="mt-6">
               {plan.isRecommended ? (
@@ -427,10 +431,11 @@ export default function Pricing() {
           <table className="w-full table-fixed border-separate border-spacing-0 text-left">
             <caption className="sr-only">Pricing plan comparison</caption>
             <colgroup>
-              <col className="w-2/5" />
-              <col className="w-1/5" />
-              <col className="w-1/5" />
-              <col className="w-1/5" />
+              <col className="w-1/3" />
+              <col className="w-[16.67%]" />
+              <col className="w-[16.67%]" />
+              <col className="w-[16.67%]" />
+              <col className="w-[16.67%]" />
             </colgroup>
 
             {/* Sticky header */}
@@ -504,7 +509,7 @@ export default function Pricing() {
                   <tr>
                     <th
                       scope="colgroup"
-                      colSpan={4}
+                      colSpan={5}
                       className={cx(
                         sectionIdx === 0 ? "pt-8" : "pt-6",
                         "pb-3 pl-6 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500",

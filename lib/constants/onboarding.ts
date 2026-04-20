@@ -10,15 +10,14 @@ export const STAGGER_CARDS = 0.06;
 export const STORAGE_KEY = "buildinsocial_onboarding";
 export const TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
 
-export const TOTAL_STEPS = 6;
+export const TOTAL_STEPS = 5;
 
 export const STEP_ROUTES: Record<number, string> = {
   1: "/onboarding/start",
   2: "/onboarding/platforms",
   3: "/onboarding/voice",
   4: "/onboarding/plan-preview",
-  5: "/onboarding/pricing",
-  6: "/onboarding/activation",
+  5: "/onboarding/activation",
 };
 
 export const containerVariants: Variants = {
@@ -170,10 +169,10 @@ export const LIBRARY_VOICES = [
   },
 ] as const;
 
+// Pre-launch: no fake testimonials with made-up names or metrics. Swap in real,
+// verifiable quotes once we have them.
 export const SOCIAL_PROOF_LINES = [
-  "Priya, LaunchKit \u2014 340 LinkedIn impressions in week one. Zero effort.",
-  "Marcus, ShipLog \u2014 12 YouTube subscribers from one week of Shorts. No filming.",
-  "Ava, PingBase \u2014 6 inbound leads traced to a Reel she never recorded.",
+  "What one month looks like: up to 92 videos \u00b7 4 platforms \u00b7 1 weekly review.",
 ] as const;
 
 export const LOADING_MESSAGES = [
@@ -189,16 +188,31 @@ export const LOADING_MESSAGES = [
 
 export const PRICING_PACKAGES = [
   {
+    tier: "starter" as const,
+    name: "Starter",
+    price: 19,
+    annualPrice: 15,
+    platforms: 1,
+    videosPerMonth: 15,
+    outcome: "Start simple. One platform, real consistency.",
+    details: [
+      "1 platform",
+      "15 videos/month (hard cap)",
+      "Library voice",
+      "Autopilot + manual modes",
+    ],
+  },
+  {
     tier: "solo" as const,
     name: "Solo",
     price: 39,
-    annualPrice: 33,
+    annualPrice: 31,
     platforms: 2,
     videosPerMonth: 40,
     outcome: "Consistent presence on 2 platforms. No weekly effort.",
     details: [
       "2 platforms",
-      "~40 videos/month",
+      "40 videos/month (hard cap)",
       "Library voices",
       "1 SEO page per video",
       "Autopilot + manual modes",
@@ -208,14 +222,14 @@ export const PRICING_PACKAGES = [
     tier: "creator" as const,
     name: "Creator",
     price: 79,
-    annualPrice: 66,
+    annualPrice: 63,
     platforms: 3,
     videosPerMonth: 65,
     outcome: "Three platforms, your cloned voice, and a plan that runs itself.",
-    badge: "Most chosen by solo founders",
+    badge: "Most chosen",
     details: [
       "3 platforms",
-      "~65 videos/month",
+      "65 videos/month (hard cap)",
       "Your cloned voice",
       "Performance insights after 4 weeks",
       "Everything in Solo",
@@ -225,13 +239,13 @@ export const PRICING_PACKAGES = [
     tier: "studio" as const,
     name: "Studio",
     price: 149,
-    annualPrice: 125,
+    annualPrice: 119,
     platforms: 4,
     videosPerMonth: 92,
     outcome: "All 4 platforms. Maximum distribution. Priority rendering.",
     details: [
       "All 4 platforms",
-      "~92 videos/month",
+      "92 videos/month (hard cap)",
       "Your cloned voice",
       "Performance insights after 4 weeks",
       "Priority rendering",

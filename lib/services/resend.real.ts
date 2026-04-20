@@ -12,6 +12,8 @@ import {
   VoiceReadyEmail,
   BillingConfirmedEmail,
   RenderFailedEmail,
+  PublishSuccessEmail,
+  QuotaWarningEmail,
 } from "@/lib/email/templates";
 import type { EmailTemplate } from "@/lib/mock/resend.mock";
 
@@ -80,6 +82,24 @@ export async function sendEmail(params: {
         displayName: (d.displayName as string) ?? "there",
         videoTitle: (d.videoTitle as string) ?? "Untitled",
         videoId: (d.videoId as string) ?? "",
+      }),
+    },
+    "publish-success": {
+      subject: `Posted: ${d.videoTitle ?? "Your video"}`,
+      react: React.createElement(PublishSuccessEmail, {
+        displayName: (d.displayName as string) ?? "there",
+        videoTitle: (d.videoTitle as string) ?? "Untitled",
+        platform: (d.platform as string) ?? "social",
+        videoId: (d.videoId as string) ?? "",
+      }),
+    },
+    "quota-warning": {
+      subject: `You've used ${d.used ?? "most"} of your ${d.cap ?? ""} videos this month.`,
+      react: React.createElement(QuotaWarningEmail, {
+        displayName: (d.displayName as string) ?? "there",
+        used: (d.used as number) ?? 0,
+        cap: (d.cap as number) ?? 0,
+        tier: (d.tier as string) ?? "",
       }),
     },
   };

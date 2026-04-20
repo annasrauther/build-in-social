@@ -442,7 +442,7 @@ export default function StartPage() {
   function toggleNiche(id: NicheId) {
     setSelectedNiches((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   }
@@ -509,6 +509,7 @@ export default function StartPage() {
         {!showManualFallback && (
           <PremiumInput
             type="text"
+            aria-label="Your product website or domain"
             value={domainInput}
             onChange={(e) => handleDomainChange(e.target.value)}
             onBlur={handleDomainBlur}
@@ -660,6 +661,7 @@ export default function StartPage() {
                 <PremiumInput
                   ref={manualNameRef}
                   type="text"
+                  label="Product name"
                   value={manualName}
                   onChange={(e) => {
                     setManualName(e.target.value);
@@ -668,6 +670,7 @@ export default function StartPage() {
                   placeholder={APP.ONBOARDING.step1.manualNamePlaceholder}
                 />
                 <PremiumTextarea
+                  label="What does it do?"
                   value={manualDescription}
                   onChange={(e) => {
                     setManualDescription(e.target.value);

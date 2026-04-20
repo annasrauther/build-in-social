@@ -54,7 +54,7 @@ const FONT_STYLES: BrandKit["fontStyle"][] = [
 ];
 
 export default function BrandKitPage() {
-  const [kit, setKit] = useState<BrandKit | null>(null);
+  const [_kit, setKit] = useState<BrandKit | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);

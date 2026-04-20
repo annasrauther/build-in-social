@@ -1,10 +1,14 @@
 "use client";
 
-import { forwardRef, useState, useEffect } from "react";
+import { forwardRef, useState, useEffect, useId } from "react";
 
 interface PremiumInputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
+  /** Optional visible label rendered above the input with `htmlFor` pairing. */
+  label?: string;
+  /** Accessible label when a visible label is not used. Passed through to the input. */
+  "aria-label"?: string;
 }
 
 /**
@@ -12,17 +16,46 @@ interface PremiumInputProps
  * No blue, no browser outline. Warm orange spin on focus.
  */
 export const PremiumInput = forwardRef<HTMLInputElement, PremiumInputProps>(
-  function PremiumInput({ error, className = "", onFocus, onBlur, style, autoFocus, ...props }, ref) {
+  function PremiumInput(
+    {
+      error,
+      className = "",
+      onFocus,
+      onBlur,
+      style,
+      autoFocus,
+      label,
+      id: idProp,
+      ...props
+    },
+    ref,
+  ) {
     const [focused, setFocused] = useState(false);
+    const reactId = useId();
+    const id = idProp ?? reactId;
 
     // autoFocus fires before React state hydrates — manually sync focused state
     useEffect(() => {
       if (autoFocus) setFocused(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (
       <div className={className}>
+        {label && (
+          <label
+            htmlFor={id}
+            className="mb-1.5 block"
+            style={{
+              fontSize: "var(--type-supporting-mobile)",
+              fontWeight: 500,
+              color: "var(--text-primary)",
+            }}
+          >
+            {label}
+          </label>
+        )}
+
         {/* Outer clipping wrapper — creates the gradient border space */}
         <div
           className="relative overflow-hidden p-[1.5px] rounded-[calc(var(--radius-md)+1.5px)]"
@@ -50,9 +83,11 @@ export const PremiumInput = forwardRef<HTMLInputElement, PremiumInputProps>(
           >
             <input
               ref={ref}
+              id={id}
               autoFocus={autoFocus}
+              aria-invalid={error ? true : undefined}
               {...props}
-              className="focus:outline-none focus:ring-0 focus:border-transparent w-full h-[52px] font-normal bg-transparent border-none outline-none px-[14px] appearance-none"
+              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-surface)] w-full h-[52px] font-normal bg-transparent border-none px-[14px] appearance-none"
               onFocus={(e) => {
                 setFocused(true);
                 onFocus?.(e);

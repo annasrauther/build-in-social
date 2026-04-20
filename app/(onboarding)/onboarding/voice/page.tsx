@@ -322,13 +322,14 @@ function VoiceCard({
 
 export default function VoicePage() {
   const { data, update, goToStep } = useOnboarding();
-  const { playSelect, playDeselect, playNavigation, playError, vibrate } =
+  const { playSelect, playDeselect: _playDeselect, playNavigation, playError, vibrate } =
     useInteractionFeedback();
 
   const [selected, setSelected] = useState(data.libraryVoiceId || "alex");
   const [consentChecked, setConsentChecked] = useState(!!data.voiceConsentAt);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [cloneInfoOpen, setCloneInfoOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const stopAudio = useCallback(() => {
@@ -505,6 +506,23 @@ export default function VoicePage() {
             />
           </motion.div>
         ))}
+
+        {/* ── Clone my voice — informational / locked, not selectable ── */}
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            visible: {
+              opacity: 1,
+              y: 0,
+              transition: { duration: 0.28, ease: [0.16, 1, 0.3, 1] },
+            },
+          }}
+        >
+          <CloneVoiceCard
+            expanded={cloneInfoOpen}
+            onToggle={() => setCloneInfoOpen((v) => !v)}
+          />
+        </motion.div>
       </motion.div>
 
       {/* Voice consent */}
@@ -550,5 +568,147 @@ export default function VoicePage() {
         </span>
       </motion.label>
     </OnboardingShell>
+  );
+}
+
+/* ─── Clone voice (locked/informational) ──────────────────────────────────── */
+
+function CloneVoiceCard({
+  expanded,
+  onToggle,
+}: {
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div
+      aria-disabled="true"
+      style={{
+        position: "relative",
+        borderRadius: "var(--radius-lg)",
+        border: "1.5px dashed var(--border-default)",
+        backgroundColor: "var(--bg-elevated)",
+        padding: "14px 16px 12px",
+        opacity: 0.95,
+      }}
+    >
+      <div className="flex items-start gap-3">
+        {/* Avatar — mic icon */}
+        <div
+          aria-hidden
+          className="shrink-0 flex items-center justify-center rounded-full"
+          style={{
+            width: 40,
+            height: 40,
+            backgroundColor: "var(--bg-overlay)",
+            color: "var(--text-tertiary)",
+            fontSize: 18,
+          }}
+        >
+          {/* Microphone glyph */}
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="9" y="2" width="6" height="12" rx="3" />
+            <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
+            <line x1="12" y1="18" x2="12" y2="22" />
+          </svg>
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+            <span
+              style={{
+                fontWeight: 600,
+                fontSize: "var(--type-body-mobile)",
+                color: "var(--text-primary)",
+              }}
+            >
+              Clone my voice
+            </span>
+            <span
+              title="Unlocks after you pick a paid plan."
+              style={{
+                fontSize: "var(--type-micro)",
+                fontWeight: 600,
+                color: "var(--text-tertiary)",
+                backgroundColor: "var(--bg-overlay)",
+                padding: "2px 8px",
+                borderRadius: 99,
+                border: "1px solid var(--border-subtle)",
+                letterSpacing: "0.02em",
+                textTransform: "uppercase",
+              }}
+            >
+              Locked
+            </span>
+          </div>
+          <p
+            style={{
+              fontSize: "var(--type-supporting-mobile)",
+              color: "var(--text-secondary)",
+              lineHeight: 1.5,
+            }}
+          >
+            Voice cloning unlocks after you pick a paid plan.
+          </p>
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={expanded}
+            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-elevated)] rounded-sm"
+            style={{
+              marginTop: 6,
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              fontSize: "var(--type-micro)",
+              fontWeight: 500,
+              color: "var(--accent)",
+              textDecoration: "underline",
+              textUnderlineOffset: 3,
+            }}
+          >
+            {expanded ? "Hide details" : "How does it work?"}
+          </button>
+
+          <AnimatePresence initial={false}>
+            {expanded && (
+              <motion.div
+                key="clone-details"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                style={{ overflow: "hidden" }}
+              >
+                <p
+                  style={{
+                    marginTop: 10,
+                    fontSize: "var(--type-supporting-mobile)",
+                    color: "var(--text-secondary)",
+                    lineHeight: 1.55,
+                  }}
+                >
+                  Once you activate a paid plan, Settings &rarr; Voice walks you
+                  through a 60-second recording. We train your clone, you
+                  approve a sample, then every video narrates in your voice.
+                  Until then, pick a library voice above to keep moving.
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </div>
   );
 }

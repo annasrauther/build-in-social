@@ -27,7 +27,14 @@ export function InstaxImage({
       <div className="bg-gray-50 p-2 dark:bg-gray-900">
         <div className="relative overflow-hidden rounded">
           <div className="absolute inset-0 shadow-[inset_0px_0px_3px_0px_rgb(0,0,0,1)]"></div>
-          <Image src={src} alt={alt} width={width} height={height} loading="lazy" />
+          <Image
+            src={src}
+            alt={alt}
+            width={width}
+            height={height}
+            loading="lazy"
+            sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 320px"
+          />
         </div>
       </div>
       <div

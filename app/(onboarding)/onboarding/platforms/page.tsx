@@ -136,6 +136,8 @@ export default function PlatformsPage() {
 
       <motion.div
         className="flex flex-col gap-3"
+        role="group"
+        aria-label="Select platforms to publish to"
         initial="hidden"
         animate="visible"
         variants={{
@@ -157,6 +159,7 @@ export default function PlatformsPage() {
             }}
           >
             <SelectionCard
+              variant="checkbox"
               selected={selected.includes(platform.id)}
               onSelect={() => toggle(platform.id)}
               icon={platform.icon}

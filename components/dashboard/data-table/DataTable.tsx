@@ -13,6 +13,7 @@ import * as React from "react"
 
 import { DataTableBulkEditor } from "./DataTableBulkEditor"
 import { Filterbar } from "./DataTableFilterbar"
+import { DataTableMobileCards } from "./DataTableMobileCards"
 import { DataTablePagination } from "./DataTablePagination"
 
 import {
@@ -33,6 +34,7 @@ interface DataTableProps<TData> {
 export function DataTable<TData>({ columns, data }: DataTableProps<TData>) {
   const pageSize = 20
   const [rowSelection, setRowSelection] = React.useState({})
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table v8 returns non-memoizable functions; known incompatibility with React Compiler.
   const table = useReactTable({
     data,
     columns,
@@ -57,7 +59,11 @@ export function DataTable<TData>({ columns, data }: DataTableProps<TData>) {
     <>
       <div className="space-y-3">
         <Filterbar table={table} />
-        <div className="relative overflow-hidden overflow-x-auto">
+        {/* P2-21: mobile card-list fallback below lg; desktop table at lg+ */}
+        <div className="lg:hidden">
+          <DataTableMobileCards table={table} />
+        </div>
+        <div className="relative hidden overflow-hidden overflow-x-auto lg:block">
           <Table>
             <TableHead>
               {table.getHeaderGroups().map((headerGroup) => (

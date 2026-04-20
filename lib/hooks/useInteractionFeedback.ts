@@ -56,7 +56,6 @@ export function useInteractionFeedback() {
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + duration + 0.01);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 

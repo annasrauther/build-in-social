@@ -2,6 +2,7 @@
 
 import { SignUp } from "@clerk/nextjs";
 import { motion } from "framer-motion";
+import { useTheme } from "next-themes";
 import { ELEMENT_ENTER, ease } from "@/lib/motion";
 import { Button } from "@/components/tremor/Button";
 import { clerkAppearance } from "@/lib/clerk-appearance";
@@ -10,6 +11,8 @@ const devAuth = process.env.NEXT_PUBLIC_DEV_AUTH === "1";
 const hasClerk = !devAuth && !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
 export default function SignUpPage() {
+  const { resolvedTheme } = useTheme();
+  const theme: "light" | "dark" = resolvedTheme === "dark" ? "dark" : "light";
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-4"
@@ -56,23 +59,23 @@ export default function SignUpPage() {
               className="text-[18px] font-medium mb-2 font-sans"
               style={{ color: "var(--text-primary)" }}
             >
-              Development sign-up
+              Demo mode
             </h1>
             <p
               className="text-[14px] mb-6"
               style={{ color: "var(--text-secondary)" }}
             >
-              Bypass Clerk and continue as the test user.
+              Demo mode — sign in as demo user.
             </p>
             <Button type="submit" className="w-full">
-              Continue as Test User
+              Continue as demo user
             </Button>
           </form>
         ) : hasClerk ? (
           <div className="flex justify-center">
             <SignUp
               fallbackRedirectUrl="/onboarding/start"
-              appearance={clerkAppearance}
+              appearance={clerkAppearance(theme)}
             />
           </div>
         ) : (

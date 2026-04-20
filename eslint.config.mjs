@@ -27,6 +27,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Tremor Raw primitives — copied from the official template, do not lint.
+    "components/tremor/**",
+    // Vendor type declarations — third-party, do not lint.
+    "lib/types/vendor/**",
   ]),
 ]);
 

@@ -1,17 +1,13 @@
 /**
- * Logo upload stub — Phase 1.
- * Accepts a multipart/form-data POST with a `file` field.
- * In Phase 1, returns a placeholder URL. Real R2 upload wired in Phase 2.
- *
  * POST /api/upload/logo
+ * Accepts multipart/form-data with a `file` field, uploads to Cloudflare R2,
+ * and returns the public URL. PNG/SVG/JPG, max 2 MB.
  * → { data: { url: string }, error: null }
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { getOrCreateUser } from "@/lib/auth";
-
-const PLACEHOLDER_URL =
-  "https://pub-placeholder.r2.dev/logos/placeholder-logo.png";
+import { uploadBuffer } from "@/lib/services/r2";
 
 export async function POST(req: NextRequest) {
   let user;
@@ -53,16 +49,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // TODO Phase 2: upload to Cloudflare R2 via lib/services/r2.ts
-    // const r2Key = `logos/${user.id}/${Date.now()}-${filename}`;
-    // await uploadBuffer(r2Key, buffer);
-    // const url = `${R2_PUBLIC_URL}/${r2Key}`;
-    void user; // Referenced to satisfy linter
-
-    return NextResponse.json({
-      data: { url: PLACEHOLDER_URL },
-      error: null,
+    const ext =
+      file.type === "image/png"
+        ? "png"
+        : file.type === "image/svg+xml"
+          ? "svg"
+          : "jpg";
+    const key = `logos/${user.id}/${Date.now()}.${ext}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const { publicUrl } = await uploadBuffer({
+      key,
+      buffer,
+      contentType: file.type,
     });
+
+    return NextResponse.json({ data: { url: publicUrl }, error: null });
   } catch {
     return NextResponse.json(
       { data: null, error: "Upload failed" },

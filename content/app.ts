@@ -52,6 +52,7 @@ export const APP = {
 
   QUALITY_GATE: {
     title: "What happened this week?",
+    subtitle: "Three specific questions. The more detail, the better the content.",
     q1: "What did you learn, ship, or decide?",
     q1Placeholder:
       'Be specific. "Launched Stripe billing," "Finally understood useEffect," or "Delivered a client audit" \u2014 all work.',
@@ -163,6 +164,72 @@ export const APP = {
     webhooksDescription: "Pipe Build In Social events into your own stack.",
     brandLabel: "Brand kit",
     brandDescription: "Colors, logo, watermark, and caption font.",
+    publishingLabel: "Publishing",
+    publishingDescription:
+      "Publish pSEO articles to your own WordPress site so the SEO juice accrues to your domain.",
+  },
+
+  SETTINGS_PUBLISHING: {
+    title: "Publishing",
+    subtitle:
+      "Route pSEO articles to your own domain so search rankings accrue to you \u2014 not a buildinsocial.com subdomain.",
+    wpCardTitle: "Publish pSEO articles to your own WordPress site",
+    wpCardSubtitle:
+      "Connect WordPress once. Every pSEO article goes live on your domain \u2014 no copy-paste, no CMS switcheroo.",
+    wpBenefitBullets: [
+      "Your domain earns the backlinks and long-tail search traffic.",
+      "Works with self-hosted WordPress (\u22655.6) and Jetpack-connected WordPress.com sites.",
+      "Uses a scoped Application Password \u2014 never your admin login.",
+    ],
+    siteUrlLabel: "Site URL",
+    siteUrlPlaceholder: "https://yoursite.com",
+    siteUrlHelp: "Use the full https:// URL of your WordPress site.",
+    usernameLabel: "WordPress username",
+    usernamePlaceholder: "your-wp-username",
+    appPasswordLabel: "Application password",
+    appPasswordPlaceholder: "xxxx xxxx xxxx xxxx xxxx xxxx",
+    appPasswordHelp:
+      "Generate this in wp-admin \u2192 Users \u2192 Profile \u2192 Application Passwords. We encrypt it at rest \u2014 you can rotate it any time.",
+    appPasswordHelpLinkLabel:
+      "How to generate a WordPress application password \u2192",
+    appPasswordHelpLinkHref:
+      "https://wordpress.org/documentation/article/application-passwords/",
+    testCta: "Test connection",
+    testing: "Build In Social is reaching out to your site\u2026",
+    testSuccessWithTitle: (siteTitle: string) =>
+      `Connected to ${siteTitle}. Credentials verified.`,
+    testSuccessNoTitle: "Credentials verified.",
+    testFailure: "We couldn\u2019t verify those credentials.",
+    saveCta: "Save connection",
+    saving: "Build In Social is saving\u2026",
+    saved: "Saved \u2713",
+    statusTitle: "Connected",
+    statusSiteUrl: "Site URL",
+    statusUsername: "WordPress user",
+    statusLastTested: "Last verified",
+    statusLastPublished: "Last published",
+    statusLastPublishedNever: "No posts yet",
+    enabledToggleLabel: "Enable for pSEO articles",
+    enabledToggleDescription:
+      "When on, new pSEO articles publish to your WordPress site instead of the buildinsocial.com subdomain.",
+    disconnectCta: "Disconnect",
+    disconnectTitle: "Disconnect this WordPress site?",
+    disconnectDescription:
+      "Future pSEO articles will publish to your buildinsocial.com subdomain again. Existing posts already on your site stay put.",
+    disconnectConfirm: "Disconnect site",
+    disconnectError:
+      "Build In Social couldn\u2019t disconnect the site. Try again or contact support.",
+    lockedTitle: "Publish to your own WordPress site",
+    lockedDescription:
+      "Available on Creator and Studio. Your pSEO articles publish to your-domain.com/topic so the long-tail traffic lands on your domain.",
+    lockedCta: "Upgrade \u2192",
+    loadError: "Couldn\u2019t load your WordPress connection.",
+    saveError: "Build In Social couldn\u2019t save your connection.",
+    retestCta: "Re-test connection",
+    retestSuccess: "Connection is still healthy.",
+    retestFailure: (reason: string) => `Connection failed \u2014 ${reason}`,
+    roadmapNote:
+      "WordPress publishes pSEO articles today. Video publishing and Ghost/Webflow integrations are on the roadmap.",
   },
 
   SETTINGS_BRAND: {
@@ -360,16 +427,34 @@ export const APP = {
     avatarCta: "Join waitlist",
     usageTitle: "This month",
     usageVideos: (count: number, limit: number) =>
-      `${count} of ~${limit} videos created`,
+      `${count} of ${limit} videos this month`,
     usagePlatforms: (active: number, total: number) =>
       `${active} of ${total} platforms connected`,
-    usageRenews: (date: string) => `Renews ${date}`,
+    usageRenews: (date: string) => `Resets ${date}`,
     usagePending: "Usage data syncs after your first videos.",
+    hardCapExplainer:
+      "Hard cap \u2014 we never auto-charge for extras. Hit your cap and we pause until the monthly reset, or you can upgrade.",
     cancellationPolicyTitle: "Cancellation",
     cancellationPolicyBody:
       "Cancel anytime from the billing portal. Access continues through your billing period. Your videos stay downloadable for 30 days after cancellation.",
     afterTrialNote:
       "After your 14-day trial, pick a plan. Your account pauses cleanly if you don\u2019t \u2014 no charges, no data loss.",
+  },
+
+  QUOTA: {
+    dialogTitle: (cap: number) => `You\u2019ve used this month\u2019s ${cap} videos`,
+    dialogBody: (nextTier: string | null, resetDate: string) =>
+      nextTier
+        ? `Upgrade to ${nextTier} for more, or wait until ${resetDate}. You\u2019ll keep access to previous videos.`
+        : `You\u2019re on our top plan. Wait until ${resetDate} for your next videos. You\u2019ll keep access to previous videos.`,
+    upgradeCta: (nextTier: string) => `Upgrade to ${nextTier}`,
+    waitCta: "Wait until reset",
+    headerUsage: (used: number, cap: number) => `${used} of ${cap} videos this month`,
+    headerNearCap: (used: number, cap: number) =>
+      `${used} of ${cap} videos \u2014 near your cap`,
+    headerAtCap: (cap: number) =>
+      `${cap} of ${cap} videos \u2014 cap reached. Upgrade or wait until reset.`,
+    noSurpriseCharges: "Hard cap. No surprise charges.",
   },
 
   WAITLIST: {
@@ -419,7 +504,7 @@ export const APP = {
       subheading:
         "Drop your site. In 60 seconds, see the videos Build In Social would post for you across YouTube Shorts, Reels, LinkedIn, and X. No site? Describe what you build \u2014 autopilot works from your niche alone.",
       cta: "See my content plan \u2192",
-      socialProof: "For founders who ship faster than they can market.",
+      socialProof: "For anyone who ships, writes, or builds faster than they can market.",
       productSectionLabel: "Your website",
       websitePlaceholder: "yourproduct.com",
       nichePhaseSectionLabel: "Your expertise area",
@@ -499,7 +584,7 @@ export const APP = {
     step6: {
       title: "Start your free trial",
       framingLine:
-        "You\u2019re not paying for a tool. You\u2019re hiring a distribution partner.",
+        "Faster than editing one video yourself. Cheaper than skipping social entirely.",
       toggleAnnual: "Annual",
       toggleMonthly: "Monthly",
       mostChosen: "Most chosen",

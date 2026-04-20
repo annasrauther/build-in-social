@@ -23,7 +23,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   const inner = (
-    <ThemeProvider defaultTheme="system" attribute="class">
+    <ThemeProvider defaultTheme="system" attribute="class" disableTransitionOnChange>
       <QueryClientProvider client={queryClient}>
         {children}
         {process.env.NODE_ENV === "development" && (

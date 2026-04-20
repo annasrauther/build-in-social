@@ -81,3 +81,31 @@ export const findWebhookSubscriptionsForEvent = useReal
 // ── GDPR: cascade delete + export (Article 17 + 20) ──
 export const getAllUserData = useReal ? real.getAllUserData : mock.getAllUserData;
 export const deleteUserAndData = useReal ? real.deleteUserAndData : mock.deleteUserAndData;
+
+// ── Monthly video renders (hard-cap credits) ──
+export const getMonthlyVideoUsage = useReal
+  ? real.getMonthlyVideoUsage
+  : mock.getMonthlyVideoUsage;
+export const hasMonthlyVideoRender = useReal
+  ? real.hasMonthlyVideoRender
+  : mock.hasMonthlyVideoRender;
+export const addMonthlyVideoRender = useReal
+  ? real.addMonthlyVideoRender
+  : mock.addMonthlyVideoRender;
+export const removeMonthlyVideoRender = useReal
+  ? real.removeMonthlyVideoRender
+  : mock.removeMonthlyVideoRender;
+
+// ── WordPress publishing connections ──
+export const getWordPressConnection = useReal
+  ? real.getWordPressConnection
+  : mock.getWordPressConnection;
+export const upsertWordPressConnection = useReal
+  ? real.upsertWordPressConnection
+  : mock.upsertWordPressConnection;
+export const updateWordPressConnection = useReal
+  ? real.updateWordPressConnection
+  : mock.updateWordPressConnection;
+export const deleteWordPressConnection = useReal
+  ? real.deleteWordPressConnection
+  : mock.deleteWordPressConnection;

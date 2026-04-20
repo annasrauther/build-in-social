@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Card } from "@/components/tremor/Card";
-import { Button } from "@/components/tremor/Button";
 import { Badge } from "@/components/tremor/Badge";
 import { TabNavigation, TabNavigationLink } from "@/components/tremor/TabNavigation";
 import { StatusCard } from "@/components/ui/StatusCard";

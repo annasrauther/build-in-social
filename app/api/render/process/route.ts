@@ -32,6 +32,7 @@ import { generatePseoPage } from "@/lib/services/claude";
 import { sendEmail } from "@/lib/services/resend";
 import { refundCreditForRender } from "@/lib/services/credits";
 import { INTERNAL_SECRET, APP_URL } from "@/lib/env";
+import { timingSafeStringEquals } from "@/lib/security/compare";
 
 const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; // ElevenLabs: Rachel — clear, neutral
 
@@ -64,8 +65,8 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-  const provided = req.headers.get("x-internal-secret");
-  if (provided !== INTERNAL_SECRET) {
+  const provided = req.headers.get("x-internal-secret") ?? "";
+  if (!timingSafeStringEquals(provided, INTERNAL_SECRET)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

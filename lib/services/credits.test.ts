@@ -10,12 +10,55 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const mocks = vi.hoisted(() => ({
-  getUserByClerkId: vi.fn(),
-}));
+const mocks = vi.hoisted(() => {
+  // Fresh in-memory store per test run. The db layer is now the source of
+  // truth for quota state, so we mirror the mock nocodebackend contract here
+  // (key: "${userId}:${yearMonth}", value: Set<videoId>).
+  const store = new Map<string, Set<string>>();
+  const keyOf = (u: string, m: string) => `${u}:${m}`;
+  const getSet = (u: string, m: string) => {
+    let s = store.get(keyOf(u, m));
+    if (!s) {
+      s = new Set();
+      store.set(keyOf(u, m), s);
+    }
+    return s;
+  };
+  return {
+    getUserByClerkId: vi.fn(),
+    getMonthlyVideoUsage: vi.fn(async (u: string, m: string) => getSet(u, m).size),
+    hasMonthlyVideoRender: vi.fn(async (u: string, m: string, v: string) =>
+      getSet(u, m).has(v)
+    ),
+    addMonthlyVideoRender: vi.fn(
+      async (u: string, m: string, v: string, cap: number) => {
+        const s = getSet(u, m);
+        if (s.has(v)) return { added: false, count: s.size, atCap: false };
+        if (s.size >= cap) return { added: false, count: s.size, atCap: true };
+        s.add(v);
+        return { added: true, count: s.size, atCap: false };
+      }
+    ),
+    removeMonthlyVideoRender: vi.fn(async (u: string, m: string, v: string) => {
+      const s = getSet(u, m);
+      if (!s.has(v)) return { removed: false, count: s.size };
+      s.delete(v);
+      return { removed: true, count: s.size };
+    }),
+    __reset: () => store.clear(),
+  };
+});
 
 vi.mock("@/lib/services/db", () => ({
   getUserByClerkId: mocks.getUserByClerkId,
+  getMonthlyVideoUsage: mocks.getMonthlyVideoUsage,
+  hasMonthlyVideoRender: mocks.hasMonthlyVideoRender,
+  addMonthlyVideoRender: mocks.addMonthlyVideoRender,
+  removeMonthlyVideoRender: mocks.removeMonthlyVideoRender,
+}));
+
+vi.mock("@/lib/mock/nocodebackend.mock", () => ({
+  _resetMonthlyVideoRenders: () => mocks.__reset(),
 }));
 
 import {
@@ -42,8 +85,8 @@ function userWithTier(tier: SubscriptionTier) {
 }
 
 describe("deductCreditForRender", () => {
-  beforeEach(() => {
-    _resetCreditsForTests();
+  beforeEach(async () => {
+    await _resetCreditsForTests();
     mocks.getUserByClerkId.mockReset();
   });
 
@@ -94,6 +137,20 @@ describe("deductCreditForRender", () => {
     }
   });
 
+  it("enforces the 15-video hard cap on Starter", async () => {
+    mocks.getUserByClerkId.mockResolvedValue(userWithTier("starter"));
+    expect(MONTHLY_VIDEO_BUDGET.starter).toBe(15);
+    for (let i = 0; i < 15; i++) {
+      const r = await deductCreditForRender("clerk_user_01", `video_${i}`);
+      expect(r.ok).toBe(true);
+    }
+    const overflow = await deductCreditForRender("clerk_user_01", "video_16");
+    expect(overflow.ok).toBe(false);
+    if (!overflow.ok) {
+      expect(overflow.reason).toBe("INSUFFICIENT_CREDITS");
+    }
+  });
+
   it("returns USER_NOT_FOUND when the user lookup fails", async () => {
     mocks.getUserByClerkId.mockResolvedValue(null);
     const result = await deductCreditForRender("clerk_unknown", "video_01");
@@ -113,8 +170,8 @@ describe("deductCreditForRender", () => {
 });
 
 describe("refundCreditForRender", () => {
-  beforeEach(() => {
-    _resetCreditsForTests();
+  beforeEach(async () => {
+    await _resetCreditsForTests();
     mocks.getUserByClerkId.mockReset();
     mocks.getUserByClerkId.mockResolvedValue(userWithTier("creator"));
   });

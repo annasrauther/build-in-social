@@ -98,6 +98,7 @@ const PLATFORMS: PlatformDef[] = [
 export default function PlatformsSettings() {
   const [connecting, setConnecting] = useState<Platform | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showComingSoon, setShowComingSoon] = useState<Record<string, boolean>>({});
 
   async function handleConnect(platform: Platform) {
     setConnecting(platform);
@@ -110,7 +111,8 @@ export default function PlatformsSettings() {
       });
       const json = await res.json();
       if (res.status === 501) {
-        setError(APP.SETTINGS_PLATFORMS.oauthNotice);
+        // Honest "coming soon" state — per-platform, not a silent failure
+        setShowComingSoon((prev) => ({ ...prev, [platform]: true }));
       } else if (!res.ok) {
         setError(json.error ?? APP.COMMON.errorGeneric);
       }
@@ -205,45 +207,102 @@ export default function PlatformsSettings() {
                 </div>
               </div>
 
-              {/* Right: status + button */}
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-                <span
+              {/* Right: status + button OR coming-soon state */}
+              {showComingSoon[p.id] ? (
+                <div
                   style={{
-                    fontSize: "var(--type-micro)",
-                    fontWeight: 500,
-                    padding: "3px 8px",
-                    borderRadius: 99,
-                    backgroundColor: "var(--bg-elevated)",
-                    color: "var(--text-tertiary)",
-                    border: "1px solid var(--border-default)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-end",
+                    gap: 8,
+                    flexShrink: 0,
+                    minWidth: 0,
+                    maxWidth: 360,
                   }}
                 >
-                  Not connected
-                </span>
-                <motion.div
-                  whileTap={{ scale: 0.96 }}
-                  whileHover={{ scale: 1.02 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                >
-                  <Button
-                    className="gap-1.5"
-                    disabled={isConnecting}
-                    onClick={() => handleConnect(p.id)}
+                  <span
+                    style={{
+                      fontSize: "var(--type-micro)",
+                      fontWeight: 600,
+                      padding: "3px 8px",
+                      borderRadius: 99,
+                      backgroundColor: "rgba(217,119,87,0.10)",
+                      color: "var(--accent)",
+                      border: "1px solid rgba(217,119,87,0.25)",
+                    }}
                   >
-                    {isConnecting ? (
-                      <>
-                        <RiLoader4Line className="size-4 shrink-0 animate-spin" />
-                        {APP.SETTINGS_PLATFORMS.connecting}
-                      </>
-                    ) : (
-                      <>
-                        <RiAddLine className="-ml-0.5 size-4 shrink-0" />
-                        {APP.SETTINGS_PLATFORMS.connect}
-                      </>
-                    )}
-                  </Button>
-                </motion.div>
-              </div>
+                    OAuth connection — setting up
+                  </span>
+                  <p
+                    style={{
+                      fontSize: "var(--type-supporting-desktop)",
+                      color: "var(--text-tertiary)",
+                      textAlign: "right",
+                      margin: 0,
+                    }}
+                  >
+                    We&rsquo;ll email you when your platform is ready.
+                  </p>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                    <Button
+                      variant="secondary"
+                      onClick={() => {
+                        // Stub waitlist — uses same 501 API deliberately; user gets honest status
+                        window.open("/waitlist?platform=" + p.id, "_self");
+                      }}
+                    >
+                      Join the waitlist
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        window.open("/videos", "_self");
+                      }}
+                    >
+                      Learn about manual publishing
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+                  <span
+                    style={{
+                      fontSize: "var(--type-micro)",
+                      fontWeight: 500,
+                      padding: "3px 8px",
+                      borderRadius: 99,
+                      backgroundColor: "var(--bg-elevated)",
+                      color: "var(--text-tertiary)",
+                      border: "1px solid var(--border-default)",
+                    }}
+                  >
+                    Not connected
+                  </span>
+                  <motion.div
+                    whileTap={{ scale: 0.96 }}
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                  >
+                    <Button
+                      className="gap-1.5"
+                      disabled={isConnecting}
+                      onClick={() => handleConnect(p.id)}
+                    >
+                      {isConnecting ? (
+                        <>
+                          <RiLoader4Line className="size-4 shrink-0 animate-spin" />
+                          {APP.SETTINGS_PLATFORMS.connecting}
+                        </>
+                      ) : (
+                        <>
+                          <RiAddLine className="-ml-0.5 size-4 shrink-0" />
+                          {APP.SETTINGS_PLATFORMS.connect}
+                        </>
+                      )}
+                    </Button>
+                  </motion.div>
+                </div>
+              )}
             </motion.div>
           );
         })}

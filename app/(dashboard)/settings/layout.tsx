@@ -4,11 +4,15 @@ import { TabNavigation, TabNavigationLink } from "@/components/tremor/TabNavigat
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
+// TODO (content/app.ts owner): Add SETTINGS_NAV strings for these tabs —
+// currently using inline labels as a fallback per P1-17.
 const navigationSettings = [
   { name: "Profile", href: "/settings/profile" },
   { name: "Platforms", href: "/settings/platforms" },
   { name: "Voice", href: "/settings/voice" },
   { name: "Brand kit", href: "/settings/brand" },
+  { name: "Publishing", href: "/settings/publishing" },
+  { name: "Automation", href: "/settings/automation" },
   { name: "Billing", href: "/settings/billing" },
   { name: "Webhooks", href: "/settings/webhooks" },
 ]

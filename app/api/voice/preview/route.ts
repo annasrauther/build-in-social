@@ -10,6 +10,7 @@ import {
   checkClonePreviewCooldown,
   markClonePreviewRun,
 } from "@/lib/services/voice-preview-cache";
+import { canUseFeature } from "@/lib/billing/capabilities";
 
 /**
  * GET /api/voice/preview?voiceId=alex
@@ -58,7 +59,9 @@ const VOICE_ID_MAP: Record<string, { elevenlabsId: string; previewText: string }
 const CLONE_PREVIEW_TEXT =
   "This is a preview of your voice on Build In Social. Your weekly content will sound like this.";
 
+// Kept for reference — capabilities helper is the source of truth.
 const CLONE_PLANS = new Set<string>(["creator", "studio"]);
+void CLONE_PLANS;
 
 // In-memory cache for library voices — persists for the server lifecycle
 const libraryPreviewCache = new Map<string, string>();
@@ -71,13 +74,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Per-endpoint base rate limit 20/min by userId+ip (unchanged).
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown";
-  const rlKey = `${userId}:${ip}`;
-  const limited = await checkRateLimit(rlKey, "voice/preview", 20, "1 m");
+  // MED-7: key on userId only for authenticated routes — IP rotation bypassed
+  // the combined key for legitimate mobile/VPN users while not stopping abuse.
+  const limited = await checkRateLimit(userId, "voice/preview", 20, "1 m");
   if (limited) return limited;
 
   const url = new URL(req.url);
@@ -129,7 +128,7 @@ async function handleClonePreview(clerkUserId: string) {
     );
   }
 
-  if (!CLONE_PLANS.has(user.subscriptionTier)) {
+  if (!canUseFeature(user.subscriptionTier, "voice_clone_preview")) {
     return NextResponse.json(
       {
         data: null,

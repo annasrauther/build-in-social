@@ -102,13 +102,9 @@ function computeCanProceed(data: OnboardingData): boolean {
     case 4:
       return !!data.contentMode;
 
-    // Pricing — tier selected
+    // Activation — always reachable once plan preview is complete
     case 5:
-      return !!data.selectedTier;
-
-    // Activation — payment done
-    case 6:
-      return data.paymentComplete;
+      return true;
 
     default:
       return false;

@@ -10,14 +10,15 @@ export async function createCheckoutSession(params: {
   userId: string;
   credits: number;
   price: number;
+  tier?: string;
 }): Promise<{ sessionUrl: string; sessionId: string }> {
   console.log("[MOCK stripe] createCheckoutSession", params.packId);
   await delay();
-  // In mock mode, immediately simulate a successful payment
-  return {
-    sessionUrl: `/api/credits/mock-add?userId=${params.userId}&credits=${params.credits}&packId=${params.packId}`,
-    sessionId: `cs_mock_${Date.now()}`,
-  };
+  // In mock mode, route to the dev-only activation endpoint that mirrors
+  // the real Stripe webhook (updates tier + sends welcome email).
+  const tier = params.tier ?? params.packId;
+  const url = `/api/dev/billing/activate?userId=${encodeURIComponent(params.userId)}&tier=${encodeURIComponent(tier)}`;
+  return { sessionUrl: url, sessionId: `cs_mock_${Date.now()}` };
 }
 
 export async function createPortalSession(_params: {
