@@ -10,7 +10,8 @@ const LINKS: { name: string; href: string }[] = [
   { name: "About", href: "/about" },
   { name: "Privacy", href: "/privacy" },
   { name: "Terms", href: "/terms" },
-  { name: "Sub-processors", href: "/subprocessors" },
+  { name: "Support", href: "mailto:support@buildinsocial.com" },
+  { name: "Data partners", href: "/subprocessors" },
   { name: "Data residency", href: "/subprocessors#residency" },
 ]
 
@@ -27,7 +28,7 @@ export default function Footer() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-xs text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]"
+                className="py-3 px-1 text-xs text-gray-600 dark:text-gray-300 transition-colors hover:text-[var(--text-primary)]"
               >
                 {item.name}
               </Link>

@@ -3,6 +3,9 @@ import {
   RiEyeLine,
   RiSendPlaneLine,
 } from "@remixicon/react"
+import { LANDING } from "@/content/landing"
+import Balancer from "react-wrap-balancer"
+
 const steps = [
   {
     num: "1",
@@ -14,13 +17,12 @@ const steps = [
   {
     num: "2",
     title: "Review your batch, or let it fly",
-    description:
-      "Each week, Build In Social prepares up to 23 videos. Review them, or let autopilot post on schedule.",
+    description: `Each week, Build In Social prepares up to ${LANDING.GLOBAL_DATABASE.videoCount} videos. Review them, or let autopilot post on schedule.`,
     icon: RiEyeLine,
   },
   {
     num: "3",
-    title: "Videos go live across four platforms",
+    title: "Post to four platforms automatically",
     description:
       "YouTube Shorts, Reels, LinkedIn, X. Each one native. Each one building an SEO page behind it.",
     icon: RiSendPlaneLine,
@@ -32,17 +34,19 @@ export default function CodeExample() {
     <section
       id="how-it-works"
       aria-labelledby="code-example-title"
-      className="mx-auto mt-20 w-full max-w-6xl px-3"
+      className="mx-auto mt-20 w-full max-w-6xl px-3 scroll-mt-20"
     >
       <h2
         id="code-example-title"
-        className="text-gradient-brand mt-2 py-2 text-4xl font-bold tracking-tighter sm:text-6xl md:text-6xl"
+        className="text-gradient-brand mt-2 py-2 text-4xl font-bold tracking-tighter sm:text-6xl md:text-6xl font-serif"
       >
         How it works
       </h2>
       <p className="mt-6 max-w-2xl text-lg text-gray-600 dark:text-gray-400">
-        Three steps. Three minutes. Up to 23 videos — formatted for YouTube
-        Shorts, Instagram Reels, LinkedIn, and X — scheduled for the week.
+        <Balancer>
+          Three steps. Three minutes. Up to {LANDING.GLOBAL_DATABASE.videoCount} videos — formatted for YouTube
+          Shorts, Instagram Reels, LinkedIn, and X — scheduled for the week.
+        </Balancer>
       </p>
       <dl className="mt-10 grid grid-cols-1 gap-8 sm:gap-10 sm:grid-cols-3">
         {steps.map((item) => (
@@ -55,8 +59,8 @@ export default function CodeExample() {
                 className="size-6 text-brand-500 dark:text-brand-400"
               />
             </div>
-            <dt className="mt-6 font-semibold text-gray-900 dark:text-gray-50">
-              <span className="inline-block bg-gradient-to-t from-brand-900 to-brand-500 bg-clip-text text-lg font-bold text-transparent dark:from-brand-700 dark:to-brand-400">
+            <dt className="mt-6 font-semibold text-gray-900 dark:text-gray-50 font-serif">
+              <span className="text-lg font-bold text-brand-500 dark:text-brand-400">
                 {item.num}.
               </span>{" "}
               {item.title}

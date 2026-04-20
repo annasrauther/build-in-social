@@ -20,7 +20,7 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   title: {
-    default: "Build In Social — Your social media employee is here.",
+    default: "Build In Social — weekly platform-native video, end to end",
     template: "%s | Build In Social",
   },
   description:
@@ -40,14 +40,14 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://buildinsocial.com",
-    title: "Build In Social — Your social media employee is here.",
+    title: "Build In Social — weekly platform-native video, end to end",
     description:
       "One prompt per week. Platform-native content for 4 platforms. Every video gets a Google-indexed SEO page. Posts while you build.",
     siteName: "Build In Social",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Build In Social — Your social media employee is here.",
+    title: "Build In Social — weekly platform-native video, end to end",
     description:
       "One prompt per week. Platform-native content for 4 platforms. Posts while you build.",
     creator: "@buildinsocial",
@@ -74,7 +74,7 @@ export default function RootLayout({
       className={`${poppins.variable} ${montserrat.variable}`}
       suppressHydrationWarning
     >
-      <body className="overflow-y-scroll scroll-auto antialiased selection:bg-brand-100 selection:text-brand-900 dark:selection:bg-brand-900 dark:selection:text-brand-100 bg-[#FAF9F5] dark:bg-[#141413]">
+      <body className="overflow-y-scroll scroll-auto antialiased bg-[#FAF9F5] dark:bg-[#141413]">
         <Providers>{children}</Providers>
       </body>
     </html>

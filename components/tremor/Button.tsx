@@ -10,7 +10,7 @@ import { cx, focusRing } from "@/lib/utils"
 const buttonVariants = tv({
   base: [
     // base
-    "relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-sm font-medium shadow-sm transition-all duration-100 ease-in-out active:scale-[0.97]",
+    "relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-sm font-medium shadow-sm transition-all duration-100 ease-in-out active:scale-[0.97] min-h-11",
     // disabled
     "disabled:pointer-events-none disabled:shadow-none",
     // focus
@@ -21,8 +21,8 @@ const buttonVariants = tv({
       primary: [
         // border
         "border-transparent",
-        // light: black→#7b7b7b | dark: white→silver
-        "bg-gradient-to-br from-[#000000] to-[#7b7b7b] dark:from-white dark:to-gray-400",
+        // light: black→gray-500 | dark: white→silver
+        "bg-gradient-to-br from-gray-900 to-gray-500 dark:from-white dark:to-gray-400",
         // text
         "text-white dark:text-gray-900",
         // hover
@@ -34,8 +34,8 @@ const buttonVariants = tv({
       secondary: [
         // border
         "border-gray-200 dark:border-transparent",
-        // light: white→very light gray | dark: silver→dark
-        "bg-gradient-to-br from-[#FAFAFA] to-[#DDDDDD] dark:from-gray-400 dark:to-[#141413]",
+        // light: white→light gray | dark: silver→dark
+        "bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-400 dark:to-[#141413]",
         // text
         "text-gray-900 dark:text-white",
         // hover

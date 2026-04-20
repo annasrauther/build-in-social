@@ -15,11 +15,11 @@ export function cx(...args: ClassValue[]) {
 
 export const focusInput = [
   // base
-  "focus:ring-2",
+  "focus-visible:ring-2",
   // ring color
-  "focus:ring-brand-200 focus:dark:ring-brand-700/30",
+  "focus-visible:ring-brand-200 focus-visible:dark:ring-brand-700/30",
   // border color
-  "focus:border-brand-500 focus:dark:border-brand-700",
+  "focus-visible:border-brand-500 focus-visible:dark:border-brand-700",
 ]
 
 // Tremor Raw focusRing [v0.0.1]

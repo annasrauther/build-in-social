@@ -10,7 +10,7 @@ const GlobalDatabase = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="mx-auto mt-24 h-[500px] w-full max-w-6xl animate-pulse rounded-xl bg-anthropic-lightGray/20" />
+      <div className="mx-auto mt-24 h-[520px] w-full max-w-6xl animate-pulse rounded-xl bg-anthropic-lightGray/20" />
     ),
   },
 )

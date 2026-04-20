@@ -46,7 +46,7 @@ const ThemeSwitch = () => {
             aria-label={`Switch to ${label} mode`}
             onClick={() => setTheme(value)}
             className={cx(
-              "relative flex size-8 items-center justify-center rounded-full outline-none transition-colors duration-150",
+              "relative flex size-8 min-h-11 min-w-11 items-center justify-center rounded-full outline-none transition-colors duration-150",
               focusRing,
               isActive
                 ? "text-gray-900 dark:text-gray-50"

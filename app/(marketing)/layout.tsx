@@ -9,7 +9,7 @@ export default function MarketingLayout({
     <>
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-gray-900"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-white focus:text-gray-900 dark:focus:bg-gray-900 dark:focus:text-gray-50"
       >
         {APP.A11Y.skipToContent}
       </a>

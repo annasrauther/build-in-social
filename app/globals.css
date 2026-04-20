@@ -314,10 +314,6 @@
     background: radial-gradient(circle at center, rgba(217, 119, 87, 0.10) 0%, transparent 70%);
   }
 
-  .backdrop-blur {
-    backdrop-filter: blur(3px);
-  }
-
   .backdrop-blur-nav {
     backdrop-filter: blur(12px);
   }

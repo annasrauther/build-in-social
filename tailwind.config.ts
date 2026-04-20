@@ -38,6 +38,12 @@ const config: Config = {
           blue: "#6A9BCC",
           green: "#788C5D",
         },
+        platform: {
+          youtube: "#FF0000",
+          instagram: "#E1306C",
+          linkedin: "#0A66C2",
+          x: "#000000",
+        },
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],

@@ -19,7 +19,7 @@ export function Faqs() {
         <div className="col-span-full sm:col-span-5">
           <h2
             id="faq-title"
-            className="inline-block scroll-my-24 bg-gradient-to-br from-gray-900 to-gray-800 bg-clip-text py-2 pr-2 text-2xl font-bold tracking-tighter text-transparent lg:text-3xl dark:from-gray-50 dark:to-gray-300"
+            className="inline-block scroll-my-24 py-2 pr-2 text-2xl font-bold tracking-tighter text-gray-900 dark:text-gray-50 lg:text-3xl font-serif"
           >
             Frequently Asked Questions
           </h2>

@@ -14,7 +14,7 @@ interface NavContent {
 interface HeroContent {
   headline: string;
   subhead: string;
-  callout: string;
+  callout?: string;
   subCallout?: string;
   primaryCta: string;
   secondaryCta: string;
@@ -65,7 +65,7 @@ interface TestimonialsContent {
 }
 
 interface PricingPlan {
-  id: "solo" | "creator" | "studio";
+  id: "starter" | "solo" | "creator" | "studio";
   name: string;
   price: number;
   annualPrice: number;
@@ -104,13 +104,14 @@ interface FooterContent {
   dataLine?: string;
 }
 
-interface SocialProofMetric {
-  value: string;
-  label: string;
+interface SocialProofContent {
+  /** Honest one-line framing of what a week looks like, e.g. "23 videos · 4 platforms · 1 weekly review". */
+  heading: string;
+  summary: string;
 }
 
-interface SocialProofContent {
-  metrics: SocialProofMetric[];
+interface GlobalDatabaseContent {
+  videoCount: string;
 }
 
 interface Feature {
@@ -129,6 +130,7 @@ export interface LandingContent {
   NAV: NavContent;
   HERO: HeroContent;
   SOCIAL_PROOF: SocialProofContent;
+  GLOBAL_DATABASE: GlobalDatabaseContent;
   FEATURES: FeaturesContent;
   VALUE_PROPS: ValuePropsContent;
   HOW_IT_WORKS: HowItWorksContent;
@@ -149,44 +151,41 @@ export const LANDING: LandingContent = {
     mainLinks: [
       { label: "About", href: "/about" },
       { label: "Pricing", href: "/pricing" },
-      { label: "Changelog", href: "/changelog" },
+      { label: "What's new", href: "/changelog" },
     ],
     signInLabel: "Sign in",
-    ctaLabel: "Get started",
+    ctaLabel: "Join the waitlist",
   },
 
   HERO: {
-    headline: "Your domain presence, on autopilot.",
+    headline:
+      "Every week, up to 20 platform-native videos per month go out. You don\u2019t film one.",
     subhead:
-      "You ship. You consult. You learn. You forget to post. Build In Social writes the script, renders your voice over B-roll, posts to 4 platforms, and spins up a search article — every week.",
-    callout:
-      "Even when nothing shipped — Build In Social runs on autopilot.",
-    subCallout:
-      "Scripts are easy. Shipping 23 platform-native videos a week isn\u2019t. That\u2019s the part Build In Social automates.",
-    primaryCta: "Start free trial",
+      "You ship. You learn. You forget to post. Build In Social scripts, renders, and posts to 4 platforms \u2014 every week.",
+    primaryCta: "Join the waitlist",
     secondaryCta: "See how it works",
-    reassurance: "No credit card required. 14-day trial.",
+    reassurance: "No credit card required. Cancel any time.",
   },
 
   SOCIAL_PROOF: {
-    metrics: [
-      { value: "12,400+", label: "Videos posted for founders" },
-      { value: "$39/mo", label: "vs. $3,000/mo for a hire" },
-      { value: "92", label: "Videos per month on Studio" },
-      { value: "3 min", label: "From signup to first batch" },
-    ],
+    heading: "What one month looks like",
+    summary: "Up to 92 videos \u00b7 4 platforms \u00b7 1 weekly review",
+  },
+
+  GLOBAL_DATABASE: {
+    videoCount: "23",
   },
 
   FEATURES: {
     headline: "You ship. Nobody sees it. That\u2019s what we fix.",
     builtFor:
-      "Built for indie developers, SaaS founders, freelancers, and solo creators. Not for marketing teams \u2014 yet.",
+      "Built for anyone building a social presence \u2014 solo founders, indie devs, freelancers, creators, newsletter writers, agencies managing a single brand. Designed for humans who don\u2019t want social to become their full-time job.",
     features: [
-      { title: "A ranking article per video", description: "Every video auto-generates a Google-indexed search article on your subdomain (e.g. yourproduct.buildinsocial.com/topic). Your long-tail SEO compounds while you ship.", image: "/images/features/autopilot.png" },
-      { title: "Script, voice, B-roll, render, post", description: "Build In Social writes the script, renders your voice over B-roll, assembles platform-native video, and posts to YouTube Shorts, Reels, LinkedIn, and X. End to end \u2014 not a scheduler.", image: "/images/features/four-platforms.png" },
-      { title: "Up to 23 posts across 4 platforms", description: "A full week of content \u2014 formatted for each platform, prepared and scheduled at once. 5 minutes a week of review, not 15 minutes a day of scheduling.", image: "/images/features/weekly-batches.png" },
-      { title: "Zero-input weeks on autopilot", description: "Works from your niche alone \u2014 no product, no launch, no news required. Build In Social prepares a full week of content.", image: "/images/features/manual-mode.png" },
-      { title: "Sounds like you, not a template", description: "Content matches your domain, your audience, and how you talk. Every time.", image: "/images/features/your-voice.png" },
+      { title: "Rank on Google from every video", description: "Every video auto-generates a Google-indexed search article on your subdomain (e.g. yourproduct.buildinsocial.com/topic). Your long-tail SEO compounds while you ship. (Solo and above.)", image: "/images/features/autopilot.png" },
+      { title: "Script, voice, render, post", description: "Build In Social writes the script, renders your voice over B-roll, assembles platform-native video, and posts to YouTube Shorts, Reels, LinkedIn, and X. End to end \u2014 not a scheduler.", image: "/images/features/four-platforms.png" },
+      { title: "Ship 92 posts a month", description: "Month-of-content \u2014 formatted for each platform, prepared and scheduled in batches. 5 minutes a week of review, not 15 minutes a day of scheduling.", image: "/images/features/weekly-batches.png" },
+      { title: "Run zero-input weeks", description: "Works from your niche alone \u2014 no product, no launch, no news required. Build In Social prepares a full week of content.", image: "/images/features/manual-mode.png" },
+      { title: "Sound like yourself", description: "Content matches your domain, your audience, and how you talk. Every time.", image: "/images/features/your-voice.png" },
       { title: "See what resonates", description: "Videos post on your schedule. Performance data flows back so you know what lands.", image: "/images/features/post-track.png" },
     ],
   },
@@ -207,7 +206,7 @@ export const LANDING: LandingContent = {
         body: "Every video generates a Google-indexed search article. Articles published on your subdomain (e.g. yourproduct.buildinsocial.com/topic) and indexed by Google. Your long-tail search presence compounds while you focus on your product.",
       },
       {
-        title: "Sound like yourself, not a template",
+        title: "Your voice, not a template",
         body: "Three-minute setup. Build In Social learns what you build, who it's for, and how you talk about it. Clone your voice on Creator and Studio plans.",
       },
       {
@@ -228,16 +227,18 @@ export const LANDING: LandingContent = {
       {
         num: "2",
         title: "Review your batch, or let it fly",
-        body: "Each week, Build In Social prepares up to 23 videos. Review them, or let autopilot post on schedule.",
+        body: "Each month, Build In Social prepares up to 92 videos. Review them, or let autopilot post on schedule.",
       },
       {
         num: "3",
-        title: "Videos go live across four platforms",
+        title: "Post to four platforms automatically",
         body: "YouTube Shorts, Reels, LinkedIn, X. Each one formatted for its platform. Each one building a search article behind it.",
       },
     ],
   },
 
+  // Testimonials intentionally empty pre-launch — no fake social proof.
+  // Re-enable once we have at least one real, verifiable testimonial.
   TESTIMONIALS: {
     headline: "What founders are saying",
     testimonials: [],
@@ -245,63 +246,86 @@ export const LANDING: LandingContent = {
 
   PARTNER_CALLOUT: {
     quote:
-      "You\u2019re not paying for a tool. You\u2019re hiring a distribution partner.",
+      "Faster than editing one video yourself. Cheaper than skipping social entirely.",
   },
 
   PRICING: {
     headline: "Simple, honest pricing. Pick your scale.",
-    subhead:
-      "You\u2019re not paying for a tool. You\u2019re hiring a distribution partner.",
+    subhead: "Simple pricing. Cancel any time.",
     plans: [
+      {
+        id: "starter",
+        name: "Starter",
+        price: 19,
+        annualPrice: 15,
+        description: "1 platform. 15 videos/month. Hard cap \u2014 no surprise charges.",
+        bullets: [
+          "15 videos/month (hard cap)",
+          "One platform of your choice",
+          "Professional library voice",
+          "Manual + autopilot modes",
+        ],
+        ctaLabel: "Join the waitlist",
+      },
       {
         id: "solo",
         name: "Solo",
         price: 39,
-        annualPrice: 33,
-        description: "2 platforms. ~40 videos per month.",
+        annualPrice: 31,
+        description: "2 platforms. 40 videos/month (hard cap).",
         bullets: [
-          "~40 videos/month",
+          "40 videos/month (hard cap)",
           "YouTube Shorts + one other platform",
           "Google-indexed search article per video",
           "Professional library voice",
         ],
-        ctaLabel: "Start free trial",
+        ctaLabel: "Join the waitlist",
       },
       {
         id: "creator",
         name: "Creator",
         price: 79,
-        annualPrice: 66,
-        description: "3 platforms. ~65 videos per month.",
+        annualPrice: 63,
+        description: "3 platforms. 65 videos/month (hard cap).",
         bullets: [
-          "~65 videos/month",
+          "65 videos/month (hard cap)",
           "Three platforms of your choice",
           "Scheduled posting on your 3 platforms",
           "Your cloned voice from a 60-second recording",
+          "Publish pSEO articles to your own WordPress site",
           "Performance breakdowns from week 4",
         ],
-        ctaLabel: "Start free trial",
+        ctaLabel: "Join the waitlist",
         popular: true,
       },
       {
         id: "studio",
         name: "Studio",
         price: 149,
-        annualPrice: 125,
-        description: "All 4 platforms. ~92 videos per month.",
+        annualPrice: 119,
+        description: "All 4 platforms. 92 videos/month (hard cap).",
         bullets: [
-          "~92 videos/month",
+          "92 videos/month (hard cap)",
           "All four platforms",
           "Full autopilot scheduling",
+          "Publish pSEO articles to your own WordPress site",
           "Deeper performance insights + content recommendations (week 4+)",
         ],
-        ctaLabel: "Start free trial",
+        ctaLabel: "Join the waitlist",
       },
     ],
     faqs: [
       {
+        q: "Can I publish pSEO articles to my own domain?",
+        a: "Yes \u2014 connect your WordPress site on Creator or Studio, and pSEO articles publish to your-domain.com/topic instead of a buildinsocial.com subdomain. Works with self-hosted WordPress and WordPress.com. Other CMS integrations (Ghost, Webflow) are on the roadmap.",
+      },
+      {
         q: "Is the content actually good, or is it generic AI slop?",
-        a: "Every video is formatted for the platform it lives on \u2014 the right duration, hook structure, and pacing. YouTube Shorts get 30\u201345 seconds. Reels get 20\u201330. LinkedIn gets 45\u201360. X gets 15\u201320. Build In Social learns your niche, your audience, and your voice \u2014 not a one-size-fits-all template. On Creator and Studio plans, it uses your cloned voice from a 60-second recording.",
+        a: "Every script runs through a specificity gate before it renders. You review the full week in ~5 minutes before anything publishes. If something is off, one-click regenerate with a nudge. (We\u2019re shipping example week-in-life videos in the next release.)",
+      },
+      {
+        q: "Why not TikTok?",
+        a: "TikTok\u2019s content API requires a lengthy app review + is restricted per post. We\u2019re working on it \u2014 join the waitlist on the waitlist page. For now, YouTube Shorts + Reels cover the short-form faceless-video audience and post reliably.",
       },
       {
         q: "Do I lose control over what gets posted?",
@@ -313,7 +337,11 @@ export const LANDING: LandingContent = {
       },
       {
         q: "How fast can I start posting?",
-        a: "Three minutes. Describe your niche, connect your platform accounts, and your first weekly batch is ready. No credit card for the 14-day trial. Most founders are live the same day they sign up.",
+        a: "Three minutes. Describe your niche, connect your platform accounts, and your first weekly batch is ready. No credit card required. Most founders are live the same day they sign up.",
+      },
+      {
+        q: "What happens if I hit my monthly video cap?",
+        a: "We pause your next render and tell you. Every plan has a hard cap \u2014 Starter 15, Solo 40, Creator 65, Studio 92. We never auto-charge you for extras. You can upgrade to the next tier for more this month, or wait until your monthly reset. Videos you\u2019ve already made stay available.",
       },
       {
         q: "Can I use this for multiple projects?",
@@ -321,7 +349,7 @@ export const LANDING: LandingContent = {
       },
       {
         q: "Can I use this for client accounts / agency use?",
-        a: "Build In Social is built for individual founders and creators. For agency use across multiple clients, reach out \u2014 we\u2019re collecting interest for a dedicated tier.",
+        a: "Build In Social is built for anyone running a single brand \u2014 founders, freelancers, creators, newsletter writers, and agencies managing one client brand. For agency use across multiple clients, reach out \u2014 we\u2019re collecting interest for a dedicated tier.",
       },
       {
         q: "Does my voice clone work if English is my second language?",
@@ -349,7 +377,7 @@ export const LANDING: LandingContent = {
       },
       {
         q: "Is this for teams or just solo operators?",
-        a: "Solo operators and founder-led brands. Build In Social has no seats, approvals, or shared workspaces. If you run content for a team or multiple clients, stay on Jasper Business or Hootsuite \u2014 or join our agency waitlist.",
+        a: "Anyone running a single brand \u2014 solo founders, freelancers, creators, and small agencies managing one brand. Build In Social has no seats, approvals, or shared workspaces. If you run content for a team or multiple clients, stay on Jasper Business or Hootsuite \u2014 or join our agency waitlist.",
       },
     ],
   },
@@ -357,9 +385,9 @@ export const LANDING: LandingContent = {
   FINAL_CTA: {
     headline: "You\u2019ll never run another Sunday-night scripting session.",
     subhead:
-      "Or never started? Autopilot runs without you. 14-day free trial. Your first video batch is ready in under three minutes.",
-    ctaLabel: "Start your free trial",
-    reassurance: "No credit card required. Cancel anytime. Takes 3 minutes.",
+      "Or never got started? Autopilot runs without you. Your first video batch is ready in under three minutes.",
+    ctaLabel: "Join the waitlist",
+    reassurance: "No credit card required. Cancel any time. Takes 3 minutes.",
   },
 
   FOOTER: {
@@ -369,10 +397,11 @@ export const LANDING: LandingContent = {
       { label: "Sign in", href: "/login" },
       { label: "Privacy", href: "/privacy" },
       { label: "Terms", href: "/terms" },
-      { label: "Sub-processors", href: "/subprocessors" },
+      { label: "Support", href: "mailto:support@buildinsocial.com" },
+      { label: "Data partners", href: "/subprocessors" },
       { label: "Data residency", href: "/subprocessors#residency" },
     ],
     copyright: "\u00a9 2026 Build In Social",
-    dataLine: "Data stored on Cloudflare R2. See sub-processors.",
+    dataLine: "Data stored on Cloudflare R2. See data partners.",
   },
 };

@@ -1,6 +1,7 @@
 "use client"
 import createGlobe from "cobe"
 import { FunctionComponent, useEffect, useRef } from "react"
+import { useReducedMotion } from "framer-motion"
 
 /* ── Brand logo SVGs ─────────────────────────────────────────────────────── */
 
@@ -133,8 +134,10 @@ const PLATFORM_LOGOS = [
 
 export const GlobalDatabase: FunctionComponent = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const reducedMotion = useReducedMotion()
 
   useEffect(() => {
+    if (reducedMotion) return
     let phi = 4.7
     const globe = createGlobe(canvasRef.current!, {
       devicePixelRatio: 2,
@@ -157,7 +160,7 @@ export const GlobalDatabase: FunctionComponent = () => {
       },
     })
     return () => { globe.destroy() }
-  }, [])
+  }, [reducedMotion])
 
   const features = [
     {
@@ -226,6 +229,8 @@ export const GlobalDatabase: FunctionComponent = () => {
       <div className="relative z-10 w-full flex justify-center mt-6">
         <canvas
           ref={canvasRef}
+          role="img"
+          aria-label="Global platform activity map"
           className="relative h-[520px] w-[520px] max-w-full"
         />
         <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-b from-transparent to-gray-950 pointer-events-none" />
@@ -237,7 +242,7 @@ export const GlobalDatabase: FunctionComponent = () => {
           <div className="grid grid-cols-1 gap-x-8 gap-y-6 rounded-2xl border border-white/[4%] bg-white/[2%] px-5 py-7 sm:px-6 sm:py-8 shadow-xl backdrop-blur-sm md:grid-cols-3 md:p-10">
             {features.map((item) => (
               <div key={item.name} className="flex flex-col gap-3">
-                <h3 className="bg-gradient-to-br from-brand-300 to-brand-500 bg-clip-text text-base font-semibold text-transparent md:text-lg">
+                <h3 className="text-base font-semibold text-gray-50 md:text-lg font-serif">
                   {item.name}
                 </h3>
                 <p className="text-sm leading-relaxed text-white/40">

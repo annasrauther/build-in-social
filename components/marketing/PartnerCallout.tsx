@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { LANDING } from "@/content/landing";
-import { fadeInUp } from "@/lib/motion";
+import { useSafeMotion } from "@/lib/hooks/useSafeMotion";
 
 /**
  * Pull-quote row that surfaces the core partner positioning line.
@@ -10,13 +10,22 @@ import { fadeInUp } from "@/lib/motion";
  * the Features section has established value.
  */
 export default function PartnerCallout() {
+  const { transition } = useSafeMotion();
   return (
     <section
       aria-label="Value proposition"
       className="mx-auto mt-24 w-full max-w-3xl px-8 sm:mt-32"
     >
+      <h2 className="sr-only">Why Build In Social</h2>
       <motion.blockquote
-        variants={fadeInUp}
+        variants={{
+          hidden: { opacity: 0, y: 20 },
+          visible: {
+            opacity: 1,
+            y: 0,
+            transition: transition({ duration: 0.5, ease: [0.16, 1, 0.3, 1] }),
+          },
+        }}
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: "-80px" }}
