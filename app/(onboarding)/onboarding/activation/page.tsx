@@ -44,11 +44,7 @@ function generateParticles(count: number): Particle[] {
 }
 
 function ConfettiBurst() {
-  const [particles, setParticles] = useState<Particle[]>([]);
-
-  useEffect(() => {
-    setParticles(generateParticles(50));
-  }, []);
+  const [particles] = useState<Particle[]>(() => generateParticles(50));
 
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 20 }}>
@@ -150,7 +146,7 @@ export default function ActivationPage() {
   }
 
   return (
-    <OnboardingShell step={6} showBack={false} showContinue={false}>
+    <OnboardingShell step={5} showBack={false} showContinue={false}>
       <ConfettiBurst />
 
       <AnimatePresence>

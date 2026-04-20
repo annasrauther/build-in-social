@@ -49,6 +49,11 @@ const mocks = vi.hoisted(() => ({
   callOrder: [] as string[],
 }));
 
+vi.mock("@/lib/env", () => ({
+  INTERNAL_SECRET: "test-secret",
+  APP_URL: "http://localhost:3000",
+}));
+
 vi.mock("@/lib/auth", () => ({
   requireAuth: mocks.requireAuth,
   getAuthUserId: mocks.requireAuth,

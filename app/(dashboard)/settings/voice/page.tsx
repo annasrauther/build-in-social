@@ -5,12 +5,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/tremor/Button";
 import { StatusCard } from "@/components/ui/StatusCard";
 import { APP } from "@/content/app";
+import { LIBRARY_VOICES } from "@/lib/constants/onboarding";
 import type { SubscriptionTier } from "@/lib/types/user";
 
 type Profile = {
   id: string;
   subscriptionTier: SubscriptionTier;
   voiceProfileId?: string;
+  // Library voice id as persisted in the voice profile `name` field (lowercased).
+  libraryVoiceId?: string;
 };
 
 type PreviewState =
@@ -19,6 +22,12 @@ type PreviewState =
   | { kind: "playing"; audioUrl: string }
   | { kind: "rateLimited" }
   | { kind: "upgrade" }
+  | { kind: "error"; message: string };
+
+type LibraryState =
+  | { kind: "idle" }
+  | { kind: "saving"; voiceId: string }
+  | { kind: "saved"; voiceId: string }
   | { kind: "error"; message: string };
 
 const COPY = APP.SETTINGS_VOICE;
@@ -48,7 +57,30 @@ export default function VoiceSettings() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewState>({ kind: "idle" });
+  const [library, setLibrary] = useState<LibraryState>({ kind: "idle" });
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const handleChangeLibraryVoice = useCallback(async (voiceId: string) => {
+    setLibrary({ kind: "saving", voiceId });
+    try {
+      const res = await fetch("/api/settings/voice", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ voiceId }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        setLibrary({
+          kind: "error",
+          message: typeof json.error === "string" ? json.error : APP.COMMON.errorGeneric,
+        });
+        return;
+      }
+      setLibrary({ kind: "saved", voiceId });
+    } catch {
+      setLibrary({ kind: "error", message: APP.COMMON.errorGeneric });
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -276,6 +308,77 @@ export default function VoiceSettings() {
           </div>
         </div>
       </section>
+
+      {profile && (
+        <section aria-labelledby="library-voice-settings">
+          <div className="grid grid-cols-1 gap-x-14 gap-y-8 md:grid-cols-3">
+            <div>
+              <h2
+                id="library-voice-settings"
+                className="scroll-mt-10 font-semibold text-gray-900 dark:text-gray-50"
+              >
+                Library voice
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-gray-500">
+                The voice Build In Social uses when you&apos;re not using a clone. You
+                can change it any time — it takes effect on the next render.
+              </p>
+            </div>
+
+            <div className="md:col-span-2 space-y-3">
+              <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {LIBRARY_VOICES.map((v) => {
+                  const isSaving = library.kind === "saving" && library.voiceId === v.id;
+                  const isSaved = library.kind === "saved" && library.voiceId === v.id;
+                  return (
+                    <li key={v.id}>
+                      <button
+                        type="button"
+                        onClick={() => void handleChangeLibraryVoice(v.id)}
+                        disabled={library.kind === "saving"}
+                        className="w-full text-left rounded-lg border border-gray-200 bg-white p-4 transition hover:border-brand-500 hover:shadow-sm disabled:opacity-60 disabled:cursor-not-allowed dark:border-gray-800 dark:bg-gray-950 dark:hover:border-brand-500"
+                        aria-label={`Use ${v.name} voice`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <p className="font-medium text-gray-900 dark:text-gray-50">
+                              {v.name}
+                            </p>
+                            <p className="mt-0.5 text-xs text-gray-500">
+                              {v.personality}
+                            </p>
+                          </div>
+                          {isSaving && (
+                            <span className="text-xs text-gray-500">Saving…</span>
+                          )}
+                          {isSaved && (
+                            <span
+                              className="text-xs font-medium"
+                              style={{ color: "var(--accent)" }}
+                            >
+                              Selected
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-2 text-sm leading-5 text-gray-600 dark:text-gray-400">
+                          {v.description}
+                        </p>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              {library.kind === "error" && (
+                <StatusCard
+                  variant="error"
+                  title="Couldn't save"
+                  description={library.message}
+                />
+              )}
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

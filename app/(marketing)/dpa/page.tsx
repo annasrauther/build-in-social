@@ -164,10 +164,10 @@ export default function DpaPage() {
         <section>
           <SectionHeading>4. International transfers</SectionHeading>
           <p className="text-[15px]">
-            A number of Build In Social's sub-processors are based in the
+            A number of Build In Social&apos;s sub-processors are based in the
             United States. Transfers of personal data from the EEA, UK, or
             Switzerland to those sub-processors are covered by the European
-            Commission's Standard Contractual Clauses (SCCs, Module 2 or 3 as
+            Commission&apos;s Standard Contractual Clauses (SCCs, Module 2 or 3 as
             applicable) and, for UK data, the UK International Data Transfer
             Addendum. A named, current list of sub-processors and their
             jurisdictions is published at{" "}
@@ -226,7 +226,7 @@ export default function DpaPage() {
         <section>
           <SectionHeading>6. Sub-processors</SectionHeading>
           <p className="text-[15px]">
-            The current list of sub-processors, together with each one's
+            The current list of sub-processors, together with each one&apos;s
             jurisdiction, purpose, data processed, and retention window, is
             published at{" "}
             <Link
@@ -236,7 +236,7 @@ export default function DpaPage() {
             >
               buildinsocial.com/subprocessors
             </Link>
-            . Build In Social gives at least 30 days' email notice before
+            . Build In Social gives at least 30 days&apos; email notice before
             adding or replacing a sub-processor in a way that materially
             changes the processing of customer data.
           </p>

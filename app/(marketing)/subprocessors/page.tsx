@@ -30,7 +30,7 @@ export default function SubprocessorsPage() {
             deliver the service. Each vendor is engaged under a data-processing
             agreement with confidentiality, security, and onward-transfer
             obligations at least as strict as ours. For EU, UK, and Swiss data,
-            transfers outside the EEA are covered by the European Commission's
+            transfers outside the EEA are covered by the European Commission&apos;s
             Standard Contractual Clauses (SCCs) and, where applicable, the UK
             International Data Transfer Addendum.
           </p>
@@ -144,8 +144,8 @@ export default function SubprocessorsPage() {
           <p className="text-[15px]">
             Build In Social notifies account holders by email at least 30 days
             before adding a new sub-processor or replacing an existing one in a
-            way that materially changes how your data is processed. The "Last
-            updated" date at the top of this page always reflects the current
+            way that materially changes how your data is processed. The &quot;Last
+            updated&quot; date at the top of this page always reflects the current
             version.
           </p>
           <p className="text-[15px] mt-3">

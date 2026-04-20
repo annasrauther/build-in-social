@@ -1,14 +1,23 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { Button } from "@/components/tremor/Button";
 import { ArrowAnimated } from "@/components/marketing/ArrowAnimated";
 import { Badge } from "@/components/tremor/Badge";
 import { StatusCard } from "@/components/ui/StatusCard";
 import { APP } from "@/content/app";
 import { useWeek } from "@/lib/context/week-context";
-import type { User } from "@/lib/types/user";
+import type { SubscriptionTier, User } from "@/lib/types/user";
 import type { Video } from "@/lib/types/video";
+
+interface UsageResponse {
+  used: number;
+  cap: number;
+  tier: SubscriptionTier;
+  resetAt: string;
+}
 
 interface DashboardClientProps {
   profile: User;
@@ -45,6 +54,36 @@ export default function DashboardClient({ profile, videos }: DashboardClientProp
   const onboardingDone = profile.onboardingComplete;
   const isAutopilot = weekMode === "autopilot";
 
+  // Monthly usage against hard cap. Fetched from /api/billing/usage.
+  const [usage, setUsage] = useState<UsageResponse | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/billing/usage")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (!cancelled && j?.data) setUsage(j.data as UsageResponse);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const usageLabel = usage
+    ? usage.used >= usage.cap
+      ? APP.QUOTA.headerAtCap(usage.cap)
+      : usage.used >= Math.floor(usage.cap * 0.8)
+        ? APP.QUOTA.headerNearCap(usage.used, usage.cap)
+        : APP.QUOTA.headerUsage(usage.used, usage.cap)
+    : null;
+  const usageTone = usage
+    ? usage.used >= usage.cap
+      ? "danger"
+      : usage.used >= Math.floor(usage.cap * 0.8)
+        ? "warning"
+        : "muted"
+    : "muted";
+
   const primaryCtaLabel =
     total > 0
       ? APP.DASHBOARD.reviewCta
@@ -69,6 +108,33 @@ export default function DashboardClient({ profile, videos }: DashboardClientProp
       <p style={{ fontSize: "var(--type-supporting-desktop)", color: "var(--text-tertiary)" }}>
         {APP.DASHBOARD.subtitle}
       </p>
+
+      {usageLabel && (
+        <div
+          className="flex flex-wrap items-center gap-2"
+          aria-live="polite"
+        >
+          <span
+            style={{
+              fontSize: "var(--type-supporting-desktop)",
+              fontWeight: 500,
+              color:
+                usageTone === "danger"
+                  ? "var(--accent)"
+                  : usageTone === "warning"
+                    ? "var(--accent-green)"
+                    : "var(--text-secondary)",
+            }}
+          >
+            {usageLabel}
+          </span>
+          {usage && usage.used >= usage.cap && (
+            <Button asChild className="h-auto px-3 py-1 text-xs">
+              <a href="/settings/billing">{APP.SETTINGS_BILLING.upgrade}</a>
+            </Button>
+          )}
+        </div>
+      )}
 
       {!onboardingDone && (
         <StatusCard
@@ -110,10 +176,10 @@ export default function DashboardClient({ profile, videos }: DashboardClientProp
             {total > 0 ? `${total} videos` : "Nothing yet"}
           </p>
           <Button className="group w-full" asChild>
-            <a href="/plan/current" className="flex items-center justify-center">
+            <Link href="/plan/current" className="flex items-center justify-center">
               {primaryCtaLabel}
               <ArrowAnimated />
-            </a>
+            </Link>
           </Button>
           {isAutopilot && (
             <p

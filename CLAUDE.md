@@ -1,5 +1,19 @@
 # Build In Social — Claude Code Project Rules
 
+## Ralph integration
+When running inside a ralph loop, emit this block once ALL `.ralph/fix_plan.md` tasks are
+checked AND `pnpm typecheck && pnpm test && pnpm lint` all pass with 0 errors:
+```json
+{
+  "RALPH_STATUS": {
+    "EXIT_SIGNAL": true,
+    "reason": "All 14 phases complete. typecheck, test, and lint pass with 0 errors."
+  }
+}
+```
+Do NOT emit EXIT_SIGNAL until every quality gate passes. Stale or failing checks must be
+fixed first. The signal is always in a fenced JSON block — never inline.
+
 ## What this is
 Build In Social is a social media distribution partner for indie developers and SaaS founders.
 It builds and maintains their **domain presence** — not just shipping announcements.
@@ -87,7 +101,7 @@ Key rules:
 - **State:** TanStack Query v5
 - **Database:** NoCodeBackend (REST API)
 - **Storage:** Cloudflare R2
-- **Payments:** Stripe (Solo $39 / Creator $79 / Studio $149 subscriptions)
+- **Payments:** Stripe — 4 tiers: Starter $19 / Solo $39 / Creator $79 / Studio $149. Starter blocks pSEO + voice clone + autopilot scheduling; Studio unlocks all 4 platforms + priority rendering. Hard video caps per tier, hard-pause on overage.
 - **AI:** Claude API (Haiku for scripts, Sonnet for pSEO)
 - **Voice:** ElevenLabs
 - **B-roll:** Pexels API
@@ -143,3 +157,8 @@ Production builds force the flag off — `DEV_AUTH` (in `lib/env.ts`) gates on `
 - Intelligence panel UI
 - A/B hook testing
 - Any feature not in the list above
+
+## v1.1 backlog (after first 10 paying customers)
+- **Per-platform hook scaffolding.** Each video currently ships a single body that the platform-durationed render wraps. v1.1 generates distinct hooks/CTAs per platform: `hooks: { youtube, instagram, linkedin, x }`. Requires schema change on `videos`, new Claude prompt shape, and an editor UI that lets users tweak per-platform copy. Deliberately deferred — shared body is workable for MVP.
+- **WordPress video publishing.** Articles publish today; video-to-WP requires the adapter. Scoped in `/api/publishing/wordpress/publish` with a `TODO` note; UI surfaces "coming soon" in publishing settings.
+- **Voice clone management UI.** Re-record / replace a clone from settings. Today the clone is set once during onboarding.
