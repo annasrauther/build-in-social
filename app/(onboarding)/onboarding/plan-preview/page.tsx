@@ -196,7 +196,7 @@ export default function PlanPreviewPage() {
             {APP.ONBOARDING.step5.modeHeading}
           </p>
 
-          <div role="radiogroup" aria-label={APP.ONBOARDING.step5.modeHeading} className="flex flex-col sm:flex-row gap-3">
+          <div role="radiogroup" aria-label={APP.ONBOARDING.step5.modeHeading} className="flex flex-col sm:flex-row sm:items-stretch gap-3">
             {(
               [
                 {
@@ -233,11 +233,9 @@ export default function PlanPreviewPage() {
                     border: isSelected
                       ? "1.5px solid var(--accent)"
                       : "1.5px solid var(--border-default)",
-                    backgroundColor: isSelected
-                      ? "var(--accent-subtle)"
-                      : "var(--bg-elevated)",
+                    backgroundColor: "var(--bg-elevated)",
                     boxShadow: isSelected
-                      ? "0 0 0 3px rgba(217,119,87,0.10)"
+                      ? "0 0 0 3px rgba(217,119,87,0.10), inset 0 0 0 1000px rgba(217,119,87,0.06)"
                       : "none",
                     cursor: "pointer",
                   }}

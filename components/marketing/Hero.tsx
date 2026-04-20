@@ -4,7 +4,6 @@ import { Button } from "@/components/tremor/Button"
 import { ArrowAnimated } from "@/components/marketing/ArrowAnimated"
 import HeroImage from "./HeroImage"
 import { LANDING } from "@/content/landing"
-import Balancer from "react-wrap-balancer"
 
 export default function Hero() {
   return (
@@ -14,9 +13,9 @@ export default function Hero() {
     >
       <h1
         id="hero-title"
-        className="inline-block animate-slide-up-fade [animation-duration:300ms] bg-brand-gradient bg-clip-text p-2 text-4xl font-bold tracking-tighter text-transparent sm:text-6xl md:text-7xl dark:bg-brand-gradient-dark font-serif"
+        className="inline-block animate-slide-up-fade [animation-duration:300ms] bg-brand-gradient bg-clip-text p-2 text-4xl font-bold tracking-tighter text-transparent sm:text-6xl md:text-7xl dark:bg-brand-gradient-dark font-serif text-balance"
       >
-        <Balancer>{LANDING.HERO.headline}</Balancer>
+        {LANDING.HERO.headline}
       </h1>
       <p
         className="mt-6 max-w-lg animate-slide-up-fade [animation-duration:200ms] text-lg text-gray-700 dark:text-gray-400"
