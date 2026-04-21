@@ -1,22 +1,8 @@
 import type { Metadata } from "next";
-import { Poppins, Montserrat } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { Providers } from "@/components/providers";
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-sans",
-  display: "swap",
-});
-
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  style: ["normal", "italic"],
-  variable: "--font-serif",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -71,10 +57,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${poppins.variable} ${montserrat.variable}`}
+      className={`dark ${GeistSans.variable} ${GeistMono.variable}`}
+      style={{ colorScheme: "dark" }}
       suppressHydrationWarning
     >
-      <body className="overflow-y-scroll scroll-auto antialiased bg-[#FAF9F5] dark:bg-[#141413]">
+      <body className="overflow-y-scroll scroll-auto antialiased bg-bg text-text">
         <Providers>{children}</Providers>
       </body>
     </html>
