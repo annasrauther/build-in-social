@@ -1,19 +1,45 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import Link from "next/link";
-import { motion } from "motion/react";
-import { Card } from "@/components/tremor/Card";
-import { Badge } from "@/components/tremor/Badge";
-import { TabNavigation, TabNavigationLink } from "@/components/tremor/TabNavigation";
-import { StatusCard } from "@/components/ui/StatusCard";
+import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
+import { Video as VideoIcon } from "lucide-react";
+import { PlanShell } from "@/components/plan/PlanShell";
+import { Button } from "@/components/ui/shadcn/button";
+import { Input } from "@/components/ui/shadcn/input";
+import {
+  EmptyState,
+  ErrorState,
+  SkeletonRows,
+} from "@/components/ui/states";
+import { PLATFORM_ICON, PLATFORM_LABEL } from "@/components/video/platform-icons";
+import { useState } from "react";
 import { APP } from "@/content/app";
+import { cn } from "@/lib/utils";
 import type { Video, VideoStatus } from "@/lib/types/video";
 import type { Platform } from "@/lib/types/user";
 
-type Filter = "all" | VideoStatus;
+/**
+ * /videos — demoted to a filterable archive.
+ *
+ * Per F3: the primary entry to any video is now the drawer on
+ * `/plan/current`. This page exists for deep-linking and for
+ * browsing the whole library; it is intentionally dense (row
+ * layout, not cards) and mono-numeric to signal "archive".
+ */
 
-const FILTERS: { id: Filter; label: string }[] = [
+type StatusFilter = "all" | VideoStatus;
+const STATUS_VALUES = [
+  "all",
+  "draft",
+  "approved",
+  "rendering",
+  "ready",
+  "posted",
+  "failed",
+] as const;
+
+const FILTERS: readonly { id: StatusFilter; label: string; meta?: string }[] = [
   { id: "all", label: APP.VIDEOS.filterAll },
   { id: "draft", label: APP.VIDEOS.filterDraft },
   { id: "approved", label: APP.VIDEOS.filterApproved },
@@ -23,19 +49,27 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: "failed", label: APP.VIDEOS.filterFailed },
 ];
 
-const PLATFORM_COLORS: Record<Platform, string> = {
-  youtube: "bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300",
-  instagram:
-    "bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-400",
-  linkedin:
-    "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-  x: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+const STATUS_DOT: Record<VideoStatus, string> = {
+  draft: "bg-text-tertiary",
+  approved: "bg-[color:var(--warning)]",
+  rendering: "bg-[color:var(--warning)] animate-pulse",
+  ready: "bg-accent",
+  posted: "bg-accent",
+  failed: "bg-[color:var(--danger)]",
 };
 
 export default function VideosPage() {
-  const [videos, setVideos] = useState<Video[] | null>(null);
+  const [videos, setVideosLocal] = useState<Video[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>("all");
+
+  const [filter, setFilter] = useQueryState(
+    "status",
+    parseAsStringLiteral(STATUS_VALUES).withDefault("all"),
+  );
+  const [query, setQuery] = useQueryState(
+    "q",
+    parseAsString.withDefault(""),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -45,15 +79,15 @@ export default function VideosPage() {
         if (cancelled) return;
         if (j.error) {
           setError(j.error);
-          setVideos([]);
+          setVideosLocal([]);
         } else {
-          setVideos((j.data as Video[]) ?? []);
+          setVideosLocal((j.data as Video[]) ?? []);
         }
       })
       .catch(() => {
         if (!cancelled) {
           setError(APP.COMMON.errorGeneric);
-          setVideos([]);
+          setVideosLocal([]);
         }
       });
     return () => {
@@ -63,169 +97,167 @@ export default function VideosPage() {
 
   const filtered = useMemo(() => {
     if (!videos) return [];
-    if (filter === "all") return videos;
-    return videos.filter((v) => v.status === filter);
-  }, [videos, filter]);
+    const q = query.trim().toLowerCase();
+    return videos.filter((v) => {
+      if (filter !== "all" && v.status !== filter) return false;
+      if (!q) return true;
+      return (
+        v.title.toLowerCase().includes(q) ||
+        (v.scriptJson?.hook ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [videos, filter, query]);
+
+  const loading = videos === null && !error;
 
   return (
-    <div className="p-4 sm:px-6 sm:pb-10 sm:pt-10 lg:px-10 lg:pt-7">
-      {/* A6: aria-live region announces async fetch state changes to screen readers */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className="sr-only"
-      >
-        {videos === null
-          ? APP.A11Y.loading
-          : error
-          ? error
-          : APP.A11Y.loaded}
+    <PlanShell
+      title="Videos"
+      subtitle={
+        videos
+          ? `${videos.length} in archive · ${filtered.length} shown`
+          : "Loading archive…"
+      }
+      actions={
+        <Button asChild variant="primary" size="sm">
+          <Link href="/plan/current">Go to this week</Link>
+        </Button>
+      }
+    >
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-1 overflow-x-auto">
+          {FILTERS.map((f) => {
+            const active = filter === f.id;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => void setFilter(f.id)}
+                aria-pressed={active}
+                className={cn(
+                  "inline-flex items-center h-7 px-2.5 text-[12px] font-medium leading-none rounded-[var(--radius-input)]",
+                  "transition-colors duration-fast ease-out-cubic",
+                  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--focus-ring)]",
+                  active
+                    ? "bg-accent-subtle text-text border border-[color-mix(in_srgb,var(--accent)_30%,transparent)]"
+                    : "bg-transparent text-text-secondary border border-transparent hover:bg-[color-mix(in_srgb,var(--gray-12)_4%,transparent)]",
+                )}
+              >
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+        <div className="sm:w-64">
+          <Input
+            value={query}
+            onChange={(e) => void setQuery(e.target.value || null)}
+            placeholder="Search titles and hooks…"
+            aria-label="Search videos"
+          />
+        </div>
       </div>
 
-      <header className="mb-6">
-        <h1 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-          {APP.VIDEOS.title}
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {APP.VIDEOS.subtitle(videos?.length ?? 0)}
-        </p>
-      </header>
-
-      <TabNavigation className="mb-6">
-        {FILTERS.map((f) => (
-          <TabNavigationLink
-            key={f.id}
-            href="#"
-            active={filter === f.id}
-            onClick={(e: React.MouseEvent) => {
-              e.preventDefault();
-              setFilter(f.id);
-            }}
-          >
-            {f.label}
-          </TabNavigationLink>
-        ))}
-      </TabNavigation>
-
-      {videos === null ? (
-        <VideoGridSkeleton />
+      {loading ? (
+        <SkeletonRows rows={8} height={36} gap={4} />
       ) : error ? (
-        <StatusCard
-          variant="error"
-          title="Couldn't load videos"
+        <ErrorState
+          title="Couldn't load your library"
           description={error}
-          cta={APP.COMMON.retry}
-          onCta={() => window.location.reload()}
-          ctaGradient
+          onRetry={() => window.location.reload()}
         />
       ) : filtered.length === 0 ? (
-        <EmptyState filter={filter} />
-      ) : (
-        <ul className="grid gap-3 tablet-sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((v) => (
-            <motion.li
-              key={v.id}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <Link
-                href={`/videos/${v.id}`}
-                className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
+        filter === "all" && !query ? (
+          <EmptyState
+            icon={VideoIcon}
+            title="Your library is empty"
+            description={APP.VIDEOS.emptyFirstWeekCta}
+            action={
+              <Button asChild variant="primary" size="sm">
+                <Link href="/plan/current">{APP.VIDEOS.emptyCta}</Link>
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={VideoIcon}
+            title="No matches"
+            description="Try a different filter or clear the search."
+            action={
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  void setFilter("all");
+                  void setQuery(null);
+                }}
               >
-                <Card className="p-4 h-full hover:border-gray-300 dark:hover:border-gray-700 transition">
-                  <div className="flex items-center justify-between mb-2">
-                    <span
-                      className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${PLATFORM_COLORS[v.platform]}`}
-                    >
-                      {v.platform}
-                    </span>
-                    <Badge variant={statusVariant(v.status)}>
-                      {v.status}
-                    </Badge>
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50 line-clamp-2">
-                    {v.title}
-                  </h3>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-                    {v.scriptJson.hook}
-                  </p>
-                  <div className="mt-3 flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
-                    <span>{v.durationSeconds}s</span>
-                    <span>{v.dayOfWeek?.toUpperCase()}</span>
-                  </div>
-                </Card>
-              </Link>
-            </motion.li>
+                Reset filters
+              </Button>
+            }
+          />
+        )
+      ) : (
+        <ul className="flex flex-col gap-1">
+          {filtered.map((v, i) => (
+            <ArchiveRow key={v.id} video={v} index={i} />
           ))}
         </ul>
       )}
-    </div>
+    </PlanShell>
   );
 }
 
-function statusVariant(status: VideoStatus): "success" | "warning" | "default" | "error" {
-  switch (status) {
-    case "ready":
-    case "posted":
-      return "success";
-    case "rendering":
-    case "approved":
-      return "warning";
-    case "failed":
-      return "error";
-    default:
-      return "default";
-  }
-}
-
-function EmptyState({ filter }: { filter: Filter }) {
-  const isAll = filter === "all";
-
-  if (!isAll) {
-    const filterLabels: Record<string, string> = {
-      draft: "No drafts yet",
-      approved: "Nothing approved yet",
-      rendering: "Nothing rendering right now",
-      ready: "Nothing queued to post",
-      posted: "No posted videos yet",
-      failed: "No failed videos",
-    };
-    return (
-      <StatusCard
-        variant="notFound"
-        title={filterLabels[filter] ?? `No ${filter} videos`}
-        description="Switch to a different filter or build your weekly plan."
-        ctaGradient
-        cta="Build this week's plan"
-        ctaHref="/plan/current"
-      />
-    );
-  }
-
+function ArchiveRow({ video, index }: { video: Video; index: number }) {
+  const Icon = PLATFORM_ICON[video.platform as Platform];
   return (
-    <StatusCard
-      variant="empty"
-      title="Your library is empty"
-      description={APP.VIDEOS.emptyFirstWeekCta}
-      cta={APP.VIDEOS.emptyCta}
-      ctaHref="/plan/current"
-      ctaGradient
-    />
-  );
-}
-
-function VideoGridSkeleton() {
-  return (
-    <ul className="grid gap-3 tablet-sm:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <li
-          key={i}
-          className="skeleton-line"
-          style={{ height: 160, borderRadius: "var(--radius-lg)" }}
+    <li>
+      <Link
+        href={`/videos/${video.id}`}
+        prefetch
+        className={cn(
+          "group flex items-center gap-3 h-9 px-3",
+          "text-[13px] leading-none",
+          "border border-transparent hover:border-[color:var(--border)]",
+          "bg-transparent hover:bg-[color-mix(in_srgb,var(--gray-12)_3%,transparent)]",
+          "rounded-[var(--radius-card)]",
+          "transition-colors duration-fast ease-out-cubic",
+          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--focus-ring)]",
+          "animate-fade-in",
+        )}
+        style={{ animationDelay: `${Math.min(index, 12) * 20}ms` }}
+      >
+        <span
+          aria-hidden="true"
+          className={cn(
+            "inline-block h-1.5 w-1.5 rounded-full shrink-0",
+            STATUS_DOT[video.status as VideoStatus] ?? "bg-text-tertiary",
+          )}
         />
-      ))}
-    </ul>
+        <span className="w-9 shrink-0 font-mono text-[11px] uppercase tracking-wider text-text-tertiary tabular-nums">
+          {(video.dayOfWeek ?? "—").toString().slice(0, 3).toUpperCase()}
+        </span>
+        <Icon
+          size={14}
+          className="shrink-0 text-text-secondary"
+          aria-hidden="true"
+        />
+        <span className="flex-1 min-w-0 truncate text-text">
+          {video.title}
+        </span>
+        <span className="shrink-0 font-mono text-[11px] text-text-tertiary tabular-nums">
+          {video.durationSeconds}s
+        </span>
+        <span
+          className="shrink-0 font-mono text-[11px] uppercase tracking-wider text-text-tertiary"
+          aria-label={`Status: ${video.status}`}
+        >
+          {video.status}
+        </span>
+        <span className="shrink-0 text-[11px] text-text-tertiary sr-only">
+          {PLATFORM_LABEL[video.platform as Platform]}
+        </span>
+      </Link>
+    </li>
   );
 }
