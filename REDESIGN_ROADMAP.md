@@ -38,6 +38,11 @@ Forward-looking work after the Linear-clone v2 pass. Snapshot as of
 | **redesign/v4-f4-streaming** | Client-side streaming illusion over the existing `/api/plan/generate` endpoint (the API backend is untouched per the ground rules). New `components/plan/ThemeInput.tsx` carries the F4 theme prompt — single line + primary button, 140-char cap matching the API. `/plan/current` now holds `lockedIds: Set<string>` + `lastTheme: string` state; `generate()` accepts `autopilotHint` and `preserveLocks`. When regenerating with locks, locked cards stay in their day slot and the fresh response backfills the unlocked ones in day order. Toast summarizes the split. `DayCard` gets `locked={...}` + `onToggleLock` wired through from the plan page's state. |
 | **redesign/v4-f6-publish** | Real per-platform publish calls via `/api/videos/[id]/publish` replacing the 400ms fake-success stub. New `lib/publish.ts` returns a discriminated union `{ success \| not-implemented \| failed }`. The 501 the backend currently returns (platform OAuth is Sprint 9) is surfaced as a distinct `"not-implemented"` state on `PublishPlatformState` — iris-7 dot + "Soon" label — so users don't think publishing broke. `publishDrawer` is now async + parallel per platform; `retryPlatform` same. When real OAuth + publishing ship, deleting the 501 branch in `lib/publish.ts` makes the UI work end-to-end with no other changes. |
 
+### v5 — Propagation + CTA polish (one branch on v4)
+| Branch | Summary |
+|---|---|
+| **redesign/v5-propagation** | 6 commits. `/videos` demoted from card grid to dense 36px archive rows with dot statuses, mono uppercase status labels, nuqs URL state (`?status=&q=`), search covering title+hook. `/series` list rebuilt with the same row grammar (44px rows, two-line name+topic, dot status, mono meta). `/series/[id]` rebuilt on PlanShell — inline status chip in the title, definition-list body with mono labels + tabular-nums values, optimistic pause/resume, delete via `toast.undo` pattern (replaces the `window.confirm` flagged in Phase 1). `/series/create` rebuilt as a token-based single-screen form — consistent pill+ChoiceTile patterns matching onboarding. **CTA polish**: audit shortened verbose labels (`"Build this week's plan"` → `"Build plan"`, `"Unlock the full week"` → `"Unlock full week"`, etc.) and differentiated repeated `"Preview my week"` across 6 landing surfaces into tier-specific labels (`"Start free"` / `"Pick Solo"` / `"Pick Creator"` / `"Pick Studio"`), nav (`"Sign up"`), and final (`"Plan my week"`). |
+
 Every branch typechecks and builds cleanly.
 
 ## Typography (final)
@@ -68,23 +73,24 @@ The product does not advertise or bind keyboard shortcuts.
 ### Small (≤ half a day)
 
 - [ ] Remaining marketing sections (Audience/Modes/LogoCloud/SampleVideoGrid/GlobalDatabase/CodeExample/Features/Benefits/Testimonial/Pricing/Faqs/PartnerCallout). All render today via token aliases; the ~43 `dark:text-gray-*` variants carry no semantic harm in dark-only mode but should be swept for cleanliness.
-- [ ] `/videos` demote restyle (filterable archive table).
-- [ ] `/settings/*` sub-pages (profile, voice, billing, platforms, brand, automation, avatar, publishing, webhooks) — pure token swap.
+- [x] ~~`/videos` demote restyle~~ — shipped v5-propagation.
+- [ ] `/settings/*` sub-pages (profile, voice, billing, platforms, brand, automation, avatar, publishing, webhooks) — pure token swap on large files (400–800 lines each). Priority order: profile → billing → platforms → voice → brand → webhooks → rest.
 - [ ] Auth pages (`/login`, `/signup`) chrome restyle; Clerk flow untouched.
 - [ ] pSEO template (`/p/[slug]`, `/alternative/[slug]`).
 - [ ] Legal pages (`/privacy`, `/terms`, `/dpa`, `/subprocessors`, `/changelog`).
 - [ ] Drop `@remixicon/react` dep — replace each `Ri*` import with Lucide or local SVG.
-- [ ] Drop `framer-motion` in favour of `motion/react` (identical API; just a rename across ~30 files).
+- [x] ~~Drop `framer-motion` in favour of `motion/react`~~ — shipped v4-cleanup.
 - [ ] Final `dark:` variant sweep.
 
 ### Medium (1–2 days)
 
-- [ ] `/series` list — F5 restyle + "+ New series" entry from plan header.
-- [ ] `/series/create` — single-screen creator that materializes N upcoming cards into future weeks.
-- [ ] `/series/[id]` — tune / pause / archive surface.
+- [x] ~~`/series` list — F5 restyle~~ — shipped v5-propagation.
+- [x] ~~`/series/create`~~ — shipped v5-propagation as single-screen form.
+- [x] ~~`/series/[id]` — tune / pause / archive~~ — shipped v5-propagation.
 - [ ] Tailwind v4 `@theme` migration — unblocked once Tremor primitives are retired.
 - [ ] `QualityGate` restyle — drop framer-motion + Tremor Button, straight shadcn swap.
 - [ ] `WeekCalendar` rebuild — tokenize colors, 32–36px rows, Lucide, drop hardcoded platform hex.
+- [ ] Per-card regenerate API — needs a narrower endpoint than `/api/plan/generate` so we don't regenerate 6 unwanted cards for 1 slot.
 
 ### Large (structural)
 
