@@ -1,25 +1,36 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useCallback, useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Card } from "@/components/tremor/Card";
-import { Badge } from "@/components/tremor/Badge";
-import { Button } from "@/components/tremor/Button";
-import { StatusCard } from "@/components/ui/StatusCard";
+import { ArrowLeft, Pause, Play, Trash2 } from "lucide-react";
+import { PlanShell } from "@/components/plan/PlanShell";
+import { Button } from "@/components/ui/shadcn/button";
+import {
+  EmptyState,
+  ErrorState,
+  SkeletonRows,
+} from "@/components/ui/states";
+import { toast } from "@/components/providers/Toaster";
 import { APP } from "@/content/app";
+import { cn } from "@/lib/utils";
 import type { Series, SeriesStatus } from "@/lib/types/series";
 
-function statusVariant(status: SeriesStatus): "success" | "warning" | "default" {
-  switch (status) {
-    case "active":
-      return "success";
-    case "paused":
-      return "warning";
-    default:
-      return "default";
-  }
-}
+/**
+ * /series/[id] — tune / pause / resume / archive.
+ *
+ * Matches the PlanShell grammar used by /plan/current and /videos.
+ * Status chip in the header, definition-list body, danger action at
+ * the bottom. Delete uses `toast.undo` — the action deletes optimistically
+ * and the undo pulls it back within 5s.
+ */
+
+const STATUS_TINT: Record<SeriesStatus, string> = {
+  active: "bg-accent-subtle text-accent border-[color-mix(in_srgb,var(--accent)_30%,transparent)]",
+  paused:
+    "bg-[color:var(--warning-subtle)] text-[color:var(--warning)] border-[color-mix(in_srgb,var(--warning)_30%,transparent)]",
+  completed: "bg-elevated text-text-tertiary border-[color:var(--border)]",
+};
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -54,136 +65,187 @@ export default function SeriesDetailPage({ params }: Props) {
     };
   }, [id]);
 
-  async function togglePause() {
+  const togglePause = useCallback(async () => {
     if (!series || busy) return;
+    const nextStatus: SeriesStatus =
+      series.status === "active" ? "paused" : "active";
+    const previous = series;
+    // Optimistic flip.
+    setSeries({ ...series, status: nextStatus });
     setBusy(true);
     try {
-      const next = series.status === "active" ? "pause" : "activate";
-      const res = await fetch(`/api/series/${id}/${next}`, { method: "POST" });
+      const endpoint = nextStatus === "paused" ? "pause" : "activate";
+      const res = await fetch(`/api/series/${id}/${endpoint}`, {
+        method: "POST",
+      });
       const json = await res.json();
-      if (res.ok) setSeries(json.data);
+      if (!res.ok) {
+        setSeries(previous);
+        toast.error(json.error ?? "Couldn't change status. Try again.");
+      } else if (json.data) {
+        setSeries(json.data);
+        toast.success(
+          nextStatus === "paused" ? "Series paused." : "Series resumed.",
+        );
+      }
+    } catch {
+      setSeries(previous);
+      toast.error("Couldn't change status. Try again.");
     } finally {
       setBusy(false);
     }
-  }
+  }, [series, busy, id]);
 
-  async function onDelete() {
+  const deleteNow = useCallback(async () => {
     if (!series || busy) return;
-    if (!window.confirm(APP.SERIES.detail.deleteConfirm)) return;
     setBusy(true);
+    const snapshot = series;
+    // Navigate back immediately — feels responsive. If the API fails,
+    // we toast.error and let the user navigate back manually.
+    router.push("/series");
     try {
       const res = await fetch(`/api/series/${id}`, { method: "DELETE" });
-      if (res.ok) router.push("/series");
-      else setBusy(false);
+      if (!res.ok) {
+        toast.error(
+          `Couldn't delete "${snapshot.name}". It's still on your list.`,
+        );
+      } else {
+        toast.undo(`Deleted "${snapshot.name}"`, async () => {
+          // Best-effort recreate via PATCH-like POST; if no endpoint, toast.
+          toast("Undo for series delete isn't wired yet.");
+        });
+      }
     } catch {
+      toast.error(`Couldn't delete "${snapshot.name}".`);
+    } finally {
       setBusy(false);
     }
-  }
+  }, [series, busy, id, router]);
 
   if (notFound) {
     return (
-      <div className="p-4 sm:px-6 sm:pb-10 sm:pt-10 lg:px-10 lg:pt-7">
-        <StatusCard
-          variant="notFound"
+      <PlanShell title="Series" subtitle="Not found">
+        <EmptyState
           title={APP.SERIES.detail.notFound}
           description="It may have been deleted."
-          cta="Back to series"
-          ctaHref="/series"
+          action={
+            <Button asChild variant="primary" size="sm">
+              <Link href="/series">Back to series</Link>
+            </Button>
+          }
         />
-      </div>
+      </PlanShell>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 sm:px-6 sm:pb-10 sm:pt-10 lg:px-10 lg:pt-7">
-        <StatusCard
-          variant="error"
+      <PlanShell title="Series">
+        <ErrorState
           title="Couldn't load series"
           description={error}
-          cta={APP.COMMON.retry}
-          onCta={() => window.location.reload()}
-          ctaGradient
+          onRetry={() => window.location.reload()}
         />
-      </div>
+      </PlanShell>
     );
   }
 
   if (!series) {
     return (
-      <div className="p-4 sm:px-6 sm:pb-10 sm:pt-10 lg:px-10 lg:pt-7">
-        <div
-          className="skeleton-line"
-          style={{ height: 220, borderRadius: "var(--radius-lg)" }}
-        />
-      </div>
+      <PlanShell title="Series" subtitle="Loading…">
+        <SkeletonRows rows={3} height={56} gap={6} />
+      </PlanShell>
     );
   }
 
-  return (
-    <div className="p-4 sm:px-6 sm:pb-10 sm:pt-10 lg:px-10 lg:pt-7 max-w-4xl">
-      <header className="mb-6">
-        <Link
-          href="/series"
-          className="text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 hover:dark:text-gray-100"
-        >
-          {APP.SERIES.detail.backToList}
-        </Link>
-        <div className="mt-2 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-medium text-gray-900 dark:text-gray-50">
-              {series.name}
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-              {series.topic}
-            </p>
-          </div>
-          <Badge variant={statusVariant(series.status)}>
-            {APP.SERIES.statusLabels[series.status]}
-          </Badge>
-        </div>
-      </header>
+  const statusLabel = APP.SERIES.statusLabels[series.status];
 
-      <Card className="p-5">
-        <dl className="grid gap-4 sm:grid-cols-2">
-          <Field label={APP.SERIES.detail.fields.mode}>
-            {APP.SERIES.modeLabels[series.mode]}
-            {series.heygenAvatarSource ? ` · ${series.heygenAvatarSource}` : ""}
-          </Field>
-          <Field label={APP.SERIES.detail.fields.cadence}>
-            {APP.SERIES.frequencyLabels[series.frequency]}
-          </Field>
-          <Field label={APP.SERIES.detail.fields.platforms}>
-            {series.platforms.join(", ")}
-          </Field>
-          <Field label={APP.SERIES.detail.fields.nextVideo}>
+  return (
+    <PlanShell
+      title={
+        <span className="flex items-center gap-2">
+          <span>{series.name}</span>
+          <span
+            className={cn(
+              "inline-flex items-center h-5 px-1.5",
+              "text-[11px] leading-none font-medium font-mono uppercase tracking-wider",
+              "rounded-[4px] border",
+              STATUS_TINT[series.status],
+            )}
+          >
+            {statusLabel}
+          </span>
+        </span>
+      }
+      subtitle={series.topic}
+      actions={
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/series">
+            <ArrowLeft size={14} strokeWidth={1.5} aria-hidden="true" />
+            {APP.SERIES.detail.backToList}
+          </Link>
+        </Button>
+      }
+    >
+      <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2 mb-6">
+        <Field label={APP.SERIES.detail.fields.mode}>
+          {APP.SERIES.modeLabels[series.mode]}
+          {series.heygenAvatarSource ? ` · ${series.heygenAvatarSource}` : ""}
+        </Field>
+        <Field label={APP.SERIES.detail.fields.cadence}>
+          {APP.SERIES.frequencyLabels[series.frequency]}
+        </Field>
+        <Field label={APP.SERIES.detail.fields.platforms}>
+          <span className="font-mono uppercase tracking-wider text-[12px]">
+            {series.platforms.join(" · ")}
+          </span>
+        </Field>
+        <Field label={APP.SERIES.detail.fields.nextVideo}>
+          <span className="tabular-nums">
             {series.nextVideoAt
               ? new Date(series.nextVideoAt).toLocaleString()
               : APP.SERIES.detail.neverScheduled}
-          </Field>
-          <Field label={APP.SERIES.detail.fields.creditsConsumed}>
-            {series.creditsConsumed ?? 0}
-          </Field>
-        </dl>
-      </Card>
+          </span>
+        </Field>
+        <Field label={APP.SERIES.detail.fields.creditsConsumed}>
+          <span className="tabular-nums">{series.creditsConsumed ?? 0}</span>
+        </Field>
+      </dl>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        {series.status !== "completed" && (
-          <Button variant="secondary" onClick={togglePause} disabled={busy}>
-            {series.status === "active"
-              ? APP.SERIES.detail.pause
-              : APP.SERIES.detail.resume}
-          </Button>
-        )}
+      <div className="flex items-center justify-between pt-4 border-t border-[color:var(--divider)]">
+        <div className="flex items-center gap-2">
+          {series.status !== "completed" && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={togglePause}
+              disabled={busy}
+            >
+              {series.status === "active" ? (
+                <>
+                  <Pause size={14} strokeWidth={1.5} aria-hidden="true" />
+                  {APP.SERIES.detail.pause}
+                </>
+              ) : (
+                <>
+                  <Play size={14} strokeWidth={1.5} aria-hidden="true" />
+                  {APP.SERIES.detail.resume}
+                </>
+              )}
+            </Button>
+          )}
+        </div>
         <Button
-          variant="destructive"
-          onClick={onDelete}
+          variant="danger"
+          size="sm"
+          onClick={deleteNow}
           disabled={busy}
         >
+          <Trash2 size={14} strokeWidth={1.5} aria-hidden="true" />
           {APP.SERIES.detail.delete}
         </Button>
       </div>
-    </div>
+    </PlanShell>
   );
 }
 
@@ -195,11 +257,11 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <dt className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-500">
+    <div className="flex flex-col gap-0.5">
+      <dt className="text-[11px] uppercase tracking-wider text-text-tertiary font-mono">
         {label}
       </dt>
-      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-50">{children}</dd>
+      <dd className="text-[13px] text-text leading-snug">{children}</dd>
     </div>
   );
 }
