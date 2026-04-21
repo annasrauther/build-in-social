@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { EASE_SPRING } from "@/lib/constants/onboarding";
 
 interface OnboardingHeadingProps {

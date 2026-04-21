@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Button } from "@/components/tremor/Button";
 import { DURATION_ENTRY, EASE_SPRING } from "@/lib/constants/onboarding";
 import type { InferProductSource } from "@/lib/types/infer-product";

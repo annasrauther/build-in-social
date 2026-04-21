@@ -1,4 +1,4 @@
-import type { Variants, Transition } from "framer-motion";
+import type { Variants, Transition } from "motion/react";
 
 // Standard easing — used everywhere
 export const ease = [0.16, 1, 0.3, 1] as const;

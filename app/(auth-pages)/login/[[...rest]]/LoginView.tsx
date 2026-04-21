@@ -1,7 +1,7 @@
 "use client";
 
 import { SignIn } from "@clerk/nextjs";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { ELEMENT_ENTER, ease } from "@/lib/motion";
 import { Button } from "@/components/tremor/Button";
 import { clerkAppearance } from "@/lib/clerk-appearance";

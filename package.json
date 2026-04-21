@@ -67,7 +67,6 @@
     "clsx": "^2.1.1",
     "cobe": "^0.6.5",
     "date-fns": "^4.1.0",
-    "framer-motion": "^12.38.0",
     "isomorphic-dompurify": "^2.30.0",
     "lenis": "^1.3.23",
     "lucide-react": "^1.8.0",

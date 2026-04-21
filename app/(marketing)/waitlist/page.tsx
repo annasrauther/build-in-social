@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/tremor/Button";
 import { Input } from "@/components/tremor/Input";
 import { Badge } from "@/components/tremor/Badge";

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Card } from "@/components/tremor/Card";
 import { Badge } from "@/components/tremor/Badge";
 import { Button } from "@/components/tremor/Button";

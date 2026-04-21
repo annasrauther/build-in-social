@@ -1,7 +1,7 @@
 "use client";
 
-import { useReducedMotion } from "framer-motion";
-import type { Transition } from "framer-motion";
+import { useReducedMotion } from "motion/react";
+import type { Transition } from "motion/react";
 
 /**
  * Reduced-motion-aware helpers for Framer Motion.

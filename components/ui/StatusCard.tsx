@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { ArrowAnimated } from "@/components/marketing/ArrowAnimated";
 import { Button } from "@/components/tremor/Button";
 

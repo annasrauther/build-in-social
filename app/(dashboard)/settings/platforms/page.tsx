@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Button } from "@/components/tremor/Button";
 import { StatusCard } from "@/components/ui/StatusCard";
 import { RiAddLine, RiLoader4Line } from "@remixicon/react";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { EASE_SPRING } from "@/lib/constants/onboarding";
 
 interface TrustLineProps {

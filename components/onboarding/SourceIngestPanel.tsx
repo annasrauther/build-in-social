@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { RiAddLine, RiArrowDownSLine, RiCheckLine, RiCloseLine } from "@remixicon/react";
 import { PremiumInput } from "@/components/onboarding/PremiumInput";
 import { PremiumTextarea } from "@/components/onboarding/PremiumTextarea";

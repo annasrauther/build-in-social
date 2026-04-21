@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { PLATFORM_CONFIGS } from "@/lib/utils/platform-config";
 import type { PlanPreviewVideo } from "@/lib/types/onboarding";
 import type { Platform } from "@/lib/types/user";

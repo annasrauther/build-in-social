@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { RiUpload2Line, RiCheckLine } from "@remixicon/react";
 import { Button } from "@/components/tremor/Button";
 import { StatusCard } from "@/components/ui/StatusCard";

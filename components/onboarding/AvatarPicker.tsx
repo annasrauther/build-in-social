@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { RiLockLine, RiSparklingLine } from "@remixicon/react";
 import { STOCK_AVATARS, AVATAR_VIBE_LABELS } from "@/content/avatars";
 import type { StockAvatar, AvatarMode } from "@/lib/types/avatar";

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { LANDING } from "@/content/landing";
 import { useSafeMotion } from "@/lib/hooks/useSafeMotion";
 

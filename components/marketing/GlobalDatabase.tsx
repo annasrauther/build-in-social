@@ -1,7 +1,7 @@
 "use client"
 import createGlobe from "cobe"
 import { FunctionComponent, useEffect, useRef } from "react"
-import { useReducedMotion } from "framer-motion"
+import { useReducedMotion } from "motion/react"
 
 /* ── Brand logo SVGs ─────────────────────────────────────────────────────── */
 

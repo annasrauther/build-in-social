@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { EASE_SPRING, TOTAL_STEPS } from "@/lib/constants/onboarding";
 
 const STEPS = Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1);

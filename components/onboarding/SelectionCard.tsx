@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import { motion, useAnimationControls } from "framer-motion";
+import { motion, useAnimationControls } from "motion/react";
 import { Check } from "lucide-react";
 
 interface SelectionCardProps {

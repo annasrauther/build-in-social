@@ -11,7 +11,7 @@ import {
   DragOverlay,
   closestCenter,
 } from "@dnd-kit/core";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { cx } from "@/lib/utils";
 import { APP } from "@/content/app";
 import type { ScheduledVideo } from "@/lib/types/schedule";

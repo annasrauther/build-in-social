@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/tremor/Button";
 import { StepProgressBar } from "./StepProgressBar";
