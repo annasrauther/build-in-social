@@ -1,10 +1,8 @@
-"use client"
+import Link from "next/link";
+import { Wordmark } from "@/components/ui/Wordmark";
+import { LANDING } from "@/content/landing";
 
-import Link from "next/link"
-import { Wordmark } from "@/components/ui/Wordmark"
-import { LANDING } from "@/content/landing"
-
-const LINKS: { name: string; href: string }[] = [
+const LINKS: readonly { name: string; href: string }[] = [
   { name: "Pricing", href: "/pricing" },
   { name: "About", href: "/about" },
   { name: "Privacy", href: "/privacy" },
@@ -12,40 +10,38 @@ const LINKS: { name: string; href: string }[] = [
   { name: "Support", href: "mailto:support@buildinsocial.com" },
   { name: "Data partners", href: "/subprocessors" },
   { name: "Data residency", href: "/subprocessors#residency" },
-]
+];
 
 export default function Footer() {
   return (
-    <footer className="border-t border-[var(--border-default)]">
+    <footer className="mt-24 border-t border-[color:var(--divider)]">
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
-          {/* Left — brand + links */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <Wordmark size={16} />
             {LINKS.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                className="py-3 px-1 text-xs text-gray-600 dark:text-gray-300 transition-colors hover:text-[var(--text-primary)]"
+                prefetch
+                className="py-1.5 px-1 text-[12px] text-text-secondary hover:text-text transition-colors duration-fast ease-out-cubic rounded-[4px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--focus-ring)]"
               >
                 {item.name}
               </Link>
             ))}
           </div>
-
         </div>
 
         {LANDING.FOOTER.dataLine ? (
-          <p className="mt-4 text-xs text-[var(--text-tertiary)]">
+          <p className="mt-4 text-[11px] text-text-tertiary">
             {LANDING.FOOTER.dataLine}
           </p>
         ) : null}
 
-        <p className="mt-2 text-xs text-[var(--text-tertiary)]">
+        <p className="mt-2 text-[11px] text-text-tertiary tabular-nums">
           &copy; {new Date().getFullYear()} Build In Social. All rights reserved.
         </p>
       </div>
     </footer>
-  )
+  );
 }
