@@ -1,751 +1,266 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
-import { OnboardingHeading } from "@/components/onboarding/OnboardingHeading";
-import { AvatarPicker } from "@/components/onboarding/AvatarPicker";
-import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
-import { useInteractionFeedback } from "@/lib/hooks/useInteractionFeedback";
-import { LIBRARY_VOICES, STAGGER_CARDS } from "@/lib/constants/onboarding";
-import { APP } from "@/content/app";
-import type { AvatarMode } from "@/lib/types/avatar";
+import { ArrowLeft, ArrowRight, Check, Pause, Play } from "lucide-react";
+import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout";
+import { Button } from "@/components/ui/shadcn/button";
+import { FirstRunHint } from "@/components/ui/states/FirstRunHint";
+import { toast } from "@/components/providers/Toaster";
+import { LIBRARY_VOICES } from "@/lib/constants/onboarding";
+import { getDraft, patchDraft, clearDraft } from "@/lib/onboarding-draft";
+import { cn } from "@/lib/utils";
 
-/* ─── Waveform bars animation ─────────────────────────────────────────────── */
+/**
+ * Onboarding — Step 3: Voice (F2 final step).
+ *
+ * 6-tile grid of library voices. Hover previews, click to select,
+ * continue to /plan/current?firstRun=1.
+ *
+ * Preview uses ElevenLabs mock via /api/voice/preview when available;
+ * falls back to a silent toast if the endpoint 5xxs.
+ */
 
-function WaveformBars({ color }: { color: string }) {
-  return (
-    <div className="flex items-center gap-[2px] h-4">
-      {[0, 1, 2, 3, 4].map((i) => (
-        <motion.span
-          key={i}
-          className="block rounded-full"
-          style={{ width: 2.5, backgroundColor: color }}
-          animate={{ height: ["4px", "14px", "6px", "12px", "4px"] }}
-          transition={{
-            duration: 0.8,
-            repeat: Infinity,
-            delay: i * 0.12,
-            ease: [0.16, 1, 0.3, 1],
-          }}
-        />
-      ))}
-    </div>
-  );
-}
+const CONSENT_KEY = "bis:voice-consent:v1";
 
-/* ─── Gender icon ─────────────────────────────────────────────────────────── */
-
-function GenderDot({ gender }: { gender: "male" | "female" }) {
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        width: 6,
-        height: 6,
-        borderRadius: "50%",
-        backgroundColor: gender === "female" ? "#DF8F70" : "#6A9BCC",
-        marginRight: 4,
-        verticalAlign: "middle",
-      }}
-    />
-  );
-}
-
-/* ─── Voice card ──────────────────────────────────────────────────────────── */
-
-type VoiceCardProps = {
-  voice: (typeof LIBRARY_VOICES)[number];
-  selected: boolean;
-  playing: boolean;
-  loading: boolean;
-  onSelect: () => void;
-  onPreview: () => void;
-};
-
-function VoiceCard({
-  voice,
-  selected,
-  playing,
-  loading,
-  onSelect,
-  onPreview,
-}: VoiceCardProps) {
-  const isActive = selected || playing;
-
-  return (
-    <div
-      style={{
-        position: "relative",
-        borderRadius: "calc(var(--radius-lg) + 1.5px)",
-        padding: "1.5px",
-        overflow: "hidden",
-        boxShadow: selected ? `0 0 0 3px ${voice.color}22, 0 6px 20px ${voice.color}18` : "none",
-        transition: "box-shadow 160ms ease",
-        backgroundColor: selected ? "transparent" : "var(--bg-elevated)",
-      }}
-    >
-      {/* Traveling beam border in the voice's own color */}
-      <motion.div
-        animate={{ opacity: selected ? 1 : 0 }}
-        transition={{ duration: 0.22 }}
-        className="focus-beam-layer"
-        style={{ ["--beam-color" as string]: voice.color }}
-      />
-
-    <motion.div
-      layout
-      animate={
-        selected
-          ? {
-              scale: [1, 1.015, 1],
-              transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] },
-            }
-          : {}
-      }
-      style={{
-        borderRadius: "var(--radius-lg)",
-        border: "none",
-        backgroundColor: "var(--bg-elevated)",
-        overflow: "hidden",
-        position: "relative",
-        zIndex: 1,
-      }}
-    >
-      {/* Main tap area */}
-      <button
-        type="button"
-        onClick={onSelect}
-        className="w-full text-left"
-        style={{
-          padding: "12px 16px 8px",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          outline: "none",
-          display: "block",
-          minHeight: 44,
-        }}
-      >
-        <div className="flex items-start gap-3">
-          {/* Avatar circle */}
-          <div
-            className="shrink-0 flex items-center justify-center rounded-full text-white font-semibold"
-            style={{
-              width: 40,
-              height: 40,
-              backgroundColor: voice.color,
-              fontSize: 15,
-              opacity: 0.92,
-            }}
-          >
-            {voice.name[0]}
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-0.5">
-              <span
-                className="font-sans"
-                style={{
-                  fontWeight: 600,
-                  fontSize: "var(--type-body-mobile)",
-                  color: "var(--text-primary)",
-                }}
-              >
-                {voice.name}
-              </span>
-              <span
-                style={{
-                  fontSize: "var(--type-micro)",
-                  fontWeight: 500,
-                  color: voice.color,
-                  backgroundColor: `${voice.color}18`,
-                  padding: "1px 6px",
-                  borderRadius: 99,
-                }}
-              >
-                {voice.personality}
-              </span>
-            </div>
-
-            <p
-              style={{
-                fontSize: "var(--type-supporting-mobile)",
-                color: "var(--text-secondary)",
-                lineHeight: 1.5,
-              }}
-            >
-              <GenderDot gender={voice.gender} />
-              {voice.description}
-            </p>
-          </div>
-
-          {/* Selection checkmark */}
-          <motion.div
-            className="shrink-0 flex items-center justify-center rounded-full"
-            style={{
-              width: 22,
-              height: 22,
-              backgroundColor: selected ? voice.color : "var(--bg-overlay)",
-              marginTop: 2,
-            }}
-            animate={{ scale: selected ? 1 : 0.88, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 25 }}
-          >
-            <AnimatePresence>
-              {selected && (
-                <motion.svg
-                  key="check"
-                  width="11"
-                  height="9"
-                  viewBox="0 0 11 9"
-                  fill="none"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0, opacity: 0 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                >
-                  <path
-                    d="M1 4.5L3.8 7.5L10 1"
-                    stroke="white"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </motion.svg>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        </div>
-      </button>
-
-      {/* Preview button row */}
-      <div
-        style={{
-          padding: "0 16px 10px 59px",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onPreview();
-          }}
-          disabled={loading}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            padding: "5px 10px",
-            borderRadius: 99,
-            border: `1px solid ${isActive ? voice.color : "var(--border-default)"}`,
-            backgroundColor: "transparent",
-            color: isActive ? voice.color : "var(--text-tertiary)",
-            fontSize: "var(--type-micro)",
-            fontWeight: 500,
-            cursor: loading ? "wait" : "pointer",
-            transition: "border-color 160ms ease, color 160ms ease",
-            outline: "none",
-            minHeight: 28,
-          }}
-          aria-label={playing ? `Stop ${voice.name} preview` : `Preview ${voice.name} voice`}
-        >
-          <AnimatePresence mode="wait">
-            {loading ? (
-              <motion.span
-                key="loading"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                style={{ display: "flex", alignItems: "center", gap: 4 }}
-              >
-                {[0, 1, 2].map((i) => (
-                  <motion.span
-                    key={i}
-                    className="block rounded-full"
-                    style={{ width: 3, height: 3, backgroundColor: "currentColor" }}
-                    animate={{ opacity: [0.3, 1, 0.3] }}
-                    transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.18 }}
-                  />
-                ))}
-              </motion.span>
-            ) : playing ? (
-              <motion.span
-                key="playing"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                style={{ display: "flex", alignItems: "center", gap: 6 }}
-              >
-                <WaveformBars color={voice.color} />
-                <span>Stop</span>
-              </motion.span>
-            ) : (
-              <motion.span
-                key="play"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                style={{ display: "flex", alignItems: "center", gap: 5 }}
-              >
-                {/* Play triangle */}
-                <svg width="8" height="9" viewBox="0 0 8 9" fill="currentColor">
-                  <path d="M0.5 1.5L7.5 4.5L0.5 7.5V1.5Z" />
-                </svg>
-                Preview
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </button>
-
-        {playing && (
-          <motion.span
-            initial={{ opacity: 0, x: -4 }}
-            animate={{ opacity: 1, x: 0 }}
-            style={{
-              fontSize: "var(--type-micro)",
-              color: voice.color,
-            }}
-          >
-            {voice.previewText.slice(0, 32)}…
-          </motion.span>
-        )}
-      </div>
-    </motion.div>
-    </div>
-  );
-}
-
-/* ─── Page ────────────────────────────────────────────────────────────────── */
-
-export default function VoicePage() {
+export default function OnboardingVoicePage() {
   const router = useRouter();
-  const { data, update, goToStep } = useOnboarding();
-  const { playSelect, playDeselect: _playDeselect, playNavigation, playError, vibrate } =
-    useInteractionFeedback();
-
-  const [selected, setSelected] = useState(data.libraryVoiceId || "alex");
-  const [consentChecked, setConsentChecked] = useState(!!data.voiceConsentAt);
+  const [selected, setSelected] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const [loadingId, setLoadingId] = useState<string | null>(null);
-  const [cloneInfoOpen, setCloneInfoOpen] = useState(false);
+  const [consented, setConsented] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Avatar selection — defaults to first stock avatar. Tier is null during
-  // onboarding (user hasn't picked a plan yet), so only free-tier stock
-  // avatars are selectable and twin is shown as locked.
-  const [avatarMode, setAvatarMode] = useState<AvatarMode>(data.avatarMode ?? "stock");
-  const [stockAvatarId, setStockAvatarId] = useState<string | undefined>(
-    data.stockAvatarId ?? "stock-founder-01",
-  );
+  useEffect(() => {
+    const draft = getDraft();
+    setSelected(draft.voiceId ?? "alex");
+    try {
+      setConsented(window.localStorage.getItem(CONSENT_KEY) === "1");
+    } catch {
+      /* ignore */
+    }
+    setHydrated(true);
+  }, []);
 
   const stopAudio = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = "";
-      audioRef.current = null;
-    }
+    audioRef.current?.pause();
+    audioRef.current = null;
     setPlayingId(null);
   }, []);
 
-  const handlePreview = useCallback(
+  const playPreview = useCallback(
     async (voiceId: string) => {
-      // Toggle off if already playing this voice
       if (playingId === voiceId) {
         stopAudio();
         return;
       }
-
-      // Stop any current playback
       stopAudio();
-
-      setLoadingId(voiceId);
-      vibrate(8);
-
       try {
-        const res = await fetch(`/api/voice/preview?voiceId=${voiceId}`);
+        const res = await fetch("/api/voice/preview", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ voiceId }),
+        });
         if (!res.ok) {
-          playError();
-          vibrate([10, 30, 10]);
+          toast.error("We couldn't load that preview. Try another voice.");
           return;
         }
-        const { audioUrl } = (await res.json()) as { audioUrl: string };
-
+        const { audioUrl } = (await res.json()) as { audioUrl?: string };
+        if (!audioUrl) {
+          toast.error("No preview available for that voice yet.");
+          return;
+        }
         const audio = new Audio(audioUrl);
         audioRef.current = audio;
-
-        audio.onended = () => {
-          setPlayingId(null);
-          audioRef.current = null;
-        };
-        audio.onerror = () => {
-          setPlayingId(null);
-          audioRef.current = null;
-          playError();
-        };
-
-        await audio.play();
         setPlayingId(voiceId);
-        vibrate(15);
+        audio.addEventListener("ended", () => setPlayingId(null));
+        await audio.play();
       } catch {
-        playError();
-        vibrate([10, 30, 10]);
-      } finally {
-        setLoadingId(null);
+        toast.error("Preview couldn't play.");
+        setPlayingId(null);
       }
     },
-    [playingId, stopAudio, vibrate, playError],
+    [playingId, stopAudio],
   );
 
-  const handleSelect = useCallback(
-    (voiceId: string) => {
-      if (voiceId === selected) return;
-      stopAudio();
-      setSelected(voiceId);
-      playSelect();
-      vibrate(10);
-    },
-    [selected, stopAudio, playSelect, vibrate],
-  );
+  // Stop audio on unmount.
+  useEffect(() => stopAudio, [stopAudio]);
 
-  function handleContinue() {
+  const toggleConsent = () => {
+    const next = !consented;
+    setConsented(next);
+    try {
+      window.localStorage.setItem(CONSENT_KEY, next ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  function back() {
     stopAudio();
-    update({
-      libraryVoiceId: selected,
-      voiceChoice: "library",
-      voiceConsentAt: new Date().toISOString(),
-      avatarMode,
-      stockAvatarId,
-      currentStep: 3,
-    });
-    playNavigation();
-    vibrate(15);
-    // F2 reorder: Voice is the FINAL step. Land on /plan/current with
-    // firstRun flag so the drawer opens on day 1.
+    router.push("/onboarding/plan-preview");
+  }
+
+  function finish() {
+    if (!selected || !consented) return;
+    stopAudio();
+    patchDraft({ voiceId: selected, lastStep: 3 });
+    // Best-effort persist of the completed onboarding draft to the server.
+    try {
+      void fetch("/api/user/onboarding", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          ...getDraft(),
+          voiceConsentAt: new Date().toISOString(),
+        }),
+      });
+    } catch {
+      /* best-effort */
+    }
+    clearDraft();
     router.push("/plan/current?firstRun=1");
   }
 
-  function handleBack() {
-    stopAudio();
-    update({ libraryVoiceId: selected });
-    // Back → Preview (step 2 in the new ordering).
-    goToStep(2);
-  }
-
-  // A6: derive a human-readable status string for the aria-live region
-  const voiceStatusMessage = (() => {
-    if (loadingId) {
-      const voice = LIBRARY_VOICES.find((v) => v.id === loadingId);
-      return `Loading preview for ${voice?.name ?? loadingId}`;
-    }
-    if (playingId) {
-      const voice = LIBRARY_VOICES.find((v) => v.id === playingId);
-      return `Now playing ${voice?.name ?? playingId}`;
-    }
-    return "";
-  })();
+  const canFinish = hydrated && !!selected && consented;
 
   return (
-    <OnboardingShell
-      step={3}
-      continueLabel="Continue"
-      continueDisabled={!selected || !consentChecked}
-      onContinue={handleContinue}
-      onBack={handleBack}
-    >
-      {/* A6: aria-live region announces voice preview loading/playing state to screen readers */}
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className="sr-only"
-      >
-        {voiceStatusMessage}
-      </div>
-
-      <OnboardingHeading
-        title="Your on-screen presence"
-        subtitle="Pick who narrates your videos — a stock AI avatar now, or train a digital twin later."
-      />
-
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.28, delay: 0.04 }}
-        className="mb-6"
-      >
-        <AvatarPicker
-          tier={null}
-          mode={avatarMode}
-          stockAvatarId={stockAvatarId}
-          onModeChange={(m) => setAvatarMode(m)}
-          onStockSelect={(id) => {
-            setStockAvatarId(id);
-            playSelect();
-            vibrate(8);
-          }}
-          compact
-        />
-      </motion.div>
-
-      <motion.p
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.28, delay: 0.05 }}
-        style={{
-          fontSize: "var(--type-supporting-mobile)",
-          color: "var(--text-tertiary)",
-          lineHeight: 1.55,
-          marginTop: 0,
-          marginBottom: 20,
-          padding: "10px 14px",
-          borderRadius: "var(--radius-md)",
-          backgroundColor: "var(--bg-elevated)",
-          border: "1px solid var(--border-subtle)",
-        }}
-      >
-        {APP.ONBOARDING.step4.libraryIntro}
-      </motion.p>
-
-      <motion.div
-        className="flex flex-col gap-2"
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: {},
-          visible: { transition: { staggerChildren: STAGGER_CARDS } },
-        }}
-      >
-        {LIBRARY_VOICES.map((voice) => (
-          <motion.div
-            key={voice.id}
-            variants={{
-              hidden: { opacity: 0, y: 12 },
-              visible: {
-                opacity: 1,
-                y: 0,
-                transition: { duration: 0.28, ease: [0.16, 1, 0.3, 1] },
-              },
-            }}
-          >
-            <VoiceCard
-              voice={voice}
-              selected={selected === voice.id}
-              playing={playingId === voice.id}
-              loading={loadingId === voice.id}
-              onSelect={() => handleSelect(voice.id)}
-              onPreview={() => handlePreview(voice.id)}
-            />
-          </motion.div>
-        ))}
-
-        {/* ── Clone my voice — informational / locked, not selectable ── */}
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 12 },
-            visible: {
-              opacity: 1,
-              y: 0,
-              transition: { duration: 0.28, ease: [0.16, 1, 0.3, 1] },
-            },
-          }}
-        >
-          <CloneVoiceCard
-            expanded={cloneInfoOpen}
-            onToggle={() => setCloneInfoOpen((v) => !v)}
-          />
-        </motion.div>
-      </motion.div>
-
-      {/* Voice consent */}
-      <motion.label
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.45, duration: 0.28 }}
-        className="flex items-start gap-3 mt-6 cursor-pointer"
-        style={{ minHeight: 44 }}
-      >
-        <input
-          type="checkbox"
-          checked={consentChecked}
-          onChange={(e) => {
-            setConsentChecked(e.target.checked);
-            if (e.target.checked) {
-              playSelect();
-              vibrate(8);
-            }
-          }}
-          className="mt-1 shrink-0"
-          style={{ width: 18, height: 18, accentColor: "var(--accent)" }}
-        />
-        <span
-          style={{
-            fontSize: "var(--type-supporting-mobile)",
-            color: "var(--text-secondary)",
-            lineHeight: 1.5,
-          }}
-        >
-          I consent to Build In Social using AI voice synthesis to create the
-          audio narration for my videos. My voice selection and usage data are
-          processed in accordance with our{" "}
-          <a
-            href="/privacy"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: "var(--accent)", textDecoration: "underline" }}
-          >
-            Privacy Policy
-          </a>
-          .
-        </span>
-      </motion.label>
-    </OnboardingShell>
-  );
-}
-
-/* ─── Clone voice (locked/informational) ──────────────────────────────────── */
-
-function CloneVoiceCard({
-  expanded,
-  onToggle,
-}: {
-  expanded: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <div
-      aria-disabled="true"
-      style={{
-        position: "relative",
-        borderRadius: "var(--radius-lg)",
-        border: "1.5px dashed var(--border-default)",
-        backgroundColor: "var(--bg-elevated)",
-        padding: "14px 16px 12px",
-        opacity: 0.95,
-      }}
-    >
-      <div className="flex items-start gap-3">
-        {/* Avatar — mic icon */}
-        <div
-          aria-hidden
-          className="shrink-0 flex items-center justify-center rounded-full"
-          style={{
-            width: 40,
-            height: 40,
-            backgroundColor: "var(--bg-overlay)",
-            color: "var(--text-tertiary)",
-            fontSize: 18,
-          }}
-        >
-          {/* Microphone glyph */}
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <rect x="9" y="2" width="6" height="12" rx="3" />
-            <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
-            <line x1="12" y1="18" x2="12" y2="22" />
-          </svg>
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-            <span
-              style={{
-                fontWeight: 600,
-                fontSize: "var(--type-body-mobile)",
-                color: "var(--text-primary)",
-              }}
-            >
-              Clone my voice
-            </span>
-            <span
-              title="Unlocks after you pick a paid plan."
-              style={{
-                fontSize: "var(--type-micro)",
-                fontWeight: 600,
-                color: "var(--text-tertiary)",
-                backgroundColor: "var(--bg-overlay)",
-                padding: "2px 8px",
-                borderRadius: 99,
-                border: "1px solid var(--border-subtle)",
-                letterSpacing: "0.02em",
-                textTransform: "uppercase",
-              }}
-            >
-              Locked
-            </span>
-          </div>
-          <p
-            style={{
-              fontSize: "var(--type-supporting-mobile)",
-              color: "var(--text-secondary)",
-              lineHeight: 1.5,
-            }}
-          >
-            Voice cloning unlocks after you pick a paid plan.
+    <OnboardingLayout step={3}>
+      <div className="flex flex-col gap-6">
+        <header className="flex flex-col gap-1">
+          <h1 className="text-[22px] font-medium tracking-[-0.02em] leading-tight text-text">
+            Pick a voice.
+          </h1>
+          <p className="text-[14px] leading-snug text-text-secondary">
+            Hover to preview. You can swap any time in settings.
           </p>
-          <button
-            type="button"
-            onClick={onToggle}
-            aria-expanded={expanded}
-            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-elevated)] rounded-sm"
-            style={{
-              marginTop: 6,
-              background: "none",
-              border: "none",
-              padding: 0,
-              cursor: "pointer",
-              fontSize: "var(--type-micro)",
-              fontWeight: 500,
-              color: "var(--accent)",
-              textDecoration: "underline",
-              textUnderlineOffset: 3,
-            }}
-          >
-            {expanded ? "Hide details" : "How does it work?"}
-          </button>
+        </header>
 
-          <AnimatePresence initial={false}>
-            {expanded && (
-              <motion.div
-                key="clone-details"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-                style={{ overflow: "hidden" }}
-              >
-                <p
-                  style={{
-                    marginTop: 10,
-                    fontSize: "var(--type-supporting-mobile)",
-                    color: "var(--text-secondary)",
-                    lineHeight: 1.55,
+        <FirstRunHint
+          capability="onboarding.voice"
+          message="One click to preview. The default is a safe bet if you're unsure."
+        />
+
+        <ul
+          className="grid grid-cols-2 gap-2 sm:grid-cols-3"
+          role="radiogroup"
+          aria-label="Library voices"
+        >
+          {LIBRARY_VOICES.map((voice) => {
+            const isSelected = selected === voice.id;
+            const isPlaying = playingId === voice.id;
+            return (
+              <li key={voice.id}>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
+                  onClick={() => setSelected(voice.id)}
+                  onMouseEnter={() => {
+                    /* autoplay on hover would be aggressive; rely on Play button */
                   }}
+                  className={cn(
+                    "group relative w-full text-left",
+                    "flex flex-col gap-2",
+                    "p-3",
+                    "rounded-[var(--radius-card)]",
+                    "border transition-colors duration-fast ease-out-cubic",
+                    "focus-visible:outline-2 focus-visible:outline-offset-2",
+                    "focus-visible:[outline-color:var(--focus-ring)]",
+                    isSelected
+                      ? "border-[color-mix(in_srgb,var(--accent)_40%,transparent)] bg-accent-subtle"
+                      : "border-[color:var(--border)] bg-surface hover:bg-[color-mix(in_srgb,var(--gray-12)_3%,var(--surface))]",
+                  )}
                 >
-                  Once you activate a paid plan, Settings &rarr; Voice walks you
-                  through a 60-second recording. We train your clone, you
-                  approve a sample, then every video narrates in your voice.
-                  Until then, pick a library voice above to keep moving.
-                </p>
-              </motion.div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-2">
+                      <span className="text-[13px] font-medium leading-none text-text">
+                        {voice.name}
+                      </span>
+                      <span className="text-[11px] uppercase tracking-wider text-text-tertiary">
+                        {voice.personality}
+                      </span>
+                    </span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      aria-label={isPlaying ? "Stop preview" : `Preview ${voice.name}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        void playPreview(voice.id);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          void playPreview(voice.id);
+                        }
+                      }}
+                      className={cn(
+                        "inline-flex h-5 w-5 items-center justify-center",
+                        "rounded-[4px] text-text-tertiary",
+                        "hover:text-text hover:bg-[color-mix(in_srgb,var(--gray-12)_4%,transparent)]",
+                        "transition-colors duration-fast ease-out-cubic",
+                      )}
+                    >
+                      {isPlaying ? (
+                        <Pause size={12} strokeWidth={1.5} aria-hidden="true" />
+                      ) : (
+                        <Play size={12} strokeWidth={1.5} aria-hidden="true" />
+                      )}
+                    </span>
+                  </div>
+                  <p className="text-[12px] leading-snug text-text-secondary">
+                    {voice.description}
+                  </p>
+                  {isSelected ? (
+                    <span
+                      aria-hidden="true"
+                      className="absolute right-2 top-2 inline-flex h-4 w-4 items-center justify-center text-accent"
+                    >
+                      <Check size={12} strokeWidth={2} />
+                    </span>
+                  ) : null}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+
+        <label className="flex items-start gap-2 text-[12px] text-text-secondary leading-snug cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={consented}
+            onChange={toggleConsent}
+            className={cn(
+              "mt-0.5 h-3.5 w-3.5 shrink-0 cursor-pointer accent-[color:var(--accent)]",
+              "focus-visible:outline-2 focus-visible:outline-offset-2",
+              "focus-visible:[outline-color:var(--focus-ring)]",
             )}
-          </AnimatePresence>
+          />
+          <span>
+            I understand Build In Social uses this voice to narrate my videos
+            and that I can change it later.
+          </span>
+        </label>
+
+        <div className="flex items-center justify-between pt-2">
+          <Button variant="ghost" size="sm" onClick={back}>
+            <ArrowLeft size={14} strokeWidth={1.5} aria-hidden="true" />
+            Back
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={finish}
+            disabled={!canFinish}
+          >
+            Open my plan
+            <ArrowRight size={14} strokeWidth={1.5} aria-hidden="true" />
+          </Button>
         </div>
       </div>
-    </div>
+    </OnboardingLayout>
   );
 }
