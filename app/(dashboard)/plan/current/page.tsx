@@ -29,6 +29,7 @@ import {
   FirstRunHint,
 } from "@/components/ui/states";
 import { toast } from "@/components/providers/Toaster";
+import { publishVideo } from "@/lib/publish";
 import { APP } from "@/content/app";
 import { cn } from "@/lib/utils";
 import type { Platform, SubscriptionTier } from "@/lib/types/user";
@@ -375,44 +376,100 @@ export default function CurrentPlanPage() {
   }, []);
 
   const retryPlatform = useCallback(
-    (p: Platform) => {
+    async (p: Platform) => {
       if (!drawerVideo) return;
       setPublishState((prev) => ({
         ...prev,
-        [drawerVideo.id]: { ...prev[drawerVideo.id], [p]: { status: "pending" } },
+        [drawerVideo.id]: {
+          ...prev[drawerVideo.id],
+          [p]: { status: "pending" },
+        },
       }));
-      // Retry is presentational for now — real publish API wires in Phase 5.
-      setTimeout(() => {
-        setPublishState((prev) => ({
-          ...prev,
-          [drawerVideo.id]: { ...prev[drawerVideo.id], [p]: { status: "success" } },
-        }));
-      }, 600);
+      const result = await publishVideo(drawerVideo.id, p);
+      setPublishState((prev) => {
+        const next = { ...prev[drawerVideo.id] };
+        if (result.status === "success") {
+          next[p] = { status: "success", liveUrl: result.liveUrl };
+        } else if (result.status === "not-implemented") {
+          next[p] = { status: "not-implemented", reason: result.reason };
+        } else {
+          next[p] = { status: "failed", reason: result.reason };
+        }
+        return { ...prev, [drawerVideo.id]: next };
+      });
     },
     [drawerVideo],
   );
 
-  const publishDrawer = useCallback(() => {
+  const publishDrawer = useCallback(async () => {
     if (!drawerVideo) return;
-    const selected = drawerPublishRows.filter((r) => r.selected && r.state.status !== "disconnected");
+    const selected = drawerPublishRows.filter(
+      (r) => r.selected && r.state.status !== "disconnected",
+    );
     if (selected.length === 0) return;
+
+    // Optimistic: flip selected rows to pending immediately.
     setPublishState((prev) => {
       const next = { ...prev[drawerVideo.id] };
       for (const r of selected) next[r.platform] = { status: "pending" };
       return { ...prev, [drawerVideo.id]: next };
     });
-    // Stub per-platform completion — real per-platform publish lands in Phase 5.
-    selected.forEach((r, i) => {
-      setTimeout(() => {
+
+    // F6 real per-platform publish — each platform is an independent job;
+    // a 501 on one doesn't affect the others. publishVideo distinguishes
+    // not-implemented (accent dot + "Soon") from failed (amber dot + retry).
+    await Promise.all(
+      selected.map(async (r) => {
+        const result = await publishVideo(drawerVideo.id, r.platform);
         setPublishState((prev) => {
           const next = { ...prev[drawerVideo.id] };
-          // Deterministically succeed all for now.
-          next[r.platform] = { status: "success" };
+          if (result.status === "success") {
+            next[r.platform] = { status: "success", liveUrl: result.liveUrl };
+          } else if (result.status === "not-implemented") {
+            next[r.platform] = {
+              status: "not-implemented",
+              reason: result.reason,
+            };
+          } else {
+            next[r.platform] = { status: "failed", reason: result.reason };
+          }
           return { ...prev, [drawerVideo.id]: next };
         });
-      }, 400 + i * 200);
+      }),
+    );
+
+    // Summary toast reflects the split: any real successes get the happy
+    // path; otherwise an honest message about the stubbed backend.
+    setPublishState((prev) => {
+      const finalRow = prev[drawerVideo.id] ?? {};
+      const successes = selected.filter(
+        (r) => finalRow[r.platform]?.status === "success",
+      ).length;
+      const notImpl = selected.filter(
+        (r) => finalRow[r.platform]?.status === "not-implemented",
+      ).length;
+      const failed = selected.filter(
+        (r) => finalRow[r.platform]?.status === "failed",
+      ).length;
+      if (successes === selected.length) {
+        toast.success(
+          `Live on ${successes} platform${successes === 1 ? "" : "s"}.`,
+        );
+      } else if (failed > 0) {
+        toast.error(
+          `${failed} failed · ${successes} live · ${notImpl} pending rollout.`,
+        );
+      } else if (notImpl === selected.length) {
+        toast("Platform publishing is coming soon. Your approval is saved.");
+      } else {
+        toast(
+          `${successes} live · ${notImpl} coming soon${
+            failed > 0 ? ` · ${failed} failed` : ""
+          }.`,
+        );
+      }
+      return prev;
     });
-    toast.success(`Publishing to ${selected.length} platform${selected.length === 1 ? "" : "s"}.`);
   }, [drawerVideo, drawerPublishRows]);
 
   // ------------------------------------------------------------------
