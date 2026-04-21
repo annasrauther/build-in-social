@@ -2,9 +2,11 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { ThemeProvider } from "next-themes";
 import { ClerkProvider } from "@clerk/nextjs";
 import { useState } from "react";
+import { TooltipProvider } from "@/components/ui/shadcn/tooltip";
+import { CommandPalette } from "@/components/ui/CommandPalette";
+import { Toaster } from "@/components/providers/Toaster";
 
 const hasClerkKey = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
 const devAuth = process.env.NEXT_PUBLIC_DEV_AUTH === "1";
@@ -23,14 +25,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   const inner = (
-    <ThemeProvider defaultTheme="system" attribute="class" disableTransitionOnChange>
+    <TooltipProvider delayDuration={300} skipDelayDuration={200}>
       <QueryClientProvider client={queryClient}>
         {children}
+        <CommandPalette />
+        <Toaster />
         {process.env.NODE_ENV === "development" && (
           <ReactQueryDevtools initialIsOpen={false} />
         )}
       </QueryClientProvider>
-    </ThemeProvider>
+    </TooltipProvider>
   );
 
   // Wrap with ClerkProvider only when keys are configured AND dev-auth bypass
