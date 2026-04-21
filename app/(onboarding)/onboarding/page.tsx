@@ -1,42 +1,34 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { Card } from "@/components/tremor/Card";
-import { Button } from "@/components/tremor/Button";
-import { Input } from "@/components/tremor/Input";
-import { Label } from "@/components/tremor/Label";
-import { APP } from "@/content/app";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowRight } from "lucide-react";
+import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout";
+import { Button } from "@/components/ui/shadcn/button";
+import { Input, Textarea } from "@/components/ui/shadcn/input";
+import { cn } from "@/lib/utils";
+import { getDraft, patchDraft } from "@/lib/onboarding-draft";
 import type { Platform } from "@/lib/types/user";
-import type {
-  HeygenAvatarSource,
-  SeriesMode,
-} from "@/lib/types/series";
 
 /**
- * Single-page onboarding wizard — progressive disclosure inside one scroll.
+ * Onboarding — Step 1: Context (F2).
  *
- * Flow:
- *   1. Niche / what you build or sell
- *   2. Rendering mode (faceless / stock-ai / heygen / combo)
- *   3. Avatar source (only when mode uses HeyGen)
- *   4. Platforms
- *   5. "Generate my week preview" → POST /api/plan/preview (free, no render)
- *   6. Show the preview week inline with an "Activate this series" CTA that
- *      routes to /signup (or /settings/billing if already signed in).
+ * Three fields: niche, audience, one goal. Pre-filled from F1
+ * MiniPlanner query params when present. "Use defaults" on every step.
+ * On submit: persist draft + go to /onboarding/plan-preview.
  *
- * We don't require signup to see the preview — that's the whole point of the
- * "preview-free, pay-to-ship" flow. Activation is the conversion event.
+ * This page absorbs /onboarding/start (which redirects here). The old
+ * multi-panel pre-signup preview is retired — this is the post-signup
+ * activation flow.
  */
 
-const MODES: SeriesMode[] = [
-  "faceless",
-  "stock-ai-avatar",
-  "heygen-avatar",
-  "combo",
-];
+const PLATFORMS: readonly Platform[] = [
+  "youtube",
+  "instagram",
+  "linkedin",
+  "x",
+] as const;
 
-const PLATFORMS: Platform[] = ["youtube", "instagram", "linkedin", "x"];
 const PLATFORM_LABELS: Record<Platform, string> = {
   youtube: "YouTube Shorts",
   instagram: "Instagram Reels",
@@ -44,26 +36,42 @@ const PLATFORM_LABELS: Record<Platform, string> = {
   x: "X",
 };
 
-type PreviewWeek = {
-  platform: Platform;
-  title: string;
-  hook: string;
-  angle: string;
-  suggestedLength: number;
-};
+export default function OnboardingContextPage() {
+  // useSearchParams requires Suspense for static-prerendered routes.
+  return (
+    <Suspense fallback={<OnboardingLayout step={1}><div className="h-[320px]" aria-hidden="true" /></OnboardingLayout>}>
+      <OnboardingContextInner />
+    </Suspense>
+  );
+}
 
-export default function OnboardingPage() {
+function OnboardingContextInner() {
+  const router = useRouter();
+  const params = useSearchParams();
+
   const [niche, setNiche] = useState("");
-  const [mode, setMode] = useState<SeriesMode>("faceless");
-  const [heygenSource, setHeygenSource] = useState<HeygenAvatarSource>("licensed");
-  const [platforms, setPlatforms] = useState<Platform[]>(["youtube", "linkedin"]);
-  const [previewing, setPreviewing] = useState(false);
-  const [preview, setPreview] = useState<PreviewWeek[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [audience, setAudience] = useState("");
+  const [goal, setGoal] = useState("");
+  const [platforms, setPlatforms] = useState<Platform[]>([
+    "youtube",
+    "linkedin",
+  ]);
+  const [hydrated, setHydrated] = useState(false);
 
-  const needsHeygenSource = mode === "heygen-avatar";
-  const canSubmit =
-    niche.trim().length >= 3 && platforms.length > 0 && !previewing;
+  // Hydrate from draft + pre-fill from F1 MiniPlanner query params.
+  useEffect(() => {
+    const draft = getDraft();
+    const qNiche = params.get("niche") ?? "";
+    const qAudience = params.get("audience") ?? "";
+    const qGoal = params.get("goal") ?? "";
+    setNiche(qNiche || draft.niche);
+    setAudience(qAudience || draft.audience);
+    setGoal(qGoal || draft.goal);
+    if (draft.platforms.length) setPlatforms(draft.platforms);
+    setHydrated(true);
+  }, [params]);
+
+  const canContinue = niche.trim().length >= 3 && platforms.length > 0;
 
   function togglePlatform(p: Platform) {
     setPlatforms((prev) =>
@@ -71,230 +79,168 @@ export default function OnboardingPage() {
     );
   }
 
-  async function generatePreview() {
-    if (!canSubmit) return;
-    setPreviewing(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/plan/preview", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ niche: niche.trim(), mode, platforms }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setError(json.error ?? APP.COMMON.errorGeneric);
-        return;
-      }
-      setPreview(json.data.week as PreviewWeek[]);
-    } catch {
-      setError(APP.COMMON.errorGeneric);
-    } finally {
-      setPreviewing(false);
-    }
+  function continueToPreview() {
+    patchDraft({
+      niche: niche.trim(),
+      audience: audience.trim(),
+      goal: goal.trim(),
+      platforms,
+      lastStep: 2,
+    });
+    router.push("/onboarding/plan-preview");
+  }
+
+  function useDefaults() {
+    patchDraft({
+      niche: niche.trim() || "Indie SaaS builder",
+      audience: audience.trim() || "Technical founders",
+      goal: goal.trim() || "Consistent weekly presence",
+      platforms: platforms.length ? platforms : ["youtube", "linkedin"],
+      lastStep: 2,
+    });
+    router.push("/onboarding/plan-preview");
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-10 space-y-6">
-      <header>
-        <p className="text-xs uppercase tracking-wider text-[color:var(--accent)]">
-          Build In Social
-        </p>
-        <h1 className="mt-2 text-2xl sm:text-3xl font-serif font-medium text-gray-900 dark:text-gray-50">
-          See a free week of content before you pay.
-        </h1>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-          Tell us what you build or sell. We&apos;ll generate a week of
-          platform-native titles and hooks. No render, no credit card.
-        </p>
-      </header>
-
-      {/* Niche */}
-      <Card className="p-5">
-        <Label htmlFor="onb-niche">What do you build or sell?</Label>
-        <Input
-          id="onb-niche"
-          value={niche}
-          onChange={(e) => setNiche(e.target.value)}
-          placeholder="Indie SaaS for dev teams, React perf tips, SEO courses\u2026"
-          maxLength={200}
-        />
-      </Card>
-
-      {/* Mode */}
-      <Card className="p-5">
-        <h2 className="text-sm font-medium text-gray-900 dark:text-gray-50">
-          How should your videos look?
-        </h2>
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Pick once. Change any time. Combo lets Build In Social decide per
-          video.
-        </p>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          {MODES.map((m) => {
-            const selected = mode === m;
-            const copy = APP.SERIES.create.modeOptions[m];
-            return (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setMode(m)}
-                className={
-                  "rounded-md border p-3 text-left text-sm transition " +
-                  (selected
-                    ? "border-brand-500 bg-brand-50 dark:bg-brand-950/30"
-                    : "border-gray-200 hover:border-gray-300 dark:border-gray-800 dark:hover:border-gray-700")
-                }
-                aria-pressed={selected}
-              >
-                <div className="font-medium text-gray-900 dark:text-gray-50">
-                  {copy.label}
-                </div>
-                <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  {copy.helper}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-
-        {needsHeygenSource && (
-          <div className="mt-4">
-            <Label>Pick the face</Label>
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-              {(["licensed", "twin"] as HeygenAvatarSource[]).map((src) => (
-                <button
-                  key={src}
-                  type="button"
-                  onClick={() => setHeygenSource(src)}
-                  className={
-                    "rounded-md border p-3 text-left text-sm transition " +
-                    (heygenSource === src
-                      ? "border-brand-500 bg-brand-50 dark:bg-brand-950/30"
-                      : "border-gray-200 hover:border-gray-300 dark:border-gray-800 dark:hover:border-gray-700")
-                  }
-                  aria-pressed={heygenSource === src}
-                >
-                  <div className="font-medium capitalize text-gray-900 dark:text-gray-50">
-                    {src === "licensed"
-                      ? "A licensed HeyGen face"
-                      : "Your own face (train a twin)"}
-                  </div>
-                  <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    {src === "licensed"
-                      ? "Pick a real licensed human from HeyGen\u2019s marketplace."
-                      : "Record a 60-second clip later; HeyGen trains a digital twin. Creator tier and up."}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </Card>
-
-      {/* Platforms */}
-      <Card className="p-5">
-        <h2 className="text-sm font-medium text-gray-900 dark:text-gray-50">
-          Where should your videos go?
-        </h2>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          {PLATFORMS.map((p) => {
-            const selected = platforms.includes(p);
-            return (
-              <button
-                key={p}
-                type="button"
-                onClick={() => togglePlatform(p)}
-                className={
-                  "flex items-center justify-between rounded-md border p-3 text-sm transition " +
-                  (selected
-                    ? "border-brand-500 bg-brand-50 dark:bg-brand-950/30"
-                    : "border-gray-200 hover:border-gray-300 dark:border-gray-800 dark:hover:border-gray-700")
-                }
-                aria-pressed={selected}
-              >
-                <span>{PLATFORM_LABELS[p]}</span>
-                <span className="text-xs text-gray-500">
-                  {selected ? "on" : "off"}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </Card>
-
-      {/* Preview action */}
-      <div className="flex flex-col gap-3">
-        <Button
-          variant="primary"
-          onClick={generatePreview}
-          disabled={!canSubmit}
-          className="self-start"
-        >
-          {previewing ? "Generating your preview\u2026" : "Preview my week"}
+    <OnboardingLayout
+      step={1}
+      topRight={
+        <Button variant="link" size="sm" onClick={useDefaults}>
+          Use defaults
         </Button>
-        {error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-        )}
-      </div>
-
-      {/* Preview results */}
-      {preview && (
-        <section
-          aria-label="Preview week"
-          className="mt-6 rounded-lg border border-brand-500/50 bg-brand-50/50 p-5 dark:bg-brand-950/20"
-        >
-          <p className="text-xs uppercase tracking-wider text-[color:var(--accent)]">
-            Free preview
+      }
+    >
+      <div className="flex flex-col gap-6">
+        <header className="flex flex-col gap-1">
+          <h1 className="text-[22px] font-medium tracking-[-0.02em] leading-tight text-text">
+            Tell us what you do.
+          </h1>
+          <p className="text-[14px] leading-snug text-text-secondary">
+            Three answers. We&rsquo;ll draft your week from them.
           </p>
-          <h2 className="mt-2 text-lg font-medium text-gray-900 dark:text-gray-50">
-            Your first week of {niche.trim()} content
-          </h2>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {preview.length} platform-native video idea
-            {preview.length !== 1 ? "s" : ""}. Activate a plan to render and
-            post them on your schedule.
-          </p>
+        </header>
 
-          <ul className="mt-4 space-y-3">
-            {preview.map((v, i) => (
-              <li
-                key={`${v.platform}-${i}`}
-                className="rounded-md bg-white p-4 shadow-sm dark:bg-gray-900"
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <span className="uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    {PLATFORM_LABELS[v.platform]}
-                  </span>
-                  <span className="text-gray-400">{v.suggestedLength}s</span>
-                </div>
-                <h3 className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-50">
-                  {v.title}
-                </h3>
-                <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">
-                  {v.hook}
-                </p>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                  <span className="font-medium">Angle: </span>
-                  {v.angle}
-                </p>
-              </li>
-            ))}
-          </ul>
-
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <Link href="/signup">
-              <Button variant="primary">Activate a plan to ship this week</Button>
-            </Link>
-            <Link
-              href="/pricing"
-              className="text-sm text-gray-600 underline-offset-4 hover:underline dark:text-gray-400"
+        {hydrated ? (
+          <div className="flex flex-col gap-5">
+            <Field
+              label="Your niche"
+              hint="What you build, sell, or teach."
+              htmlFor="niche"
             >
-              See pricing
-            </Link>
+              <Input
+                id="niche"
+                autoFocus
+                value={niche}
+                onChange={(e) => setNiche(e.target.value)}
+                placeholder="Indie SaaS for dev teams"
+                maxLength={120}
+              />
+            </Field>
+
+            <Field
+              label="Who you&rsquo;re reaching"
+              hint="One sentence. Optional, but it sharpens the plan."
+              htmlFor="audience"
+            >
+              <Input
+                id="audience"
+                value={audience}
+                onChange={(e) => setAudience(e.target.value)}
+                placeholder="Founders shipping their first paid product"
+                maxLength={160}
+              />
+            </Field>
+
+            <Field
+              label="One goal this quarter"
+              hint="Demo, launch, pipeline, authority — whatever the next thing is."
+              htmlFor="goal"
+            >
+              <Textarea
+                id="goal"
+                value={goal}
+                onChange={(e) => setGoal(e.target.value)}
+                placeholder="Ship v1 to 50 paying teams"
+                maxLength={240}
+                rows={2}
+              />
+            </Field>
+
+            <Field label="Platforms" hint="Toggle off anything you don&rsquo;t use.">
+              <div className="flex flex-wrap gap-1.5">
+                {PLATFORMS.map((p) => {
+                  const selected = platforms.includes(p);
+                  return (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => togglePlatform(p)}
+                      aria-pressed={selected}
+                      className={cn(
+                        "inline-flex items-center h-7 px-2.5",
+                        "text-[12px] leading-none font-medium",
+                        "rounded-[var(--radius-input)]",
+                        "border transition-colors duration-fast ease-out-cubic",
+                        "focus-visible:outline-2 focus-visible:outline-offset-2",
+                        "focus-visible:[outline-color:var(--focus-ring)]",
+                        selected
+                          ? "bg-accent-subtle border-[color-mix(in_srgb,var(--accent)_30%,transparent)] text-text"
+                          : "bg-transparent border-[color:var(--border)] text-text-secondary hover:bg-[color-mix(in_srgb,var(--gray-12)_4%,transparent)]",
+                      )}
+                    >
+                      {PLATFORM_LABELS[p]}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
           </div>
-        </section>
-      )}
+        ) : (
+          <div className="h-[320px]" aria-hidden="true" />
+        )}
+
+        <div className="flex items-center justify-between pt-2">
+          <span className="text-[12px] text-text-tertiary">
+            Takes about 15 seconds.
+          </span>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={continueToPreview}
+            disabled={!canContinue}
+          >
+            Continue
+            <ArrowRight size={14} strokeWidth={1.5} aria-hidden="true" />
+          </Button>
+        </div>
+      </div>
+    </OnboardingLayout>
+  );
+}
+
+function Field({
+  label,
+  hint,
+  htmlFor,
+  children,
+}: {
+  label: React.ReactNode;
+  hint?: React.ReactNode;
+  htmlFor?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label
+        htmlFor={htmlFor}
+        className="text-[12px] font-medium text-text leading-none"
+      >
+        {label}
+      </label>
+      {children}
+      {hint ? (
+        <p className="text-[12px] leading-snug text-text-tertiary">{hint}</p>
+      ) : null}
     </div>
   );
 }

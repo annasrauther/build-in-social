@@ -146,7 +146,7 @@ export default function DashboardClient({ profile, videos, topPerformer }: Dashb
           title={APP.DASHBOARD.emptyTitle}
           description={APP.DASHBOARD.emptyDescription}
           cta={APP.DASHBOARD.emptyCta}
-          ctaHref="/onboarding/start"
+          ctaHref="/onboarding"
           ctaGradient
           className=""
         />

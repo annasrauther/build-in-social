@@ -102,7 +102,8 @@ export default function PlanPreviewPage() {
       }
     }
 
-    router.push("/plan/current");
+    // F2 reorder: Preview is step 2, Voice is step 3. Forward to Voice.
+    router.push("/onboarding/voice");
   }
 
   const entryDelay = (base: number) => (shouldReduceMotion ? 0 : base);
@@ -110,11 +111,11 @@ export default function PlanPreviewPage() {
 
   return (
     <OnboardingShell
-      step={3}
+      step={2}
       continueLabel={activating ? "Activating…" : APP.ONBOARDING.step5.cta}
       continueDisabled={selectedMode === null || activating}
       onContinue={handleActivate}
-      onBack={() => goToStep(2)}
+      onBack={() => goToStep(1)}
       wide
     >
       <motion.div

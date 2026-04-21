@@ -46,7 +46,7 @@ export default function SignUpPage() {
         {devAuth ? (
           <form
             method="POST"
-            action="/api/dev/login?to=/onboarding/start"
+            action="/api/dev/login?to=/onboarding"
             className="rounded-[var(--radius-lg)] p-6 sm:p-8 text-center"
             style={{
               backgroundColor: "var(--bg-surface)",
@@ -72,7 +72,7 @@ export default function SignUpPage() {
         ) : hasClerk ? (
           <div className="flex justify-center">
             <SignUp
-              fallbackRedirectUrl="/onboarding/start"
+              fallbackRedirectUrl="/onboarding"
               appearance={clerkAppearance(theme)}
             />
           </div>
@@ -98,7 +98,7 @@ export default function SignUpPage() {
               authentication.
             </p>
             <a
-              href="/onboarding/start"
+              href="/onboarding"
               className="inline-block px-6 py-3 rounded-lg font-medium"
               style={{
                 backgroundColor: "var(--accent)",

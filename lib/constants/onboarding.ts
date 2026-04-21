@@ -12,10 +12,15 @@ export const TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
 
 export const TOTAL_STEPS = 3;
 
+// Updated for the F2 3-step redesign:
+//   1. /onboarding (Context) — merges legacy /onboarding/start
+//   2. /onboarding/plan-preview (Preview)
+//   3. /onboarding/voice (Voice)
+// The old /onboarding/start path is kept as a 308 redirect.
 export const STEP_ROUTES: Record<number, string> = {
-  1: "/onboarding/start",
-  2: "/onboarding/voice",
-  3: "/onboarding/plan-preview",
+  1: "/onboarding",
+  2: "/onboarding/plan-preview",
+  3: "/onboarding/voice",
 };
 
 export const containerVariants: Variants = {

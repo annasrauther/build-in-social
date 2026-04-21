@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { OnboardingHeading } from "@/components/onboarding/OnboardingHeading";
@@ -323,6 +324,7 @@ function VoiceCard({
 /* ─── Page ────────────────────────────────────────────────────────────────── */
 
 export default function VoicePage() {
+  const router = useRouter();
   const { data, update, goToStep } = useOnboarding();
   const { playSelect, playDeselect: _playDeselect, playNavigation, playError, vibrate } =
     useInteractionFeedback();
@@ -423,13 +425,16 @@ export default function VoicePage() {
     });
     playNavigation();
     vibrate(15);
-    goToStep(3); // → /onboarding/plan-preview
+    // F2 reorder: Voice is the FINAL step. Land on /plan/current with
+    // firstRun flag so the drawer opens on day 1.
+    router.push("/plan/current?firstRun=1");
   }
 
   function handleBack() {
     stopAudio();
     update({ libraryVoiceId: selected });
-    goToStep(1); // → /onboarding/start
+    // Back → Preview (step 2 in the new ordering).
+    goToStep(2);
   }
 
   // A6: derive a human-readable status string for the aria-live region
@@ -447,7 +452,7 @@ export default function VoicePage() {
 
   return (
     <OnboardingShell
-      step={2}
+      step={3}
       continueLabel="Continue"
       continueDisabled={!selected || !consentChecked}
       onContinue={handleContinue}
