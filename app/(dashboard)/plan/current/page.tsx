@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 import {
   ArrowLeft,
   CalendarClock,
@@ -84,11 +85,14 @@ export default function CurrentPlanPage() {
   const [loading, setLoading] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
   const [pushback, setPushback] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [quotaDetails, setQuotaDetails] = useState<QuotaExhaustedDetails | null>(null);
 
-  // ---- new view state ----
-  const [drawerId, setDrawerId] = useState<string | null>(null);
+  // ---- URL-backed view state (nuqs) ----
+  const [viewMode, setViewMode] = useQueryState(
+    "view",
+    parseAsStringLiteral(["list", "calendar"] as const).withDefault("list"),
+  );
+  const [drawerId, setDrawerId] = useQueryState("day", parseAsString);
   // Per-video publish state; keyed by video id → platform.
   const [publishState, setPublishState] = useState<
     Record<string, Partial<Record<Platform, PublishPlatformState>>>
@@ -399,7 +403,9 @@ export default function CurrentPlanPage() {
           label: viewMode === "list" ? "Switch to calendar" : "Switch to list",
           group: "plan",
           scope: "contextual",
-          run: () => setViewMode((v) => (v === "list" ? "calendar" : "list")),
+          run: () => {
+            void setViewMode((v) => (v === "list" ? "calendar" : "list"));
+          },
         },
       );
     }
@@ -496,7 +502,12 @@ export default function CurrentPlanPage() {
         subtitle={subtitle}
         actions={
           <>
-            <ViewToggle value={viewMode} onChange={setViewMode} />
+            <ViewToggle
+              value={viewMode}
+              onChange={(v) => {
+                void setViewMode(v);
+              }}
+            />
             <Button variant="ghost" size="sm" onClick={startFresh}>
               {APP.PLAN.startFresh}
             </Button>
@@ -541,6 +552,25 @@ export default function CurrentPlanPage() {
                   video={v}
                   selected={drawerId === v.id}
                   onOpen={(id) => setDrawerId(id)}
+                  onApprove={(id) => approveVideo(id)}
+                  onReject={(id) => rejectVideo(id)}
+                  onRegenerate={() =>
+                    toast("Regenerating single drafts lands with F4 streaming.")
+                  }
+                  onPublish={(id) => {
+                    setDrawerId(id);
+                  }}
+                  onRename={(id, nextTitle) => {
+                    // Optimistic rename — no API route yet for title edits.
+                    // This keeps the UI snappy; plug into /api/plan/edit once
+                    // that route exists.
+                    setVideos((prev) =>
+                      prev?.map((v) =>
+                        v.id === id ? { ...v, title: nextTitle } : v,
+                      ) ?? null,
+                    );
+                    toast.success("Title updated");
+                  }}
                   index={i}
                 />
               </li>

@@ -7,6 +7,7 @@ import { useState } from "react";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { TooltipProvider } from "@/components/ui/shadcn/tooltip";
 import { CommandPalette } from "@/components/ui/CommandPalette";
+import { ShortcutOverlay } from "@/components/ui/ShortcutOverlay";
 import { Toaster } from "@/components/providers/Toaster";
 
 const hasClerkKey = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -31,6 +32,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <QueryClientProvider client={queryClient}>
           {children}
           <CommandPalette />
+          <ShortcutOverlay />
           <Toaster />
           {process.env.NODE_ENV === "development" && (
             <ReactQueryDevtools initialIsOpen={false} />
