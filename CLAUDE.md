@@ -15,151 +15,300 @@ Do NOT emit EXIT_SIGNAL until every quality gate passes. Stale or failing checks
 fixed first. The signal is always in a fenced JSON block — never inline.
 
 ## What this is
-Build In Social is a social media distribution partner for indie developers and SaaS founders.
-It builds and maintains their **domain presence** — not just shipping announcements.
-Every week, Build In Social generates platform-native content around who the user is and
-what they know. If they have something to share, they share it. If not, Build In Social
-runs on autopilot using its intelligent content system.
+Build In Social is an AI video autopilot for creators — a social media distribution
+partner for indie developers, SaaS founders, creators, and SMB marketing teams. It builds
+and maintains their **domain presence** — not just shipping announcements. Every week,
+Build In Social generates platform-native content around who the user is and what they
+know. If they have something to share, they share it. If not, Build In Social runs on
+autopilot using its intelligent content system.
 Platform-native content for YouTube Shorts, Instagram Reels, LinkedIn, and X.
 Posts automatically. Every video generates a pSEO page.
-Full spec: /knowledge-center.md — read it completely before writing any code.
+Full spec: `/knowledge-center.md` — read it completely before writing any code.
+
+## Active redesign
+A top-to-bottom redesign to Linear/Raycast quality is underway. See:
+- `/Users/annasrauther/.claude/plans/manager-product-redesign-kind-pascal.md` — master plan
+- `DESIGN_AUDIT.md` — Phase 1 audit (routes, anti-patterns, flows)
+- `REDESIGN_ROADMAP.md` — Phase 7 (forward-looking) when written
+
+The redesign rewires the view layer only. API routes, schemas, `lib/services/*`,
+and `lib/credits/*` are untouched.
 
 ## The agent system
-14 specialist agents live in .claude/agents/. @manager is the orchestrator — invoke it first for every task and it routes to the right specialists in the right order.
-Non-negotiables: @architect runs before @implementer, @tester runs after @implementer, @security-auditor runs on any auth/billing/user-data change, @ui-crafter + @ux-critic run on every user-facing feature.
+14 specialist agents live in `.claude/agents/`. `@manager` is the orchestrator — invoke it
+first for every task and it routes to the right specialists in the right order.
+Non-negotiables: `@architect` runs before `@implementer`, `@tester` runs after
+`@implementer`, `@security-auditor` runs on any auth/billing/user-data change,
+`@ui-crafter` + `@ux-critic` run on every user-facing feature.
 
-## Design system
-The UI is built on two Tremor Raw templates (Tailwind v3 + Radix UI):
-- **Database template** → marketing/landing pages (Navbar, Hero, Pricing, Features, Footer, Changelog)
-- **Dashboard template** → authenticated app shell (Sidebar, DataTable, Charts, Settings)
+---
 
-Key rules:
-1. Brand palette is the Anthropic warm palette. `brand-500 = #D97757` (Anthropic Orange) with the full 50–950 scale derived in `tailwind.config.ts`. Light bg `#FAF9F5`, dark bg `#141413`. Secondary accents: `#6A9BCC` (blue), `#788C5D` (green). Do not introduce off-palette colors. Tremor `<Button variant="primary">` deliberately stays high-contrast (gray-900 / gray-50) — brand orange is for gradients, accents, focus rings, and selection, not on filled buttons.
-2. Both dark and light modes are supported out of the box via `next-themes`.
-   System preference is auto-detected. User can toggle with ThemeSwitch component.
-3. Fonts: Montserrat (headings, `font-serif`) + Poppins (body, `font-sans`), loaded via `next/font/google`. No Geist, no Inter, no Lora, no Source Serif 4.
-4. Tailwind v3 for ALL styling. No CSS-in-JS. No Styletron.
-5. Framer Motion for page transitions and micro-interactions.
-6. Mobile-first. All touch targets ≥ 44px.
-7. All app strings live in /content/app.ts. No hardcoded strings in components.
+## Design system (rewritten for the redesign)
 
-### Component conventions
-- **Tremor Raw primitives** in `components/tremor/` — Button, Card, Input, Badge, Dialog, etc.
-  These are copied from the official Tremor templates and should not be modified.
-- `components/marketing/` — landing page sections (Hero, Features, Pricing, etc.)
-- `components/dashboard/` — app shell components (Sidebar, DataTable, overview cards, etc.)
-- `components/ui/` — custom composition components (Wordmark, StickyBar, ConfirmDialog, etc.)
-- `components/onboarding/` — onboarding flow components
-- `components/plan/` — weekly plan components
-- Feature components: `components/<feature>/`
-- App strings: `content/app.ts` (single source of truth for all UI copy)
+### Theme
+**Dark only.** No light mode. No `next-themes`. No `prefers-color-scheme` branches.
+`<html class="dark">` is forced at the layout root; the `.dark` selector is retained
+in `tailwind.config.ts` purely so legacy `dark:` variants continue to resolve while
+screens migrate off them.
 
-### Route groups
-- `app/(marketing)/` — public marketing pages (Database template shell: Navbar + Footer)
-- `app/(dashboard)/` — authenticated app pages (Dashboard template shell: Sidebar)
-- `app/(onboarding)/` — onboarding flow (clean layout, no sidebar)
-- `app/(auth-pages)/` — login, signup, legal pages
-- `app/api/` — all API routes (untouched)
+### Color — Radix `grayDark` (neutrals) + `irisDark` (accent)
+Exposed as CSS custom properties in `app/globals.css` and surfaced as Tailwind utility
+classes in `tailwind.config.ts`.
+
+| Role | Value | Tailwind |
+|---|---|---|
+| Page bg | `grayDark.1` | `bg-bg` |
+| Surface | `grayDark.2` | `bg-surface` |
+| Elevated | `grayDark.3` | `bg-elevated` |
+| Border (structural) | `grayDark.6` | `border-border` |
+| Border (interactive) | `grayDark.7` | `border-[color:var(--border-interactive)]` |
+| Divider | `grayDark.12 @ 6%` | `border-[color:var(--divider)]` |
+| Text primary | `grayDark.12` | `text-text` |
+| Text secondary | `grayDark.11` | `text-text-secondary` |
+| Text tertiary | `grayDark.10` | `text-text-tertiary` |
+| Text disabled | `grayDark.9` | `text-text-disabled` |
+| Accent | `irisDark.9` | `bg-accent`, `text-accent` |
+| Accent hover | `irisDark.10` | `bg-accent-hover` |
+| Accent subtle (15%) | `iris@15%` | `bg-accent-subtle` |
+| Focus ring | `iris@40%` | `[--focus-ring]` via `focus-visible` |
+
+**Body text must be ≥ `text-text-secondary` (grayDark.11) for 4.5:1 contrast. Never use
+`text-text-tertiary` (.10) for body text.** Legacy `brand-*`, `anthropic-*`, `accent-orange`
+classes are aliased to iris/gray for migration — do not introduce new usages of them.
+
+### Typography — Geist + Geist Mono
+Loaded via `geist/font` in `app/layout.tsx`. OpenType features enabled globally:
+`cv11`, `ss01`, `ss03`, `tnum`. `font-variant-numeric: tabular-nums` on body.
+
+- Display: Geist, tracking `-0.02em` at ≥ 24px, weight 500.
+- Body: 13–14px, line-height 1.4–1.5, weight 400.
+- Numerics: tabular everywhere. Mono for IDs, timestamps, code.
+- Hierarchy via **weight (400 vs 500) and color**, not size.
+
+### Spacing, radius, density
+4px grid. Standard paddings: 8 / 12 / 16 / 24.
+Radius: **6 inputs, 8 cards, 12 modals** (`--radius-input/--radius-card/--radius-modal`).
+Nested radius = parent − padding.
+List rows: 32–36px. Toolbars: 40px. Sidebars: 220–240px.
+
+### Motion
+- Default duration: 180ms, ease-out cubic `[0.22, 1, 0.36, 1]` (Tailwind
+  `ease-out-cubic`, `duration-default`).
+- Reveals: `translateY(8px) → 0`, `opacity 0 → 1`, 40ms stagger.
+- Hover: 2–4% bg shift, not color changes or scale transforms.
+- All motion gated on `prefers-reduced-motion`. Actually reduce, not shorten.
+- Lenis mounted at root via `components/providers/SmoothScroll.tsx`, gated on
+  reduced-motion. Marketing routes are the primary beneficiary; product UI
+  does not get scroll choreography.
+- Never: bouncy springs, 500ms fades, `translateY > 16px` on reveals.
+
+### Icons
+Lucide only, 16px default, `strokeWidth={1.5}`. Optically centered with labels, not
+geometrically. `@remixicon/react` is legacy — retained for Tremor primitives until
+owning screens migrate.
+
+### Anti-patterns — reject on sight
+- Pure `#000` / `#fff` / hardcoded hex in JSX
+- Shadow-based elevation in dark mode — use hairline borders
+- Purple→pink gradients (use iris-only)
+- Emoji in product UI
+- Inter / Arial / system font stacks
+- Illustrated parallax scenes
+- "Are you sure?" confirm dialogs for reversible actions
+- Spinners for user-initiated mutations
+- "Success!", "Oops!", "Woohoo!", "Great!", "Let's" in copy
+
+---
+
+## Interaction rules (non-negotiable)
+
+### Keyboard & command palette
+- `⌘K` / `Ctrl+K` opens the palette (`components/ui/CommandPalette.tsx`).
+- Every primary action has a keyboard shortcut, visible in tooltips and menus.
+- Actions registered via `lib/actions-registry.ts`:
+  - Global seeds live in `CommandPalette.tsx`.
+  - Screens register their contextual actions via `useRegisterActions([...])`.
+- A new user should accomplish 80% of common actions without a mouse.
+
+### Mutations
+- **Optimistic updates** for all user-initiated mutations via
+  `lib/optimistic.ts` (`useOptimistic({ queryKey, applyOptimistic, … })`).
+- Rollback + `toast.error` on server rejection.
+- Destructive actions run immediately + show `toast.undo(message, onUndo)` for 5s —
+  no confirm dialog.
+- Reserve `ConfirmDialog` for genuinely irreversible actions (delete workspace,
+  cancel subscription, clone voice).
+
+### Navigation
+- Prefetch `<Link>` on hover.
+- Route transitions under 100ms perceived. Skeletons match real layout.
+- No full-page reloads. No skeleton flash for cached data.
+- `/dashboard` → 308 redirect to `/plan/current` (kill vestigial hub).
+
+### Five required states per screen
+1. **Empty** — `components/ui/states/EmptyState.tsx`. One icon, one sentence, one CTA.
+2. **Loading** — `components/ui/states/LoadingSkeleton.tsx`. 40ms staggered reveals.
+   Never spinners.
+3. **Error** — `components/ui/states/ErrorState.tsx`. What failed, why (if knowable),
+   what to try. No raw error dumps.
+4. **Partial** — `components/ui/states/PartialFailureChip.tsx`. One section fails,
+   rest works. Don't error-page the whole screen.
+5. **First-run vs returning** — `components/ui/states/FirstRunHint.tsx` backed by
+   `lib/seen.ts`. Per-capability localStorage flags. Dismissed after interaction.
+
+### Focus, hover, selection
+- `:focus-visible` only — no rings on mouse click.
+- Focus ring: iris at 40% opacity, 2px width, 2px offset.
+- Hover: 2–4% bg shift.
+- Selected row: iris@15% bg + 2px left-edge accent bar (`.is-selected` utility).
+
+### Copy
+- Verbs over nouns: "Create issue", not "New issue".
+- Second person, present tense.
+- Specific over generic: "Saved to Q4 Planning", not "Saved successfully".
+- Calm voice. No exclamation marks.
+- Errors are human: "We couldn't reach the server. Check your connection and try again."
+- All strings live in `content/app.ts`.
+
+### Performance as design
+- Sub-200ms interactions. Slower requires optimistic update or designed loading state.
+- Geist preloaded, `font-display: swap`.
+- Image dimensions always set — zero CLS.
+- Bundle budgets: marketing ≤ 150kb JS, app shell ≤ 300kb.
+- 60fps scroll — if Lenis + effects drop frames, cut effects.
+
+---
+
+## User flow redesign (the spine of the redesign)
+
+Six primary flows govern which screens get redesigned and in what order. See
+`DESIGN_AUDIT.md` § 4 for before/after click counts.
+
+**F1** Discovery → Signup — marketing hero becomes an inline `MiniPlanner`.
+Free tools feed signup via upgrade rails.
+
+**F2** Signup → First video — 3 steps (Context / Preview / Voice) dumping on
+`/plan/current?firstRun=1` with a draft already in hand. Platform OAuth is **lazy**.
+
+**F3** Returning-user daily loop — `/plan/current` is the default authed landing
+route. Today auto-scrolls into view, clicks open the video drawer in place (not
+a route change).
+
+**F4** Plan-a-week — one theme input streams 7 cards in parallel. Per-card
+Regenerate / Edit / Delete / Lock; week-level Regenerate-all / Approve-all /
+Reorder / Shift-dates.
+
+**F5** Create-a-series — materializes N upcoming cards into future weeks
+immediately. No abstract "activate" step.
+
+**F6** Publish + post-publish — one button + per-platform dots. Partial success
+is first-class. Disconnected platforms show inline Connect → OAuth popup.
+
+### Routes killed / merged / demoted (in progress across phases)
+- `/dashboard` → redirect to `/plan/current`
+- `/guides` → kill; content migrates into ⌘K results
+- `/onboarding/start` → merge into `/onboarding`
+- `/videos` → demote to filterable archive
+- `/settings/*` → consolidate to 4 cards (Account / Brand / Connections / Automation)
+- Sub-routes retained for deep-linking
+
+---
+
+## Component conventions
+
+### Primitive layers — two, side by side during migration
+- **`components/ui/shadcn/*`** — preferred. Dark-only, token-based shadcn wrappers.
+  `Button`, `Input`, `Card`, `Dialog`, `DropdownMenu`, `Tooltip`, `Command`,
+  `Drawer`, `Kbd`. Imports: `@/components/ui/shadcn`.
+- **`components/tremor/*`** — legacy Tremor Raw. Do not add new imports. Screens
+  still using Tremor are migrated when their phase runs.
+
+### Directory map
+- `app/(marketing)/` — public marketing (Phase 5 rebuild target)
+- `app/(dashboard)/` — authenticated product (Phase 3 / 6 rebuild)
+- `app/(onboarding)/` — 3-step activation (Phase 4 rebuild)
+- `app/(auth-pages)/` — Clerk wrappers (Phase 6 restyle only)
+- `app/api/` — route handlers (UNTOUCHED by redesign)
+- `components/ui/shadcn/` — new primitive layer
+- `components/ui/states/` — five-states primitives
+- `components/ui/CommandPalette.tsx` — ⌘K shell
+- `components/providers/SmoothScroll.tsx` — Lenis mount
+- `components/providers/Toaster.tsx` — sonner + `toast.undo`
+- `components/plan/` — weekly plan
+- `components/video/` — video drawer + publish (Phase 3, new)
+- `components/marketing/` — landing page sections
+- `components/dashboard/` — app shell (sidebar + user menu)
+- `components/onboarding/` — 3-step flow
+- `lib/actions-registry.ts` — command palette registry
+- `lib/optimistic.ts` — TanStack Query optimistic helper
+- `lib/seen.ts` — per-capability first-run localStorage
+- `content/app.ts` — single source of truth for UI copy
+
+---
 
 ## Product rules (never break these)
-1. **Avatar Mode is NOW ENABLED.** Build the full HeyGen pipeline — mocked by default,
-   real when `HEYGEN_API_KEY` is set in `.env.local` (follows the same mock/real service
-   pattern as ElevenLabs, Pexels, R2, etc.).
-   - Remove all "Coming soon" badges and waitlist CTAs from Avatar Mode UI.
+
+1. **Avatar Mode is ENABLED.** Full HeyGen pipeline — mocked by default, real when
+   `HEYGEN_API_KEY` is set. Follows the same mock/real service pattern as
+   ElevenLabs, Pexels, R2.
    - Avatar Mode and Faceless Mode are equal first-class render options.
    - Never ship real HeyGen API calls without the mock fallback in place first.
-2. Both **Faceless Mode** and **Avatar Mode** are the product.
-3. **Content model is domain-presence, not ship-announcements.**
-   The product is about establishing the user's authority in their domain, week over week.
-   Users set their niche/domain once during onboarding.
-   Each week they have TWO modes:
-   a) **Manual mode:** They share something specific (shipped feature, lesson learned, opinion,
-      case study, tool review, debugging story). Quality gate validates specificity.
-   b) **Autopilot mode:** They have nothing to share → Build In Social's intelligent system
-      generates a full week of domain-relevant content automatically, drawing from:
-      - Their niche and established voice
-      - Trending topics in their domain (via intelligence patterns)
-      - Evergreen content angles that perform for their audience type
-      - Pre-built content series (e.g. "30 days of React tips", "SaaS metrics explained")
-   Autopilot is a first-class feature, not a fallback. Market it as the core value.
-4. The quality gate (3 specific questions) runs ONLY in manual mode.
-   Never generate a manual script without the quality gate output. Never make it skippable.
-   Autopilot mode bypasses the quality gate — the AI provides its own specificity.
-5. Build In Social sets video duration based on platform. User cannot choose duration.
-   Show the chosen duration in the UI with an optional override that requires a click.
-6. Partner framing always. Never "generate video." Always "Build In Social is creating."
-7. Only 4 platforms: YouTube Shorts, Instagram Reels, LinkedIn, X.
-   Reddit = never. TikTok = never. In Phase 1 or any session unless told otherwise.
-8. Intelligence panel hidden until user has 5+ published videos with metrics.
-9. All Claude API calls: use Haiku for scripts/labelling/quality gate/autopilot suggestions.
-   Use Sonnet only for pSEO articles and intelligence summaries.
+2. **Content model is domain-presence, not ship-announcements.** Two modes per week:
+   - **Manual** — user shares something specific. Quality gate (3 questions) runs.
+   - **Autopilot** — AI generates a full week from niche + voice + evergreen angles.
+     Quality gate bypassed.
+   Autopilot is a first-class feature.
+3. Quality gate runs ONLY in manual mode. Never skippable. Never generated without it.
+4. Build In Social sets video duration per platform. User cannot choose; override
+   requires explicit click.
+5. Partner framing: never "generate video." Always "Build In Social is creating."
+6. Only 4 platforms: YouTube Shorts, Instagram Reels, LinkedIn, X. Reddit and
+   TikTok = never.
+7. Intelligence panel hidden until user has 5+ published videos with metrics.
+8. All Claude API calls: Haiku for scripts/labelling/quality gate/autopilot
+   suggestions; Sonnet only for pSEO articles and intelligence summaries.
 
 ## Tech stack
 - **Framework:** Next.js 16 App Router (NOT Pages Router)
 - **Language:** TypeScript 5, strict mode
-- **UI:** React 19, Tremor Raw components (Tailwind v3 + Radix UI), Framer Motion
-- **Theme:** next-themes (dark/light mode with system preference detection)
-- **Fonts:** Montserrat (headings, `font-serif`) + Poppins (body, `font-sans`) via `next/font/google`. Use Tailwind `font-serif` for titles/headings and `font-sans` for body text.
-- **Auth:** Clerk (`@clerk/nextjs`) — added LAST, after all pages built
-- **State:** TanStack Query v5
-- **Database:** NoCodeBackend (REST API)
-- **Storage:** Cloudflare R2
-- **Payments:** Stripe — 4 tiers: Starter $19 / Solo $39 / Creator $79 / Studio $149. Starter blocks pSEO + voice clone + autopilot scheduling; Studio unlocks all 4 platforms + priority rendering. Hard video caps per tier, hard-pause on overage.
-- **AI:** Claude API (Haiku for scripts, Sonnet for pSEO)
-- **Voice:** ElevenLabs
-- **B-roll:** Pexels API
-- **Video assembly:** FFmpeg WASM
-- **Email:** Resend
-- **Job queue:** Upstash Redis
-- **Icons:** Remix Icon (@remixicon/react) + Lucide React
-- **Charts:** Recharts
-- **Tables:** TanStack React Table
+- **UI:** React 19, Tailwind v3 (v4 `@theme` migration deferred to owning screens),
+  Radix primitives wrapped as shadcn/ui in `components/ui/shadcn/`.
+- **Animation:** `motion` (migrating off `framer-motion`), Lenis for smooth scroll.
+- **Command palette:** `cmdk`.
+- **Toasts:** `sonner`.
+- **Fonts:** Geist Sans + Geist Mono via `geist/font`.
+- **Icons:** Lucide (new code). Remix Icon legacy.
+- **Auth:** Clerk (`@clerk/nextjs`).
+- **State / data:** TanStack Query v5 (now actively used via `lib/optimistic.ts`).
+- **Database:** NoCodeBackend (REST API).
+- **Storage:** Cloudflare R2.
+- **Payments:** Stripe — 4 tiers: Starter $19 / Solo $39 / Creator $79 / Studio $149.
+- **AI:** Claude API (Haiku for scripts, Sonnet for pSEO).
+- **Voice:** ElevenLabs. **Avatar:** HeyGen. **B-roll:** Pexels. **Assembly:** FFmpeg WASM.
+- **Email:** Resend. **Jobs:** Upstash Redis. **Charts:** Recharts. **Tables:** TanStack React Table.
 
 ## Key conventions
 
 ### Mock services pattern
 All external integrations live in `lib/services/` with mock fallbacks in `lib/mock/`.
-To wire a real integration, set the API key in `.env.local` — the service auto-switches.
+Set the API key in `.env.local` — the service auto-switches.
 
 ### API route pattern
-- All routes return `{ data, error }` shape
-- Input validation with Zod before any DB operation
-- Environment variables via `lib/env.ts`, never `process.env` directly
+- All routes return `{ data, error }`.
+- Zod validation before any DB operation.
+- Env via `lib/env.ts`, never `process.env` directly.
 
 ### Dev auth bypass
-Set `NEXT_PUBLIC_DEV_AUTH=1` in `.env.local` to enable a one-click "Sign in as Test User" button on `/login` and `/signup`. This:
-  - Skips `ClerkProvider` entirely (no Clerk hooks may run).
-  - Skips `clerkMiddleware` in `proxy.ts`.
-  - `/api/dev/login` sets an httpOnly cookie `dev-auth=1` and redirects to `/dashboard`.
-  - `getAuthUserId()` returns `clerk_mock_01` only when the cookie is set; otherwise throws `UNAUTHORIZED`, so `/login` still works.
-  - Sign-out POSTs to `/api/dev/logout` (clears the cookie) instead of calling Clerk.
-
-Restart `next dev` after toggling — `NEXT_PUBLIC_*` values are build-time inlined and HMR will not pick up changes.
-
-Production builds force the flag off — `DEV_AUTH` (in `lib/env.ts`) gates on `NODE_ENV === "development"`. The `/api/dev/*` routes return 404 in any other environment. This deprecates the older `BYPASS_AUTH` / `NEXT_PUBLIC_BYPASS_AUTH` names (kept for one release).
-
-## Phase 1 build order — strict sequence, no skipping
-1.  Token system + Montserrat/Poppins fonts + Tremor setup + base layout
-2.  Landing page (all template sections, domain-presence copy)
-3.  Onboarding (domain/niche → platforms → voice → plan preview with mode choice)
-4.  Dashboard + Weekly plan generator (manual mode + autopilot mode)
-5.  Video library + individual video page
-6.  Faceless render pipeline (ElevenLabs + Pexels + FFmpeg + R2)
-7.  pSEO generation (auto-triggered on render complete)
-8.  Stripe billing (3 packages, outcomes language)
-9.  Platform OAuth connections (4 platforms)
-10. Resend email notifications (6 templates)
-11. Intelligence data collection (silent, no UI)
-12. Avatar waitlist page
-13. Settings pages (profile, voice, platforms, billing)
-14. Clerk auth integration (LAST — after all pages reviewed)
+`NEXT_PUBLIC_DEV_AUTH=1` enables the "Sign in as Test User" button. Skips `ClerkProvider`
+entirely. `/api/dev/login` sets `dev-auth=1` cookie. Production forces this off via
+`DEV_AUTH` in `lib/env.ts`. Restart `next dev` after toggling.
 
 ## Never build
 - Ayrshare auto-publishing
 - Intelligence panel UI (until 5+ published videos with metrics)
 - A/B hook testing
 
-## v1.1 backlog (after first 10 paying customers)
-- **Per-platform hook scaffolding.** Each video currently ships a single body that the platform-durationed render wraps. v1.1 generates distinct hooks/CTAs per platform: `hooks: { youtube, instagram, linkedin, x }`. Requires schema change on `videos`, new Claude prompt shape, and an editor UI that lets users tweak per-platform copy. Deliberately deferred — shared body is workable for MVP.
-- **WordPress video publishing.** Articles publish today; video-to-WP requires the adapter. Scoped in `/api/publishing/wordpress/publish` with a `TODO` note; UI surfaces "coming soon" in publishing settings.
-- **Voice clone management UI.** Re-record / replace a clone from settings. Today the clone is set once during onboarding.
+## v1.1 backlog
+- Per-platform hook scaffolding (`hooks: { youtube, instagram, linkedin, x }`).
+- WordPress video publishing (stubbed today).
+- Voice clone management UI in settings.
