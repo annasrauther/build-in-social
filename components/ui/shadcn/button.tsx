@@ -18,10 +18,7 @@ const buttonStyles = tv({
   ],
   variants: {
     variant: {
-      primary: [
-        "bg-accent text-accent-fg",
-        "hover:bg-accent-hover",
-      ],
+      primary: ["bg-accent text-accent-fg", "hover:bg-accent-hover"],
       secondary: [
         "bg-elevated text-text",
         "hover:bg-[var(--gray-4)]",
@@ -36,10 +33,7 @@ const buttonStyles = tv({
         "border border-[color:var(--border)]",
         "hover:bg-[color-mix(in_srgb,var(--gray-12)_4%,transparent)]",
       ],
-      danger: [
-        "bg-[color:var(--danger)] text-white",
-        "hover:brightness-110",
-      ],
+      danger: ["bg-[color:var(--danger)] text-white", "hover:brightness-110"],
       link: [
         "bg-transparent text-accent underline-offset-4",
         "hover:underline",
@@ -61,65 +55,22 @@ const buttonStyles = tv({
 export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
   VariantProps<typeof buttonStyles> & {
     asChild?: boolean;
-    /** Keyboard shortcut hint rendered on the right (e.g. "⌘K"). */
-    shortcut?: React.ReactNode;
   };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   function Button(
-    { className, variant, size, asChild, shortcut, children, ...props },
-    ref
+    { className, variant, size, asChild, children, ...props },
+    ref,
   ) {
-    // With asChild, Radix Slot requires exactly one child element. We can't
-    // append the shortcut <kbd> as a sibling — instead we shove it into the
-    // single child's children when we know it's a valid element.
-    if (asChild) {
-      const singleChild = React.Children.only(children);
-      if (React.isValidElement(singleChild) && shortcut) {
-        const merged = React.cloneElement(
-          singleChild,
-          singleChild.props as Record<string, unknown>,
-          <>
-            {(singleChild.props as { children?: React.ReactNode }).children}
-            <kbd className="ml-1.5 inline-flex items-center font-mono text-[11px] text-text-tertiary">
-              {shortcut}
-            </kbd>
-          </>
-        );
-        return (
-          <Slot
-            ref={ref}
-            className={cn(buttonStyles({ variant, size }), className)}
-            {...props}
-          >
-            {merged}
-          </Slot>
-        );
-      }
-      return (
-        <Slot
-          ref={ref}
-          className={cn(buttonStyles({ variant, size }), className)}
-          {...props}
-        >
-          {singleChild}
-        </Slot>
-      );
-    }
-
+    const Comp = asChild ? Slot : "button";
     return (
-      <button
+      <Comp
         ref={ref}
         className={cn(buttonStyles({ variant, size }), className)}
         {...props}
       >
         {children}
-        {shortcut ? (
-          <kbd className="ml-1.5 inline-flex items-center font-mono text-[11px] text-text-tertiary">
-            {shortcut}
-          </kbd>
-        ) : null}
-      </button>
+      </Comp>
     );
-  }
+  },
 );

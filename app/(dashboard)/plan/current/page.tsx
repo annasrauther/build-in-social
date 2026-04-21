@@ -10,7 +10,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/shadcn/button";
-import { Kbd } from "@/components/ui/shadcn/kbd";
 import { PlanShell } from "@/components/plan/PlanShell";
 import { ModeChooser } from "@/components/plan/ModeChooser";
 import { DayCard } from "@/components/plan/DayCard";
@@ -29,10 +28,6 @@ import {
   FirstRunHint,
 } from "@/components/ui/states";
 import { toast } from "@/components/providers/Toaster";
-import {
-  useRegisterActions,
-  type Action,
-} from "@/lib/actions-registry";
 import { APP } from "@/content/app";
 import { cn } from "@/lib/utils";
 import type { Platform, SubscriptionTier } from "@/lib/types/user";
@@ -371,60 +366,6 @@ export default function CurrentPlanPage() {
   // Command palette — register contextual actions for this screen.
   // ------------------------------------------------------------------
 
-  const contextualActions = useMemo<readonly Action[]>(() => {
-    const list: Action[] = [];
-    if (videos) {
-      list.push(
-        {
-          id: "plan.approve-all",
-          label: "Approve all drafts",
-          group: "plan",
-          scope: "contextual",
-          shortcut: ["⌘", "⇧", "A"],
-          run: () => approveAll(),
-        },
-        {
-          id: "plan.hold-week",
-          label: "Hold this week for review",
-          group: "plan",
-          scope: "contextual",
-          run: () => holdWeekForReview(),
-        },
-        {
-          id: "plan.start-fresh",
-          label: "Start fresh",
-          hint: "Clear and re-plan",
-          group: "plan",
-          scope: "contextual",
-          run: () => startFresh(),
-        },
-        {
-          id: "plan.view-toggle",
-          label: viewMode === "list" ? "Switch to calendar" : "Switch to list",
-          group: "plan",
-          scope: "contextual",
-          run: () => {
-            void setViewMode((v) => (v === "list" ? "calendar" : "list"));
-          },
-        },
-      );
-    }
-    if (mode === "choose" && niche && platforms.length > 0) {
-      list.push({
-        id: "plan.autopilot",
-        label: "Run autopilot",
-        hint: "AI drafts the full week",
-        group: "plan",
-        icon: Sparkles,
-        scope: "contextual",
-        run: () => generate({ mode: "autopilot" }),
-      });
-    }
-    return list;
-  }, [videos, mode, niche, platforms.length, viewMode, approveAll, holdWeekForReview, startFresh, generate]);
-
-  useRegisterActions(contextualActions);
-
   // ------------------------------------------------------------------
   // Derived rendering
   // ------------------------------------------------------------------
@@ -526,7 +467,6 @@ export default function CurrentPlanPage() {
                 size="sm"
                 onClick={approveAll}
                 disabled={approvedCount === videos.length}
-                shortcut={<Kbd keys={["⌘", "⇧", "A"]} />}
               >
                 {APP.PLAN.approveAll}
               </Button>

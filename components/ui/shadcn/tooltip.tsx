@@ -10,12 +10,10 @@ export const TooltipTrigger = TooltipPrimitive.Trigger;
 
 export const TooltipContent = React.forwardRef<
   React.ComponentRef<typeof TooltipPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> & {
-    shortcut?: React.ReactNode;
-  }
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
 >(function TooltipContent(
-  { className, sideOffset = 6, children, shortcut, ...props },
-  ref
+  { className, sideOffset = 6, children, ...props },
+  ref,
 ) {
   return (
     <TooltipPrimitive.Portal>
@@ -28,18 +26,12 @@ export const TooltipContent = React.forwardRef<
           "border border-[color:var(--border)]",
           "rounded-[var(--radius-input)]",
           "px-2 py-1 text-[12px] leading-none",
-          "flex items-center gap-2",
           "data-[state=delayed-open]:animate-slideUpAndFade",
-          className
+          className,
         )}
         {...props}
       >
         {children}
-        {shortcut ? (
-          <kbd className="font-mono text-[11px] text-text-tertiary">
-            {shortcut}
-          </kbd>
-        ) : null}
       </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>
   );

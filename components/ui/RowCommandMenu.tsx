@@ -2,28 +2,23 @@
 
 import * as React from "react";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
-import { Kbd } from "@/components/ui/shadcn/kbd";
 import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
 
 /**
- * Row slash menu — Linear-style `/` key to reveal contextual actions
- * for the focused row.
+ * Row context menu — per-row contextual actions, triggered by the
+ * `MoreHorizontal` button on each row. Mouse-only; no keyboard
+ * binding. Radix DropdownMenu handles Escape + outside-click; Tab
+ * order follows the native focusable order of the items inside.
  *
- * Consumers:
- *  - Attach `useRowSlashMenu(ref)` to the row's root element.
- *  - Pass an action list via `<RowCommandMenu actions={...}>`.
- *
- * The trigger is invisible; Radix DropdownMenu handles keyboard nav
- * + Escape + outside-click. The menu positions near the row via the
- * (portaled) `triggerRef` passed at render time.
+ * Consumers pass an action list via `<RowCommandMenu actions={...}>`
+ * and wire open/onOpenChange to the trigger button.
  */
 
 export interface RowAction {
   id: string;
   label: string;
   icon?: LucideIcon;
-  shortcut?: readonly string[];
   /** Destructive actions get danger styling. */
   destructive?: boolean;
   run: () => void | Promise<void>;
@@ -121,9 +116,6 @@ export function RowCommandMenu({
                   />
                 ) : null}
                 <span className="flex-1 truncate">{a.label}</span>
-                {a.shortcut ? (
-                  <Kbd keys={a.shortcut} />
-                ) : null}
               </DropdownMenuPrimitive.Item>
             );
           })}
@@ -133,30 +125,3 @@ export function RowCommandMenu({
   );
 }
 
-/**
- * Hook — opens the row menu when `/` is pressed while the row element
- * has focus. Returns menu state for the consumer to render.
- */
-export function useRowSlashMenu(rowRef: React.RefObject<HTMLElement | null>) {
-  const [open, setOpen] = React.useState(false);
-  React.useEffect(() => {
-    const el = rowRef.current;
-    if (!el) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "/") return;
-      const target = e.target as HTMLElement | null;
-      const isEditable =
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        target?.isContentEditable;
-      if (isEditable) return;
-      if (el.contains(document.activeElement)) {
-        e.preventDefault();
-        setOpen(true);
-      }
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [rowRef]);
-  return { open, setOpen };
-}

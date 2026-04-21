@@ -11,7 +11,6 @@ import {
   DrawerDescription,
 } from "@/components/ui/shadcn/drawer";
 import { Button } from "@/components/ui/shadcn/button";
-import { Kbd } from "@/components/ui/shadcn/kbd";
 import {
   PublishStrip,
   type PlatformRow,
@@ -129,7 +128,7 @@ export function VideoDrawer({
             <DrawerBody>
               <FirstRunHint
                 capability="video.drawer"
-                message="Approve opens the publish strip. Destructive actions can be undone for 5 seconds."
+                message="Approve to unlock the publish strip. Destructive actions can be undone for 5 seconds."
                 className="mb-3"
               />
 
@@ -183,7 +182,6 @@ export function VideoDrawer({
                     variant="secondary"
                     size="sm"
                     onClick={onRegenerate}
-                    shortcut={<Kbd keys={["⌘", "R"]} />}
                   >
                     <Sparkles size={14} strokeWidth={1.5} aria-hidden="true" />
                     Regenerate
@@ -195,7 +193,6 @@ export function VideoDrawer({
                   variant="primary"
                   size="sm"
                   onClick={onApprove}
-                  shortcut={<Kbd keys={["⌘", "↵"]} />}
                 >
                   <Check size={14} strokeWidth={1.5} aria-hidden="true" />
                   Approve

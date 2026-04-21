@@ -20,10 +20,15 @@ Forward-looking work after the Linear-clone v2 pass. Snapshot as of
 | Branch | Summary |
 |---|---|
 | **redesign/v2-foundations** | IBM Plex Sans + Plex Mono (Geist retired); `nuqs` installed + `NuqsAdapter`; View Transitions API enabled in `next.config.ts` with 180ms ease-out cross-fade CSS; Lucide upgraded to 1.8.0; 3 contrast spot fixes on new surfaces. |
-| **redesign/v2-plan-core** | `?` shortcut overlay (searchable cheatsheet); `/` slash menu per row (`RowCommandMenu` + `useRowSlashMenu`); inline title edit on `DayCard` (E key + double-click); ⌘↵ approve on focused row; `MoreHorizontal` hover affordance; URL state via nuqs (`?view=` and `?day=`). |
+| **redesign/v2-plan-core** | `?` shortcut overlay; `/` slash menu per row; inline title edit on `DayCard`; ⌘↵ approve on focused row; `MoreHorizontal` hover affordance; URL state via nuqs. (Keyboard bindings later removed in v3.) |
 | **redesign/v2-onboarding** | `/onboarding/plan-preview` rebuilt on OnboardingLayout (streaming 7-card preview, regenerate all, five states); `/onboarding/voice` rebuilt (6-tile library-voice grid, Play/Pause preview, consent checkbox, exit to `/plan/current?firstRun=1`). Both files stripped framer-motion + OnboardingShell + Tremor entirely. |
 | **redesign/v2-marketing** | Cta rebuilt on hairline-edged elevated panel (iris dot texture, no gradients); Footer restyled to tokens + tabular-nums copyright. |
 | **redesign/v2-propagation** | DashboardClient + loading retired (route redirected since v1 Phase 3); Button asChild fixed for Radix Slot single-child contract. |
+
+### v3 — Keyboard-shortcut removal (one branch on top of v2)
+| Branch | Summary |
+|---|---|
+| **redesign/v3-no-shortcuts** | Removed `⌘K` command palette, `?` overlay, `/` slash-menu key binding, per-row `E` / `⌘↵` bindings, all `Kbd` chip usage. Deleted `components/ui/CommandPalette.tsx`, `ShortcutOverlay.tsx`, `shadcn/command.tsx`, `shadcn/kbd.tsx`, `lib/actions-registry.ts`. Uninstalled `cmdk`. Simplified `Button` / `Tooltip` / `DropdownMenuItem` / `RowCommandMenu` to drop their `shortcut` prop. Double-click rename and visible `MoreHorizontal` button stay; a11y baseline (Tab order, focus rings, Enter/Space, Escape) unchanged. |
 
 Every branch typechecks and builds cleanly.
 
@@ -34,14 +39,21 @@ Every branch typechecks and builds cleanly.
 - Legacy `--font-heading`, `--font-serif` alias to `--font-sans`.
 
 ## Interaction grammar (final)
-- ⌘K — command palette
-- ? — shortcut overlay (searchable)
-- / — row slash menu (context-sensitive)
-- E — inline edit on focused row
-- ⌘↵ — approve focused row
-- ⌘⇧P — plan week from theme (seeded)
-- ⌘⇧A — approve all unlocked
-- URL state for: view mode, open drawer, selected day (+ future: week, filters, theme)
+Keyboard shortcuts were removed in `redesign/v3-no-shortcuts`.
+The product does not advertise or bind keyboard shortcuts.
+
+- **Row context menu** — visible `MoreHorizontal` (·) button on hover/focus
+  of each `DayCard` row opens a Radix dropdown with Rename / Approve /
+  Regenerate / Publish / Lock / Reject. Keyboard-only users reach it via
+  Tab + `Enter` (native DropdownMenu primitive behavior).
+- **Inline rename** — double-click a row title; commits on Enter/blur,
+  cancels on Escape.
+- **Drawer** — click a row to open the right-side drawer; Escape closes.
+- **URL state** (`nuqs`) — `?view=list|calendar`, `?day=<id>`. Survives
+  refresh, back/forward, deep links. Still worth adding: `?week=`,
+  `?filter=`, etc.
+- **A11y baseline retained** — Tab order, `:focus-visible` rings,
+  Enter/Space on role="button", Escape on modals.
 
 ## Still to do — by effort
 
@@ -83,9 +95,8 @@ Every branch typechecks and builds cleanly.
 
 - `useOptimistic({ queryKey, applyOptimistic, errorMessage })` → `lib/optimistic.ts`.
 - `toast.undo(message, onUndo, { duration })` → `components/providers/Toaster.tsx`.
-- `useRegisterActions([...])` + `Action` contract → `lib/actions-registry.ts`.
-- `useRowSlashMenu(ref)` + `<RowCommandMenu actions={...}>` → `components/ui/RowCommandMenu.tsx`.
-- `<ShortcutOverlay />` on `?` key, mounted app-wide → `components/ui/ShortcutOverlay.tsx`.
+- `<RowCommandMenu actions={...}>` → `components/ui/RowCommandMenu.tsx`
+  (mouse-trigger only, via visible MoreHorizontal button per row).
 - `FirstRunHint` backed by `hasSeen/markSeen` → `lib/seen.ts`.
 - `EmptyState`, `ErrorState`, `SkeletonRows`, `PartialFailureChip` → `components/ui/states`.
 - `Kbd` chip + `Button.shortcut`/`Tooltip.shortcut`/`DropdownMenuItem.shortcut`/`CommandItem.shortcut`.
@@ -111,7 +122,10 @@ Every branch typechecks and builds cleanly.
 - [ ] `pnpm lint` + custom rule: no `text-text-tertiary` on body-sized text
 - [ ] Lighthouse on `/` — perf ≥ 95, a11y ≥ 95
 - [ ] Lighthouse on `/plan/current` — perf ≥ 90, a11y ≥ 95
-- [ ] Keyboard-only walkthrough: ⌘K opens palette, `?` opens overlay, `/` opens row menu, E enters edit, ⌘↵ approves, Escape closes everything, focus returns to trigger.
+- [ ] A11y walkthrough: Tab order follows reading order on every surface;
+      every interactive element has a visible `:focus-visible` ring;
+      Escape closes every modal/drawer/menu; Enter/Space activates any
+      `role="button"`; focus returns to the trigger after dismissal.
 - [ ] Reduced-motion: Lenis disables, View Transitions skip, reveals reduced, row-reveal stagger collapses.
 
 ## Suggested next session

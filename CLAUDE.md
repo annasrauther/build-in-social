@@ -122,13 +122,26 @@ owning screens migrate.
 
 ## Interaction rules (non-negotiable)
 
-### Keyboard & command palette
-- `⌘K` / `Ctrl+K` opens the palette (`components/ui/CommandPalette.tsx`).
-- Every primary action has a keyboard shortcut, visible in tooltips and menus.
-- Actions registered via `lib/actions-registry.ts`:
-  - Global seeds live in `CommandPalette.tsx`.
-  - Screens register their contextual actions via `useRegisterActions([...])`.
-- A new user should accomplish 80% of common actions without a mouse.
+### No keyboard shortcuts (deliberate)
+Earlier iterations shipped `⌘K` command palette, `?` overlay, `/` slash
+menu, and per-row shortcut hints (`E`, `⌘↵`, `⌘⇧A`). These were
+removed — the product does not advertise or bind keyboard shortcuts.
+Everything is reachable by mouse / touch.
+
+A11y baseline is kept:
+- Tab order follows reading order.
+- `:focus-visible` iris ring (40% / 2px / 2px offset) on every interactive
+  element.
+- Native `Enter` / `Space` on buttons, `Escape` closes modals + drawers
+  (Radix handles this).
+- Row context menus surface via a visible `MoreHorizontal` button.
+
+Do NOT add:
+- `⌘K` / `Ctrl+K` bindings
+- `?` / `/` key shortcuts
+- Kbd chips on Button / Tooltip / DropdownMenu
+- The old `lib/actions-registry.ts` + `useRegisterActions` contract
+  (file deleted)
 
 ### Mutations
 - **Optimistic updates** for all user-initiated mutations via

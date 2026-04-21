@@ -16,22 +16,21 @@ import { cn } from "@/lib/utils";
 import { PLATFORM_ICON } from "@/components/video/platform-icons";
 import {
   RowCommandMenu,
-  useRowSlashMenu,
   type RowAction,
 } from "@/components/ui/RowCommandMenu";
 
 /**
  * DayCard — a single row in the weekly plan.
  *
- * 32–36px base height. Hairline grayDark.6 border. Platform icon via
- * Lucide. Iris selection treatment (accent@15% bg + 2px left-edge
- * accent bar). Tabular-nums for day + duration. No shadows.
+ * Interactions (mouse + a11y):
+ *  - Click / Enter / Space on the row → open drawer
+ *  - Double-click title → inline rename
+ *  - MoreHorizontal (·) button → row context menu (Rename, Approve,
+ *    Regenerate, Publish, Lock, Reject)
  *
- * Interactions (Linear-style):
- *  - Click / Enter / Space → open drawer
- *  - Focus + `/` → row slash menu (RowCommandMenu)
- *  - Double-click title → inline title edit
- *  - MoreHorizontal button → same slash menu (mouse users)
+ * Visual: 32–36px row, hairline grayDark.6 border, iris `.is-selected`
+ * treatment (accent@15% bg + 2px left accent bar), tabular-nums for
+ * day + duration.
  */
 
 export interface DayCardVideo {
@@ -78,11 +77,9 @@ export function DayCard({
   const approved = video.status === "approved";
 
   const rowRef = React.useRef<HTMLDivElement | null>(null);
-  const { open: slashOpen, setOpen: setSlashOpen } = useRowSlashMenu(rowRef);
   const [menuOpen, setMenuOpen] = React.useState(false);
-  const openMenu = slashOpen || menuOpen;
 
-  // Inline title editing
+  // Inline title editing — double-click to enter.
   const [editing, setEditing] = React.useState(false);
   const [draftTitle, setDraftTitle] = React.useState(video.title);
   React.useEffect(() => setDraftTitle(video.title), [video.title]);
@@ -104,20 +101,13 @@ export function DayCard({
     setEditing(false);
   };
 
+  // Enter / Space open the drawer (a11y baseline — not advertised
+  // anywhere in the UI; this is just the native role="button" contract).
   const handleKey = (e: React.KeyboardEvent) => {
     if (editing) return;
-    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      onApprove?.(video.id);
-      return;
-    }
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       onOpen(video.id);
-    }
-    if (e.key === "e" && !e.metaKey && !e.ctrlKey && !e.altKey) {
-      e.preventDefault();
-      setEditing(true);
     }
   };
 
@@ -125,16 +115,14 @@ export function DayCard({
     const list: RowAction[] = [];
     list.push({
       id: "row.open",
-      label: "Open in drawer",
+      label: "Open",
       icon: ChevronRight,
-      shortcut: ["↵"],
       run: () => onOpen(video.id),
     });
     list.push({
       id: "row.rename",
-      label: "Rename title",
+      label: "Rename",
       icon: Pencil,
-      shortcut: ["E"],
       run: () => setEditing(true),
     });
     if (onApprove && !approved) {
@@ -142,7 +130,6 @@ export function DayCard({
         id: "row.approve",
         label: "Approve",
         icon: Check,
-        shortcut: ["⌘", "↵"],
         run: () => onApprove(video.id),
       });
     }
@@ -151,7 +138,6 @@ export function DayCard({
         id: "row.regenerate",
         label: "Regenerate",
         icon: RotateCw,
-        shortcut: ["⌘", "R"],
         run: () => onRegenerate(video.id),
       });
     }
@@ -160,7 +146,6 @@ export function DayCard({
         id: "row.publish",
         label: "Publish",
         icon: Upload,
-        shortcut: ["⌘", "⇧", "↵"],
         run: () => onPublish(video.id),
       });
     }
@@ -182,7 +167,17 @@ export function DayCard({
       });
     }
     return list;
-  }, [video.id, approved, locked, onApprove, onOpen, onPublish, onRegenerate, onReject, onToggleLock]);
+  }, [
+    video.id,
+    approved,
+    locked,
+    onApprove,
+    onOpen,
+    onPublish,
+    onRegenerate,
+    onReject,
+    onToggleLock,
+  ]);
 
   return (
     <>
@@ -224,7 +219,7 @@ export function DayCard({
           aria-hidden="true"
         />
 
-        {/* Title — click-through to open; double-click to rename inline */}
+        {/* Title — double-click to rename inline */}
         {editing ? (
           <input
             ref={inputRef}
@@ -300,7 +295,7 @@ export function DayCard({
           </button>
         ) : null}
 
-        {/* MoreHorizontal → slash menu for mouse users */}
+        {/* MoreHorizontal → row context menu */}
         <button
           type="button"
           onClick={(e) => {
@@ -329,11 +324,8 @@ export function DayCard({
       </div>
 
       <RowCommandMenu
-        open={openMenu}
-        onOpenChange={(o) => {
-          setMenuOpen(o);
-          setSlashOpen(o);
-        }}
+        open={menuOpen}
+        onOpenChange={setMenuOpen}
         anchor={rowRef.current}
         actions={actions}
         title={

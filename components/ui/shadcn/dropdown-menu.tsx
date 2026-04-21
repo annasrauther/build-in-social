@@ -48,10 +48,8 @@ export const DropdownMenuContent = React.forwardRef<
 
 export const DropdownMenuItem = React.forwardRef<
   React.ComponentRef<typeof DropdownMenuPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
-    shortcut?: React.ReactNode;
-  }
->(function DropdownMenuItem({ className, children, shortcut, ...props }, ref) {
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item>
+>(function DropdownMenuItem({ className, children, ...props }, ref) {
   return (
     <DropdownMenuPrimitive.Item
       ref={ref}
@@ -59,11 +57,6 @@ export const DropdownMenuItem = React.forwardRef<
       {...props}
     >
       <span className="flex-1 truncate">{children}</span>
-      {shortcut ? (
-        <kbd className="font-mono text-[11px] text-text-tertiary">
-          {shortcut}
-        </kbd>
-      ) : null}
     </DropdownMenuPrimitive.Item>
   );
 });
