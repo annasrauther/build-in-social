@@ -4,13 +4,11 @@ import * as React from "react";
 import {
   Check,
   ChevronRight,
-  Instagram,
-  Linkedin,
   Lock,
-  Youtube,
 } from "lucide-react";
 import type { Platform } from "@/lib/types/user";
 import { cn } from "@/lib/utils";
+import { PLATFORM_ICON } from "@/components/video/platform-icons";
 
 /**
  * DayCard — a single row in the weekly plan.
@@ -42,27 +40,6 @@ export interface DayCardProps {
   index?: number;
   className?: string;
 }
-
-const PLATFORM_ICON: Record<Platform, typeof Instagram> = {
-  youtube: Youtube,
-  instagram: Instagram,
-  linkedin: Linkedin,
-  x: function XIcon(props) {
-    return (
-      <svg
-        viewBox="0 0 16 16"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        {...props}
-      >
-        <path
-          d="M9.17 7.1 13.77 2H12.6L8.64 6.4 5.49 2H2l4.83 6.75L2 14h1.17l4.2-4.66L10.7 14H14M3.59 2.88h1.8l8.22 11.26h-1.8"
-          fill="currentColor"
-        />
-      </svg>
-    );
-  },
-};
 
 export function DayCard({
   video,
@@ -117,7 +94,6 @@ export function DayCard({
       {/* Platform icon */}
       <Icon
         size={14}
-        strokeWidth={1.5}
         className="shrink-0 text-text-secondary"
         aria-hidden="true"
       />
