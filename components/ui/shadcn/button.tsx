@@ -70,9 +70,45 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     { className, variant, size, asChild, shortcut, children, ...props },
     ref
   ) {
-    const Comp = asChild ? Slot : "button";
+    // With asChild, Radix Slot requires exactly one child element. We can't
+    // append the shortcut <kbd> as a sibling — instead we shove it into the
+    // single child's children when we know it's a valid element.
+    if (asChild) {
+      const singleChild = React.Children.only(children);
+      if (React.isValidElement(singleChild) && shortcut) {
+        const merged = React.cloneElement(
+          singleChild,
+          singleChild.props as Record<string, unknown>,
+          <>
+            {(singleChild.props as { children?: React.ReactNode }).children}
+            <kbd className="ml-1.5 inline-flex items-center font-mono text-[11px] text-text-tertiary">
+              {shortcut}
+            </kbd>
+          </>
+        );
+        return (
+          <Slot
+            ref={ref}
+            className={cn(buttonStyles({ variant, size }), className)}
+            {...props}
+          >
+            {merged}
+          </Slot>
+        );
+      }
+      return (
+        <Slot
+          ref={ref}
+          className={cn(buttonStyles({ variant, size }), className)}
+          {...props}
+        >
+          {singleChild}
+        </Slot>
+      );
+    }
+
     return (
-      <Comp
+      <button
         ref={ref}
         className={cn(buttonStyles({ variant, size }), className)}
         {...props}
@@ -83,7 +119,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             {shortcut}
           </kbd>
         ) : null}
-      </Comp>
+      </button>
     );
   }
 );
