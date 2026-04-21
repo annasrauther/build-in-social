@@ -2,37 +2,34 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "motion/react";
-import { Card } from "@/components/tremor/Card";
-import { Badge } from "@/components/tremor/Badge";
-import { Button } from "@/components/tremor/Button";
-import { StatusCard } from "@/components/ui/StatusCard";
+import { Compass, Plus } from "lucide-react";
+import { PlanShell } from "@/components/plan/PlanShell";
+import { Button } from "@/components/ui/shadcn/button";
+import {
+  EmptyState,
+  ErrorState,
+  SkeletonRows,
+} from "@/components/ui/states";
 import { APP } from "@/content/app";
-import type { Series, SeriesStatus, SeriesMode } from "@/lib/types/series";
+import { cn } from "@/lib/utils";
+import type { Series, SeriesStatus } from "@/lib/types/series";
 
-function statusVariant(status: SeriesStatus): "success" | "warning" | "default" {
-  switch (status) {
-    case "active":
-      return "success";
-    case "paused":
-      return "warning";
-    default:
-      return "default";
-  }
-}
+/**
+ * /series — list surface. One row per series, matching the
+ * plan/videos grammar: dot + name + topic + cadence + credits +
+ * status chip. Click opens /series/[id] (tune/pause/archive).
+ *
+ * Primary entry for creating a series is still the "+ New series"
+ * button in the weekly plan header (F5); this page's CTA is a
+ * fallback.
+ */
 
-function modeClass(mode: SeriesMode): string {
-  switch (mode) {
-    case "faceless":
-      return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300";
-    case "stock-ai-avatar":
-      return "bg-brand-50 text-brand-600 dark:bg-brand-900/40 dark:text-brand-400";
-    case "heygen-avatar":
-      return "bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300";
-    case "combo":
-      return "bg-gray-900 text-gray-50 dark:bg-gray-100 dark:text-gray-900";
-  }
-}
+const STATUS_DOT: Record<SeriesStatus, string> = {
+  active: "bg-accent",
+  paused: "bg-[color:var(--warning)]",
+  draft: "bg-text-tertiary",
+  archived: "bg-[color:var(--border)]",
+};
 
 export default function SeriesListPage() {
   const [series, setSeries] = useState<Series[] | null>(null);
@@ -62,103 +59,114 @@ export default function SeriesListPage() {
     };
   }, []);
 
+  const loading = series === null && !error;
+
   return (
-    <div className="p-4 sm:px-6 sm:pb-10 sm:pt-10 lg:px-10 lg:pt-7">
-      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+    <PlanShell
+      title="Series"
+      subtitle={
+        series
+          ? `${series.length} total · ${
+              series.filter((s) => s.status === "active").length
+            } active`
+          : "Loading series…"
+      }
+      actions={
+        <Button asChild variant="primary" size="sm">
+          <Link href="/series/create">
+            <Plus size={14} strokeWidth={1.5} aria-hidden="true" />
+            New series
+          </Link>
+        </Button>
+      }
+    >
+      <div
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+      >
         {series === null ? APP.A11Y.loading : error ? error : APP.A11Y.loaded}
       </div>
 
-      <header className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-lg font-medium text-gray-900 dark:text-gray-50">
-            {APP.SERIES.title}
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {APP.SERIES.subtitle(series?.length ?? 0)}
-          </p>
-        </div>
-        <Link href="/series/create">
-          <Button variant="primary">{APP.SERIES.createCta}</Button>
-        </Link>
-      </header>
-
-      {series === null ? (
-        <SeriesListSkeleton />
+      {loading ? (
+        <SkeletonRows rows={4} height={44} gap={6} />
       ) : error ? (
-        <StatusCard
-          variant="error"
+        <ErrorState
           title="Couldn't load series"
           description={error}
-          cta={APP.COMMON.retry}
-          onCta={() => window.location.reload()}
-          ctaGradient
+          onRetry={() => window.location.reload()}
         />
       ) : series.length === 0 ? (
-        <StatusCard
-          variant="empty"
+        <EmptyState
+          icon={Compass}
           title={APP.SERIES.emptyTitle}
           description={APP.SERIES.emptyDescription}
-          cta={APP.SERIES.emptyCta}
-          ctaHref="/series/create"
-          ctaGradient
+          action={
+            <Button asChild variant="primary" size="sm">
+              <Link href="/series/create">{APP.SERIES.emptyCta}</Link>
+            </Button>
+          }
         />
       ) : (
-        <ul className="grid gap-3 tablet-sm:grid-cols-2 lg:grid-cols-3">
-          {series.map((s) => (
-            <motion.li
-              key={s.id}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.16, ease: [0.16, 1, 0.3, 1] }}
-            >
-              <Link
-                href={`/series/${s.id}`}
-                className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
-                aria-label={APP.SERIES.list.rowOpen + ": " + s.name}
-              >
-                <Card className="p-4 h-full hover:border-gray-300 dark:hover:border-gray-700 transition">
-                  <div className="flex items-center justify-between mb-2">
-                    <span
-                      className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${modeClass(s.mode)}`}
-                    >
-                      {APP.SERIES.modeLabels[s.mode]}
-                    </span>
-                    <Badge variant={statusVariant(s.status)}>
-                      {APP.SERIES.statusLabels[s.status]}
-                    </Badge>
-                  </div>
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50 line-clamp-1">
-                    {s.name}
-                  </h3>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-                    {s.topic}
-                  </p>
-                  <div className="mt-3 flex items-center justify-between text-xs text-gray-400 dark:text-gray-500">
-                    <span>{APP.SERIES.frequencyLabels[s.frequency]}</span>
-                    <span>
-                      {s.creditsConsumed ?? 0} credits
-                    </span>
-                  </div>
-                </Card>
-              </Link>
-            </motion.li>
+        <ul className="flex flex-col gap-1.5">
+          {series.map((s, i) => (
+            <SeriesRow key={s.id} series={s} index={i} />
           ))}
         </ul>
       )}
-    </div>
+    </PlanShell>
   );
 }
 
-function SeriesListSkeleton() {
+function SeriesRow({ series, index }: { series: Series; index: number }) {
   return (
-    <ul className="grid gap-3 tablet-sm:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <li
-          key={i}
-          className="skeleton-line"
-          style={{ height: 140, borderRadius: "var(--radius-lg)" }}
+    <li>
+      <Link
+        href={`/series/${series.id}`}
+        prefetch
+        aria-label={`${APP.SERIES.list.rowOpen}: ${series.name}`}
+        className={cn(
+          "group flex items-start gap-3 px-3 py-2.5",
+          "border border-[color:var(--border)] hover:border-[color:var(--border-interactive)]",
+          "bg-surface hover:bg-[color-mix(in_srgb,var(--gray-12)_3%,var(--surface))]",
+          "rounded-[var(--radius-card)]",
+          "transition-colors duration-fast ease-out-cubic",
+          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--focus-ring)]",
+          "animate-fade-in",
+        )}
+        style={{ animationDelay: `${Math.min(index, 8) * 30}ms` }}
+      >
+        <span
+          aria-hidden="true"
+          className={cn(
+            "mt-1.5 inline-block h-1.5 w-1.5 rounded-full shrink-0",
+            STATUS_DOT[series.status],
+          )}
         />
-      ))}
-    </ul>
+        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[13px] font-medium leading-tight text-text truncate">
+              {series.name}
+            </span>
+            <span className="text-[11px] uppercase tracking-wider text-text-tertiary font-mono">
+              {APP.SERIES.modeLabels[series.mode]}
+            </span>
+          </div>
+          <p className="text-[12px] leading-snug text-text-secondary line-clamp-1">
+            {series.topic}
+          </p>
+        </div>
+        <div className="flex flex-col items-end gap-0.5 shrink-0">
+          <span className="text-[11px] uppercase tracking-wider text-text-tertiary font-mono">
+            {APP.SERIES.statusLabels[series.status]}
+          </span>
+          <span className="text-[11px] text-text-tertiary font-mono tabular-nums">
+            {APP.SERIES.frequencyLabels[series.frequency]} ·{" "}
+            {series.creditsConsumed ?? 0} cr
+          </span>
+        </div>
+      </Link>
+    </li>
   );
 }
