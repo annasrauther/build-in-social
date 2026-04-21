@@ -6,21 +6,10 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
-  DropdownMenuSubMenu,
-  DropdownMenuSubMenuContent,
-  DropdownMenuSubMenuTrigger,
   DropdownMenuTrigger,
 } from "@/components/tremor/Dropdown"
-import {
-  RiArrowRightUpLine,
-  RiComputerLine,
-  RiMoonLine,
-  RiSunLine,
-} from "@remixicon/react"
-import { useTheme } from "next-themes"
+import { RiArrowRightUpLine } from "@remixicon/react"
 import { useRouter } from "next/navigation"
 import * as React from "react"
 
@@ -57,7 +46,6 @@ export function DropdownUserProfile({
   align = "start",
 }: DropdownUserProfileProps) {
   const [mounted, setMounted] = React.useState(false)
-  const { theme, setTheme } = useTheme()
   const router = useRouter()
   React.useEffect(() => {
     setMounted(true)
@@ -77,51 +65,6 @@ export function DropdownUserProfile({
         <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
         <DropdownMenuContent align={align}>
           <DropdownMenuLabel>emma.stone@acme.com</DropdownMenuLabel>
-          <DropdownMenuGroup>
-            <DropdownMenuSubMenu>
-              <DropdownMenuSubMenuTrigger>Theme</DropdownMenuSubMenuTrigger>
-              <DropdownMenuSubMenuContent>
-                <DropdownMenuRadioGroup
-                  value={theme}
-                  onValueChange={(value) => {
-                    setTheme(value)
-                  }}
-                >
-                  <DropdownMenuRadioItem
-                    aria-label="Switch to Light Mode"
-                    value="light"
-                    iconType="check"
-                  >
-                    <RiSunLine className="size-4 shrink-0" aria-hidden="true" />
-                    Light
-                  </DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem
-                    aria-label="Switch to Dark Mode"
-                    value="dark"
-                    iconType="check"
-                  >
-                    <RiMoonLine
-                      className="size-4 shrink-0"
-                      aria-hidden="true"
-                    />
-                    Dark
-                  </DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem
-                    aria-label="Switch to System Mode"
-                    value="system"
-                    iconType="check"
-                  >
-                    <RiComputerLine
-                      className="size-4 shrink-0"
-                      aria-hidden="true"
-                    />
-                    System
-                  </DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-              </DropdownMenuSubMenuContent>
-            </DropdownMenuSubMenu>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem>
               Changelog

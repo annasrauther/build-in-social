@@ -2,7 +2,6 @@
 
 import { SignIn } from "@clerk/nextjs";
 import { motion } from "framer-motion";
-import { useTheme } from "next-themes";
 import { ELEMENT_ENTER, ease } from "@/lib/motion";
 import { Button } from "@/components/tremor/Button";
 import { clerkAppearance } from "@/lib/clerk-appearance";
@@ -16,8 +15,7 @@ import { clerkAppearance } from "@/lib/clerk-appearance";
 export function LoginView() {
   const devAuth = process.env.NEXT_PUBLIC_DEV_AUTH === "1";
   const hasClerk = !devAuth && !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  const { resolvedTheme } = useTheme();
-  const theme: "light" | "dark" = resolvedTheme === "dark" ? "dark" : "light";
+  const theme = "dark" as const;
 
   return (
     <div

@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { Wordmark } from "@/components/ui/Wordmark"
-import ThemeSwitch from "@/components/tremor/ThemeSwitch"
 import { LANDING } from "@/content/landing"
 
 const LINKS: { name: string; href: string }[] = [
@@ -35,8 +34,6 @@ export default function Footer() {
             ))}
           </div>
 
-          {/* Right — theme toggle */}
-          <ThemeSwitch />
         </div>
 
         {LANDING.FOOTER.dataLine ? (
