@@ -3,6 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { SmoothScroll } from "@/components/providers/SmoothScroll";
 
 export const metadata: Metadata = {
   title: {
@@ -62,6 +63,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="overflow-y-scroll scroll-auto antialiased bg-bg text-text">
+        <SmoothScroll />
         <Providers>{children}</Providers>
       </body>
     </html>
