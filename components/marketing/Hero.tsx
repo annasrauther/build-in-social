@@ -1,83 +1,101 @@
-import { RiPlayCircleFill } from "@remixicon/react"
+"use client"
+
 import Link from "next/link"
-import { Button } from "@/components/tremor/Button"
-import { ArrowAnimated } from "@/components/marketing/ArrowAnimated"
+import { useRef } from "react"
+import { motion, useScroll, useTransform } from "motion/react"
+import { PlayCircle } from "lucide-react"
+import { MiniPlanner } from "@/components/marketing/MiniPlanner"
 import HeroImage from "./HeroImage"
 import { LANDING } from "@/content/landing"
+import { cn } from "@/lib/utils"
 
+/**
+ * Marketing hero — F1 entry.
+ *
+ * Layout:
+ *  - Left column: eyebrow + headline + sub + MiniPlanner + reassurance
+ *  - Right column: HeroImage with one pinned scroll moment (the only
+ *    scroll choreography on the home page per the design rules).
+ *
+ * Headline uses Geist + iris `.text-gradient-brand` (no purple→pink).
+ * Hairline-bordered MiniPlanner replaces the "Get Started" / "Watch
+ * demo" button pair. Watch-demo remains as a quiet secondary link.
+ */
 export default function Hero() {
+  const ref = useRef<HTMLDivElement | null>(null)
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  })
+  // One scroll moment: HeroImage rises slightly and fades in as it
+  // enters the viewport. Capped amplitudes; zero effect beyond the hero.
+  const y = useTransform(scrollYProgress, [0, 0.35, 1], [40, 0, -16])
+  const opacity = useTransform(scrollYProgress, [0, 0.15, 0.9, 1], [0, 1, 1, 0.6])
+
   return (
     <section
       aria-labelledby="hero-title"
-      className="mt-32 flex flex-col items-center justify-center text-center sm:mt-40"
+      className="relative mx-auto w-full max-w-6xl px-4 pt-24 sm:px-6 sm:pt-32 pb-12"
     >
-      <h1
-        id="hero-title"
-        className="inline-block animate-slide-up-fade [animation-duration:300ms] bg-brand-gradient bg-clip-text p-2 text-4xl font-bold tracking-tighter text-transparent sm:text-6xl md:text-7xl dark:bg-brand-gradient-dark font-serif text-balance"
-      >
-        {LANDING.HERO.headline}
-      </h1>
-      <p
-        className="mt-6 max-w-lg animate-slide-up-fade [animation-duration:200ms] text-lg text-gray-700 dark:text-gray-400"
-      >
-        {LANDING.HERO.subhead}
-      </p>
-      {LANDING.HERO.callout ? (
-        <p
-          className="mt-4 inline-flex max-w-lg animate-slide-up-fade [animation-duration:200ms] items-center rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-sm font-semibold text-brand-700 dark:border-brand-900/40 dark:bg-brand-950/30 dark:text-brand-300"
-        >
-          {LANDING.HERO.callout}
-        </p>
-      ) : null}
-      {LANDING.HERO.subCallout ? (
-        <p
-          className="mt-4 max-w-xl animate-slide-up-fade [animation-duration:200ms] px-4 text-sm text-gray-600 dark:text-gray-400"
-        >
-          {LANDING.HERO.subCallout}
-        </p>
-      ) : null}
-      <div
-        className="mt-8 flex w-full animate-slide-up-fade [animation-duration:250ms] flex-col justify-center gap-3 px-3 sm:flex-row"
-      >
-        <Button asChild className="group h-11 md:h-10 font-semibold mt-2">
-          <Link href="/onboarding" className="flex items-center">
-            {LANDING.HERO.primaryCta}
-            <ArrowAnimated />
-          </Link>
-        </Button>
-        <Button
-          asChild
-          variant="light"
-          className="group mt-2 h-11 md:h-10 gap-x-2 bg-transparent font-semibold hover:bg-transparent dark:bg-transparent hover:dark:bg-transparent"
-        >
-          <Link
-            href="#how-it-works"
-            className="ring-1 ring-gray-200 sm:ring-0 dark:ring-gray-900"
+      <div className="grid gap-10 tablet-sm:grid-cols-[minmax(0,1fr)_minmax(0,420px)] tablet-sm:items-start">
+        {/* Left — headline + MiniPlanner */}
+        <div className="flex flex-col gap-5">
+          <p className="animate-slide-up-fade text-[12px] uppercase tracking-wider text-accent">
+            Build In Social
+          </p>
+          <h1
+            id="hero-title"
+            className={cn(
+              "animate-slide-up-fade",
+              "text-[40px] sm:text-[52px] md:text-[60px]",
+              "font-medium leading-[1.02] tracking-[-0.02em]",
+              "text-text text-balance",
+              "text-gradient-brand"
+            )}
           >
-            <span className="mr-1 flex size-6 items-center justify-center rounded-full bg-gray-50 transition-all group-hover:bg-gray-200 dark:bg-gray-800 dark:group-hover:bg-gray-700">
-              <RiPlayCircleFill
-                aria-hidden="true"
-                className="size-5 shrink-0 text-gray-900 dark:text-gray-50"
-              />
-            </span>
-            {LANDING.HERO.secondaryCta}
-          </Link>
-        </Button>
-      </div>
-      <p className="mt-3 animate-slide-up-fade [animation-duration:300ms] text-xs text-gray-700 dark:text-gray-300">
-        {LANDING.HERO.reassurance}
-      </p>
-      <div
-        className="relative mx-auto mt-20 h-fit w-full max-w-6xl animate-slide-up-fade [animation-duration:300ms] sm:px-2"
-      >
-        {/* Radial Glow */}
-        <div className="bg-radial-glow absolute inset-0 -top-20 -z-10 h-[150%] w-full opacity-50 dark:opacity-20" />
+            {LANDING.HERO.headline}
+          </h1>
+          <p className="animate-slide-up-fade max-w-xl text-[15px] leading-relaxed text-text-secondary">
+            {LANDING.HERO.subhead}
+          </p>
+          {LANDING.HERO.subCallout ? (
+            <p className="animate-slide-up-fade max-w-xl text-[13px] leading-snug text-text-tertiary">
+              {LANDING.HERO.subCallout}
+            </p>
+          ) : null}
 
-        <HeroImage />
-        <div
-          className="absolute inset-x-0 -bottom-20 -mx-10 h-2/4 bg-gradient-to-t from-white via-white to-transparent lg:h-1/4 dark:from-[#141413] dark:via-[#141413]"
-          aria-hidden="true"
-        />
+          <div className="mt-2">
+            <MiniPlanner />
+          </div>
+
+          <div className="flex items-center gap-3 mt-1">
+            <Link
+              href="#how-it-works"
+              className={cn(
+                "inline-flex items-center gap-1.5 h-8 text-[13px] font-medium",
+                "text-text-secondary hover:text-text transition-colors duration-fast ease-out-cubic",
+                "focus-visible:outline-2 focus-visible:outline-offset-2",
+                "focus-visible:[outline-color:var(--focus-ring)] rounded-[4px]"
+              )}
+            >
+              <PlayCircle size={14} strokeWidth={1.5} aria-hidden="true" />
+              {LANDING.HERO.secondaryCta}
+            </Link>
+            <span className="text-[12px] text-text-tertiary">
+              {LANDING.HERO.reassurance}
+            </span>
+          </div>
+        </div>
+
+        {/* Right — HeroImage with one scroll moment */}
+        <motion.div
+          ref={ref}
+          style={{ y, opacity }}
+          className="relative w-full"
+        >
+          <div className="bg-radial-glow absolute inset-0 -top-10 -z-10 h-[120%] w-full opacity-40" aria-hidden="true" />
+          <HeroImage />
+        </motion.div>
       </div>
     </section>
   )

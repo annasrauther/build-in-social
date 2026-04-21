@@ -98,8 +98,8 @@ export function Navigation() {
         "fixed inset-x-3 top-4 z-50 mx-auto flex max-w-6xl transform-gpu animate-slide-down-fade justify-center overflow-hidden rounded-xl border border-transparent px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1.03)] will-change-transform",
         open === true ? "h-[100dvh]" : "h-16",
         scrolled || open === true
-          ? "backdrop-blur-nav max-w-3xl border-gray-100 bg-white/80 shadow-xl shadow-black/5 dark:border-white/15 dark:bg-[#141413]/70"
-          : "bg-white/0 dark:bg-gray-950/0",
+          ? "backdrop-blur-nav max-w-3xl border-[color:var(--border)] bg-[color-mix(in_srgb,var(--surface)_80%,transparent)]"
+          : "bg-transparent",
       )}
     >
       <div className="w-full md:my-auto">
@@ -112,7 +112,7 @@ export function Navigation() {
               {LANDING.NAV.mainLinks.map((item) => (
                 <Link
                   key={item.label}
-                  className="inline-flex min-h-[44px] items-center px-3 py-2.5 text-gray-900 dark:text-gray-50 transition-colors duration-150 hover:text-gray-900 dark:hover:text-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 rounded-sm"
+                  className="inline-flex min-h-[44px] items-center px-3 py-2.5 text-text-secondary transition-colors duration-fast ease-out-cubic hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:[outline-color:var(--focus-ring)] rounded-sm"
                   href={item.href}
                 >
                   {item.label}
