@@ -182,7 +182,7 @@ export const LANDING: LandingContent = {
       { label: "What's new", href: "/changelog" },
     ],
     signInLabel: "Sign in",
-    ctaLabel: "Preview my week",
+    ctaLabel: "Sign up",
   },
 
   HERO: {
@@ -354,7 +354,7 @@ export const LANDING: LandingContent = {
           "Stock AI avatars (starter set)",
           "Manual + autopilot modes",
         ],
-        ctaLabel: "Preview my week",
+        ctaLabel: "Start free",
       },
       {
         id: "solo",
@@ -369,7 +369,7 @@ export const LANDING: LandingContent = {
           "Google-indexed search article per video",
           "Full stock AI avatar library",
         ],
-        ctaLabel: "Preview my week",
+        ctaLabel: "Pick Solo",
       },
       {
         id: "creator",
@@ -385,7 +385,7 @@ export const LANDING: LandingContent = {
           "HeyGen digital twin \u2014 your face narrates every video",
           "Publish pSEO articles + video embeds to your own WordPress site",
         ],
-        ctaLabel: "Preview my week",
+        ctaLabel: "Pick Creator",
         popular: true,
       },
       {
@@ -402,7 +402,7 @@ export const LANDING: LandingContent = {
           "Publish pSEO + video to your own WordPress site",
           "Deeper performance insights (unlocks after 5 published videos)",
         ],
-        ctaLabel: "Preview my week",
+        ctaLabel: "Pick Studio",
       },
     ],
     faqs: [
@@ -493,7 +493,7 @@ export const LANDING: LandingContent = {
     headline: "You\u2019ll never run another Sunday-night scripting session.",
     subhead:
       "Or never got started? Autopilot runs without you. Your first video batch is ready in under three minutes.",
-    ctaLabel: "Preview my week",
+    ctaLabel: "Plan my week",
     reassurance: "No credit card required. Cancel any time. Takes 3 minutes.",
   },
 
