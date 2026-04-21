@@ -1,146 +1,78 @@
-// Tremor Raw Button [v0.1.1]
+// Tremor Button — now a compatibility shim around the Raycast-style
+// shadcn Button. Kept at this import path so the 40+ legacy callers
+// inherit the new look without touching each file.
+//
+// Variant mapping:
+//   Tremor primary      → shadcn primary
+//   Tremor secondary    → shadcn secondary
+//   Tremor light        → shadcn outline   (transparent bg + hairline border)
+//   Tremor ghost        → shadcn ghost
+//   Tremor destructive  → shadcn danger
+//
+// Tremor's `isLoading` prop resolves to `disabled`; we don't render
+// spinners for user-initiated actions per the design rules (see
+// CLAUDE.md → Interaction rules → Mutations). Callers that relied on
+// the spinner should switch to optimistic updates + toast.undo.
 
-import { Slot } from "@radix-ui/react-slot"
-import { RiLoader2Fill } from "@remixicon/react"
-import React from "react"
-import { tv, type VariantProps } from "tailwind-variants"
+"use client";
 
-import { cx, focusRing } from "@/lib/utils"
+import * as React from "react";
+import {
+  Button as RaycastButton,
+  type ButtonProps as RaycastButtonProps,
+  type ButtonVariant,
+} from "@/components/ui/shadcn/button";
 
-const buttonVariants = tv({
-  base: [
-    // base
-    "relative inline-flex items-center justify-center whitespace-nowrap rounded-md border px-3 py-2 text-center text-sm font-medium shadow-sm transition-all duration-100 ease-in-out active:scale-[0.97] min-h-11",
-    // disabled
-    "disabled:pointer-events-none disabled:shadow-none",
-    // focus
-    focusRing,
-  ],
-  variants: {
-    variant: {
-      primary: [
-        // border
-        "border-transparent",
-        // light: black→gray-500 | dark: white→silver
-        "bg-gradient-to-br from-gray-900 to-gray-500 dark:from-white dark:to-gray-400",
-        // text
-        "text-white dark:text-gray-900",
-        // hover
-        "hover:opacity-90",
-        // disabled — explicit muted gradient so text stays readable
-        "disabled:from-gray-200 disabled:to-gray-300 disabled:text-gray-400",
-        "disabled:dark:from-gray-700 disabled:dark:to-gray-600 disabled:dark:text-gray-400",
-      ],
-      secondary: [
-        // border
-        "border-gray-200 dark:border-transparent",
-        // light: white→light gray | dark: silver→dark
-        "bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-400 dark:to-[#141413]",
-        // text
-        "text-gray-900 dark:text-white",
-        // hover
-        "hover:opacity-90",
-        // disabled
-        "disabled:from-gray-50 disabled:to-gray-100 disabled:text-gray-300 disabled:border-gray-100",
-        "disabled:dark:from-gray-700 disabled:dark:to-gray-800 disabled:dark:text-gray-500 disabled:dark:border-transparent",
-      ],
-      light: [
-        // base
-        "shadow-none",
-        // border
-        "border-transparent",
-        // text color
-        "text-gray-900 dark:text-gray-50",
-        // background color
-        "bg-gray-200 dark:bg-gray-900",
-        // hover color
-        "hover:bg-gray-300/70 dark:hover:bg-gray-800/80",
-        // disabled
-        "disabled:bg-gray-100 disabled:text-gray-400",
-        "disabled:dark:bg-gray-800/50 disabled:dark:text-gray-500",
-      ],
-      ghost: [
-        // base
-        "shadow-none",
-        // border
-        "border-transparent",
-        // text color
-        "text-gray-900 dark:text-gray-50",
-        // hover color
-        "bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800/80",
-        // disabled
-        "disabled:text-gray-400",
-        "disabled:dark:text-gray-500",
-      ],
-      destructive: [
-        // text color
-        "text-white",
-        // border
-        "border-transparent",
-        // background color
-        "bg-red-600 dark:bg-red-700",
-        // hover color
-        "hover:bg-red-700 dark:hover:bg-red-600",
-        // disabled — red-200 bg avoids the invisible red-300+white combo
-        "disabled:bg-red-200 disabled:text-red-500",
-        "disabled:dark:bg-red-950 disabled:dark:text-red-400",
-      ],
-    },
-  },
-  defaultVariants: {
-    variant: "primary",
-  },
-})
+type TremorVariant =
+  | "primary"
+  | "secondary"
+  | "light"
+  | "ghost"
+  | "destructive";
 
-interface ButtonProps
-  extends React.ComponentPropsWithoutRef<"button">,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean
-  isLoading?: boolean
-  loadingText?: string
+const VARIANT_MAP: Record<TremorVariant, ButtonVariant> = {
+  primary: "primary",
+  secondary: "secondary",
+  light: "outline",
+  ghost: "ghost",
+  destructive: "danger",
+};
+
+export interface TremorButtonProps
+  extends Omit<RaycastButtonProps, "variant"> {
+  variant?: TremorVariant;
+  /** Tremor legacy prop — disables the button. No spinner. */
+  isLoading?: boolean;
+  loadingText?: string;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
+export const Button = React.forwardRef<HTMLButtonElement, TremorButtonProps>(
+  function Button(
     {
-      asChild,
-      isLoading = false,
+      variant = "primary",
+      isLoading,
       loadingText,
-      className,
       disabled,
-      variant,
       children,
-      ...props
-    }: ButtonProps,
-    forwardedRef,
-  ) => {
-    const Component = asChild ? Slot : "button"
+      ...rest
+    },
+    ref,
+  ) {
+    const mapped = VARIANT_MAP[variant];
     return (
-      <Component
-        ref={forwardedRef}
-        className={cx(buttonVariants({ variant }), className)}
+      <RaycastButton
+        ref={ref}
+        variant={mapped}
         disabled={disabled || isLoading}
-        {...props}
+        {...rest}
       >
-        {isLoading ? (
-          <span className="pointer-events-none flex shrink-0 items-center justify-center gap-1.5">
-            <RiLoader2Fill
-              className="size-4 shrink-0 animate-spin"
-              aria-hidden="true"
-            />
-            <span className="sr-only">
-              {loadingText ? loadingText : "Loading"}
-            </span>
-            {loadingText ? loadingText : children}
-          </span>
-        ) : (
-          children
-        )}
-      </Component>
-    )
+        {isLoading && loadingText ? loadingText : children}
+      </RaycastButton>
+    );
   },
-)
+);
 
-Button.displayName = "Button"
-
-export { Button, buttonVariants, type ButtonProps }
+// Re-export the Raycast Button's variants + types in case anything
+// imported the Tremor-specific types directly.
+export type ButtonProps = TremorButtonProps;
+export type { ButtonVariant };
