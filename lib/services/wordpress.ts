@@ -25,6 +25,7 @@ import {
   redactSecret,
 } from "@/lib/crypto";
 import {
+  getVideo,
   getWordPressConnection,
   updateWordPressConnection,
 } from "@/lib/services/db";
@@ -257,6 +258,27 @@ export async function publishPost(params: {
   return adapter.publishPost(params);
 }
 
+export async function publishVideoPost(params: {
+  siteUrl: string;
+  username: string;
+  appPassword: string;
+  input: {
+    title: string;
+    videoUrl: string;
+    hook: string;
+    body: string;
+    platform: string;
+    status?: "publish" | "draft" | "pending";
+  };
+}): Promise<WordPressPublishResult> {
+  try {
+    await guardOutbound(params.siteUrl);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Blocked host" };
+  }
+  return adapter.publishVideoPost(params);
+}
+
 // ─── High-level orchestration ────────────────────────────────────────────────
 
 /**
@@ -338,6 +360,88 @@ export async function publishPseoToWordPress(params: {
       redactSecret(appPassword),
       "error=",
       result.error
+    );
+  }
+
+  return { ...result, connection: toPublicConnection(conn) };
+}
+
+/**
+ * Publish a rendered video (by id) through the user's saved WP connection.
+ * Builds a post that embeds the video's R2 URL. Retries once on failure,
+ * same contract as `publishPseoToWordPress`.
+ */
+export async function publishVideoToWordPress(params: {
+  userId: string;
+  videoId: string;
+}): Promise<WordPressPublishResult & { connection?: PublicWordPressConnection }> {
+  const conn = await getWordPressConnection(params.userId);
+  if (!conn) {
+    return { ok: false, error: "No WordPress connection on file" };
+  }
+  if (!conn.enabled) {
+    return { ok: false, error: "WordPress publishing is disabled" };
+  }
+
+  const video = await getVideo(params.videoId);
+  if (!video) return { ok: false, error: "Video not found" };
+  if (video.userId !== params.userId) {
+    return { ok: false, error: "Video does not belong to this user" };
+  }
+  if (!video.outputUrl) {
+    return { ok: false, error: "Video has no rendered output yet" };
+  }
+
+  let appPassword: string;
+  try {
+    appPassword = await decryptAppPassword(conn.encryptedAppPassword);
+  } catch (err) {
+    console.error(
+      "[wordpress] failed to decrypt app password for",
+      params.userId,
+      err instanceof Error ? err.message : "unknown",
+    );
+    return { ok: false, error: "Credentials could not be decoded" };
+  }
+
+  const attempt = () =>
+    publishVideoPost({
+      siteUrl: conn.siteUrl,
+      username: conn.username,
+      appPassword,
+      input: {
+        title: video.title || "New video",
+        videoUrl: video.outputUrl ?? "",
+        hook: video.scriptJson?.hook ?? "",
+        body: video.scriptJson?.body ?? "",
+        platform: video.platform,
+        status: "publish",
+      },
+    });
+
+  let result = await attempt();
+  if (!result.ok) {
+    await new Promise((r) => setTimeout(r, 750));
+    result = await attempt();
+  }
+
+  if (result.ok) {
+    await updateWordPressConnection(params.userId, {
+      lastPublishedAt: new Date().toISOString(),
+    }).catch((err) =>
+      console.warn(
+        "[wordpress] failed to update lastPublishedAt:",
+        err instanceof Error ? err.message : "unknown",
+      ),
+    );
+  } else {
+    console.warn(
+      "[wordpress] video publish failed for user",
+      params.userId,
+      "password=",
+      redactSecret(appPassword),
+      "error=",
+      result.error,
     );
   }
 

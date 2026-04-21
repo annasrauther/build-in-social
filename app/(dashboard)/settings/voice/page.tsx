@@ -30,6 +30,14 @@ type LibraryState =
   | { kind: "saved"; voiceId: string }
   | { kind: "error"; message: string };
 
+type CloneActionState =
+  | { kind: "idle" }
+  | { kind: "deleting" }
+  | { kind: "deleted" }
+  | { kind: "starting" }
+  | { kind: "started" }
+  | { kind: "error"; message: string };
+
 const COPY = APP.SETTINGS_VOICE;
 
 function WaveformBars() {
@@ -58,7 +66,57 @@ export default function VoiceSettings() {
   const [profileError, setProfileError] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewState>({ kind: "idle" });
   const [library, setLibrary] = useState<LibraryState>({ kind: "idle" });
+  const [cloneAction, setCloneAction] = useState<CloneActionState>({ kind: "idle" });
+  const [recordConsent, setRecordConsent] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const handleDeleteClone = useCallback(async () => {
+    if (!window.confirm("Remove your voice clone? Future renders fall back to the library voice until you record a new one.")) {
+      return;
+    }
+    setCloneAction({ kind: "deleting" });
+    try {
+      const res = await fetch("/api/voice/clone", { method: "DELETE" });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        setCloneAction({ kind: "error", message: (j.error as string) ?? APP.COMMON.errorGeneric });
+        return;
+      }
+      setCloneAction({ kind: "deleted" });
+      setProfile((p) => (p ? { ...p, voiceProfileId: undefined } : p));
+    } catch {
+      setCloneAction({ kind: "error", message: APP.COMMON.errorGeneric });
+    }
+  }, []);
+
+  const handleStartClone = useCallback(async () => {
+    const file = fileRef.current?.files?.[0];
+    if (!file) {
+      setCloneAction({ kind: "error", message: "Pick a 60\u2013120s audio clip first." });
+      return;
+    }
+    if (!recordConsent) {
+      setCloneAction({ kind: "error", message: "Consent is required before training a clone." });
+      return;
+    }
+    setCloneAction({ kind: "starting" });
+    try {
+      const res = await fetch("/api/voice/clone", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ fileName: file.name, consent: true }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setCloneAction({ kind: "error", message: (j.error as string) ?? APP.COMMON.errorGeneric });
+        return;
+      }
+      setCloneAction({ kind: "started" });
+    } catch {
+      setCloneAction({ kind: "error", message: APP.COMMON.errorGeneric });
+    }
+  }, [recordConsent]);
 
   const handleChangeLibraryVoice = useCallback(async (voiceId: string) => {
     setLibrary({ kind: "saving", voiceId });
@@ -304,6 +362,80 @@ export default function VoiceSettings() {
 
             {profile && !cloneActive && (
               <p className="text-sm text-gray-500">{COPY.previewComingSoon}</p>
+            )}
+
+            {profile && canPreviewByPlan && (
+              <div className="mt-6 space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-50">
+                    {cloneActive ? "Re-record your clone" : "Train a new clone"}
+                  </h3>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Upload a 60\u2013120 second clip of your own voice. Future
+                    renders will use this clone instead of the library voice.
+                    Replacing a clone revokes the old one.
+                  </p>
+                </div>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="audio/*"
+                  className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-md file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-sm file:text-brand-700 hover:file:bg-brand-100 dark:file:bg-brand-950/30 dark:file:text-brand-300"
+                />
+                <label className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={recordConsent}
+                    onChange={(e) => setRecordConsent(e.target.checked)}
+                  />
+                  <span>
+                    I consent to Build In Social training a voice clone from
+                    this audio. I can revoke it at any time.
+                  </span>
+                </label>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    variant="primary"
+                    onClick={handleStartClone}
+                    disabled={cloneAction.kind === "starting"}
+                  >
+                    {cloneAction.kind === "starting"
+                      ? "Uploading\u2026"
+                      : cloneActive
+                        ? "Replace clone"
+                        : "Start clone training"}
+                  </Button>
+                  {cloneActive && (
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteClone}
+                      disabled={cloneAction.kind === "deleting"}
+                    >
+                      {cloneAction.kind === "deleting"
+                        ? "Removing\u2026"
+                        : "Delete my clone"}
+                    </Button>
+                  )}
+                </div>
+                {cloneAction.kind === "started" && (
+                  <p className="text-xs text-green-700 dark:text-green-400">
+                    Training started. We&apos;ll email you when the clone is
+                    ready.
+                  </p>
+                )}
+                {cloneAction.kind === "deleted" && (
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Clone removed. Future renders use the library voice until
+                    you train a new one.
+                  </p>
+                )}
+                {cloneAction.kind === "error" && (
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {cloneAction.message}
+                  </p>
+                )}
+              </div>
             )}
           </div>
         </div>

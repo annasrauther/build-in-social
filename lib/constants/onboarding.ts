@@ -10,14 +10,12 @@ export const STAGGER_CARDS = 0.06;
 export const STORAGE_KEY = "buildinsocial_onboarding";
 export const TTL_MS = 48 * 60 * 60 * 1000; // 48 hours
 
-export const TOTAL_STEPS = 5;
+export const TOTAL_STEPS = 3;
 
 export const STEP_ROUTES: Record<number, string> = {
   1: "/onboarding/start",
-  2: "/onboarding/platforms",
-  3: "/onboarding/voice",
-  4: "/onboarding/plan-preview",
-  5: "/onboarding/activation",
+  2: "/onboarding/voice",
+  3: "/onboarding/plan-preview",
 };
 
 export const containerVariants: Variants = {

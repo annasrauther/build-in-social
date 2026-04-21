@@ -1,17 +1,16 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { OnboardingHeading } from "@/components/onboarding/OnboardingHeading";
-import { PremiumInput } from "@/components/onboarding/PremiumInput";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import { EASE_SPRING } from "@/lib/constants/onboarding";
 import { APP } from "@/content/app";
 import { PLATFORM_CONFIGS } from "@/lib/utils/platform-config";
 import type { ContentMode } from "@/lib/types/onboarding";
 import type { Platform } from "@/lib/types/user";
-import { Button } from "@/components/tremor/Button";
 
 /* -------------------------------------------------------------------------- */
 /*  Skeleton week — honest preview, no fake hooks                              */
@@ -43,8 +42,11 @@ function buildSkeletonWeek(platforms: Platform[]): SkeletonSlot[] {
 /* -------------------------------------------------------------------------- */
 
 export default function PlanPreviewPage() {
+  const router = useRouter();
   const { data, update, goToStep } = useOnboarding();
   const shouldReduceMotion = useReducedMotion();
+  const persistedRef = useRef(false);
+  const [activating, setActivating] = useState(false);
 
   // Pre-select Autopilot: CLAUDE.md rule #3 — "Autopilot is a first-class
   // feature, not a fallback." Users can still switch to Manual in one click.
@@ -52,6 +54,9 @@ export default function PlanPreviewPage() {
     data.contentMode ?? "autopilot",
   );
 
+  // Platforms default to YouTube + LinkedIn since the platforms onboarding
+  // step has moved to contextual settings. Users finalize platforms on first
+  // publish attempt or from /settings/platforms.
   const platforms = useMemo<Platform[]>(
     () => (data.platforms.length > 0 ? data.platforms : ["youtube", "linkedin"]),
     [data.platforms],
@@ -59,20 +64,57 @@ export default function PlanPreviewPage() {
 
   const slots = useMemo(() => buildSkeletonWeek(platforms), [platforms]);
 
+  async function handleActivate() {
+    if (!selectedMode || activating) return;
+
+    setActivating(true);
+    update({ contentMode: selectedMode, currentStep: 3 });
+
+    // Mirror onboarding selections into WeekContext localStorage keys.
+    if (platforms.length > 0) {
+      localStorage.setItem("sg_onboard_platforms", JSON.stringify(platforms));
+    }
+    if (data.niche) localStorage.setItem("sg_user_niche", data.niche);
+    if (data.tone) localStorage.setItem("sg_user_tone", data.tone);
+
+    // Persist to DB (idempotent — /api/onboard/complete handles re-entry).
+    if (!persistedRef.current) {
+      persistedRef.current = true;
+      try {
+        await fetch("/api/onboard/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            niche: data.niche,
+            tone: data.tone,
+            platforms,
+            voiceChoice: data.voiceChoice,
+            libraryVoiceId: data.libraryVoiceId,
+            selectedTier: data.selectedTier,
+            productName: data.productName,
+            productDescription: data.productDescription,
+            voiceConsentAt: data.voiceConsentAt,
+          }),
+        });
+      } catch (err) {
+        console.error("[onboarding] failed to persist:", err);
+        persistedRef.current = false; // allow retry
+      }
+    }
+
+    router.push("/plan/current");
+  }
+
   const entryDelay = (base: number) => (shouldReduceMotion ? 0 : base);
   const entryDuration = shouldReduceMotion ? 0 : 0.28;
 
   return (
     <OnboardingShell
-      step={4}
-      continueLabel={APP.ONBOARDING.step5.cta}
-      continueDisabled={selectedMode === null}
-      onContinue={() => {
-        if (!selectedMode) return;
-        update({ contentMode: selectedMode, currentStep: 5 });
-        goToStep(5); // → /onboarding/activation
-      }}
-      onBack={() => goToStep(3)}
+      step={3}
+      continueLabel={activating ? "Activating…" : APP.ONBOARDING.step5.cta}
+      continueDisabled={selectedMode === null || activating}
+      onContinue={handleActivate}
+      onBack={() => goToStep(2)}
       wide
     >
       <motion.div
@@ -343,58 +385,6 @@ export default function PlanPreviewPage() {
           >
             {APP.ONBOARDING.step5.modeNote}
           </p>
-        </motion.div>
-
-        {/* Email capture — below mode choice, constrained width */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            delay: entryDelay(0.4),
-            duration: entryDuration,
-            ease: [...EASE_SPRING],
-          }}
-          className="mt-10 mx-auto"
-          style={{ maxWidth: 480 }}
-        >
-          <div
-            className="rounded-[var(--radius-lg)] p-4"
-            style={{ backgroundColor: "var(--bg-elevated)" }}
-          >
-            <div className="flex items-end gap-3">
-              <div className="flex-1">
-                <PremiumInput
-                  label="Save your progress"
-                  type="email"
-                  value={data.recoveryEmail || ""}
-                  onChange={(e) => update({ recoveryEmail: e.target.value })}
-                  placeholder="you@example.com"
-                />
-              </div>
-              <Button
-                variant="ghost"
-                className="text-sm"
-                disabled={
-                  !data.recoveryEmail ||
-                  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.recoveryEmail)
-                }
-                onClick={() => {
-                  /* saved via update already */
-                }}
-              >
-                Save
-              </Button>
-            </div>
-            <p
-              className="mt-2"
-              style={{
-                fontSize: "var(--type-supporting-mobile)",
-                color: "var(--text-tertiary)",
-              }}
-            >
-              We&apos;ll email you a link to pick up where you left off.
-            </p>
-          </div>
         </motion.div>
       </motion.div>
     </OnboardingShell>

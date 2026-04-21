@@ -51,3 +51,34 @@
 
 ## Discovered
 <!-- Ralph appends newly identified tasks here during development -->
+- [x] Task: Implement full HeyGen avatar render pipeline — mock service + real service (HEYGEN_API_KEY gates), /api/render/avatar route, /api/render/avatar-process worker, avatar picker UI on video detail page, remove "Coming soon" from billing settings
+
+---
+
+## Persona Swarm Fix Plan — 2026-04-21
+<!-- 15 issues identified across paid user personas. Prioritized by severity. -->
+
+### CRITICAL — Product Spec Violations
+
+- [ ] Task: In Sidebar.tsx and MobileSidebar.tsx, remove the "Soon" badge from the Avatar Mode nav item, update its href from /waitlist to /videos, and update the link label to match active navigation style — agents: [@implementer, @ui-crafter]
+- [ ] Task: Add a redirect from /waitlist to /videos (Next.js redirect in next.config.ts or a lightweight route handler in app/(marketing)/waitlist/page.tsx) so the waitlist page no longer accepts signups now that Avatar Mode is live — agents: [@implementer, @ux-critic]
+
+### HIGH — UX / Flow
+
+- [ ] Task: Persist the user's last-used plan mode (manual vs autopilot) in localStorage (key: bis_last_mode) and read it on mode-choose screen load; if a value is present, skip the choose screen entirely and surface a 1-click "Switch mode" override link instead — agents: [@architect, @implementer, @ux-critic]
+- [ ] Task: Rename the "This week" sidebar nav item to "Weekly Plan" in Sidebar.tsx, MobileSidebar.tsx, and BottomNav.tsx (all nav label strings must go through content/app.ts) — agents: [@copywriter, @implementer, @ui-crafter]
+- [ ] Task: Update the page subtitle on the Dashboard page to clearly describe its purpose as status overview (e.g. "Your domain presence at a glance"), and update the Weekly Plan page subtitle to describe it as the action/generation hub (e.g. "Build In Social is generating this week's content") — all strings via content/app.ts — agents: [@copywriter, @ui-crafter, @ux-critic]
+- [ ] Task: Investigate the post-publish → metrics → dashboard pipeline: trace how api/ingest receives intelligence data, verify the data write path to the database, confirm the top performer card query reads from the same table, and fix any broken link so users with 31+ posted videos see real metrics instead of empty state — agents: [@architect, @implementer, @tester]
+
+### MEDIUM — Copy / Language / Feature Gap
+
+- [ ] Task: In content/app.ts, update the quality gate Q1 prompt copy: replace "what you shipped" with "what you worked on or figured out", and add non-founder placeholder examples alongside "Launched Stripe billing" — include "Traced a re-render bug", "Published a thread on TypeScript generics", and "Closed a pilot deal" — no logic changes, copy only — agents: [@copywriter, @ui-crafter]
+- [ ] Task: Add a collapsible script preview section to each video card in the Weekly Plan list view (components/plan/): show full script body on expand, collapsed by default showing only title and 2-line hook, use Framer Motion for the collapse animation — agents: [@implementer, @ui-crafter, @ux-critic]
+- [ ] Task: Add a "Paste your content" optional long-form textarea to the quality gate component (QualityGate.tsx) as an overflow input beneath Q1, labelled "Or paste an existing article, newsletter, or thread" — wire its value into the plan/generate request body as optional field sourceContent — agents: [@architect, @implementer, @tester, @ui-crafter]
+
+### LOWER — UX Polish
+
+- [ ] Task: Replace the dimmed/locked top performer card placeholder with a progress indicator: display "Post X more videos to unlock performance insights" with a progress bar showing videos-posted vs. threshold (5), using the existing intelligence panel gate logic — agents: [@ui-crafter, @implementer, @copywriter]
+- [ ] Task: Rewrite the copy in QuotaExhaustedDialog and all billing upgrade CTAs to lead with the pSEO compounding benefit ("Every video you post generates a permanent search article for your domain") before mentioning video count — all strings via content/app.ts — agents: [@copywriter, @ui-crafter]
+- [ ] Task: Audit BottomNav.tsx and ensure Dashboard, Weekly Plan, and Videos are surfaced as persistent bottom navigation items on mobile (≤768px); verify touch targets are ≥44px and the component renders on all three routes — agents: [@ui-crafter, @implementer, @ux-critic]
+- [ ] Task: Add a Content Language field (English / Spanish / Bilingual) to the profile settings page (app/(dashboard)/settings/profile/); persist the value to the user profile in the database; pass it as a contentLanguage parameter in the /api/plan/generate request body and thread it through the Claude prompt — agents: [@architect, @implementer, @tester, @security-auditor]

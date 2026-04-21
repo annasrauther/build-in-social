@@ -94,7 +94,8 @@ export async function POST(req: NextRequest) {
     // Hard-cap policy: when a user is at cap, we return 402 with
     // { error: "quota_exhausted", tier, cap, resetAt }. We NEVER auto-charge
     // for extras — the client surfaces an "Upgrade to {nextTier}" CTA instead.
-    const deduction = await deductCreditForRender(userId, videoId);
+    // Faceless renders bill 1 credit per video (see lib/credits/costs.ts).
+    const deduction = await deductCreditForRender(userId, videoId, "faceless");
     if (!deduction.ok) {
       if (deduction.reason === "INSUFFICIENT_CREDITS") {
         const user = await getUserByClerkId(userId).catch(() => null);

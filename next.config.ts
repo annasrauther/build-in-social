@@ -24,6 +24,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
+  async redirects() {
+    return [
+      { source: "/waitlist", destination: "/videos", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {

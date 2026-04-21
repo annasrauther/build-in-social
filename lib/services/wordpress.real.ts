@@ -206,7 +206,100 @@ export async function publishPost(params: {
   };
 }
 
-// TODO: video post support
-// When we ship the video-embed adapter, add a `publishVideoPost` function here
-// that renders the video oEmbed / direct URL into a WP post. Keep the same
-// auth pattern (Application Passwords via Basic auth) and reuse wpFetch.
+/**
+ * Publish a video post to WordPress — embeds the rendered MP4 via an HTML5
+ * `<video>` tag that points at its R2 URL. Title + summary are driven by the
+ * script's hook + body. Requires the same Basic-auth app-password flow as
+ * `publishPost`.
+ */
+export async function publishVideoPost(params: {
+  siteUrl: string;
+  username: string;
+  appPassword: string;
+  input: {
+    title: string;
+    videoUrl: string;
+    hook: string;
+    body: string;
+    platform: string;
+    status?: "publish" | "draft" | "pending";
+  };
+}): Promise<WordPressPublishResult> {
+  if (!params.input.title || !params.input.videoUrl) {
+    return { ok: false, error: "Missing title or video URL" };
+  }
+
+  const base = params.siteUrl.replace(/\/+$/, "");
+  const authHeader = basicAuth(params.username, params.appPassword);
+
+  // Minimal HTML wrapper — title + <video> + hook + body paragraphs. Keeps
+  // rendering predictable across WP themes without depending on Gutenberg
+  // block schemas.
+  const html = [
+    `<figure class="wp-block-video"><video controls src="${escapeAttr(params.input.videoUrl)}"></video></figure>`,
+    params.input.hook ? `<p><strong>${escapeHtml(params.input.hook)}</strong></p>` : "",
+    params.input.body ? `<p>${escapeHtml(params.input.body)}</p>` : "",
+    `<p><em>Shared to ${escapeHtml(params.input.platform)} via Build In Social.</em></p>`,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const body = JSON.stringify({
+    title: params.input.title,
+    content: html,
+    status: params.input.status ?? "publish",
+  });
+
+  let res: Response;
+  try {
+    res = await wpFetch(`${base}/wp-json/wp/v2/posts`, {
+      method: "POST",
+      headers: {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+      },
+      body,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return { ok: false, error: "WordPress site did not respond in time" };
+    }
+    if (err instanceof Error && err.name === "WpRedirectError") {
+      return { ok: false, error: err.message };
+    }
+    return { ok: false, error: "Could not reach the WordPress REST API" };
+  }
+
+  if (res.status === 401 || res.status === 403) {
+    return { ok: false, error: "WordPress rejected the credentials" };
+  }
+  if (!res.ok) {
+    return { ok: false, error: `WordPress returned ${res.status}` };
+  }
+
+  let json: { id?: number; link?: string } | null = null;
+  try {
+    json = (await res.json()) as { id?: number; link?: string };
+  } catch {
+    return { ok: false, error: "WordPress returned an unexpected response" };
+  }
+
+  return {
+    ok: true,
+    wpPostId: typeof json.id === "number" ? json.id : undefined,
+    postUrl: typeof json.link === "string" ? json.link : undefined,
+  };
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttr(s: string): string {
+  return escapeHtml(s);
+}

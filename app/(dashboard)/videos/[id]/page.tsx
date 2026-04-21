@@ -14,6 +14,21 @@ import { splitScriptIntoThread } from "@/lib/services/thread";
 import { APP } from "@/content/app";
 import type { Video } from "@/lib/types/video";
 import type { CaptionStyle } from "@/lib/types/caption";
+import type { HeyGenAvatar } from "@/lib/services/heygen";
+import type { Series, SeriesMode } from "@/lib/types/series";
+
+/**
+ * Collapse a series' 4-mode setting onto the video-page toggle, which only
+ * exposes faceless vs avatar. Combo defers to the user's per-video choice
+ * (the combo picker runs server-side when the render job is built), so we
+ * leave the default at faceless. Stock-ai and HeyGen both land on "avatar"
+ * from the UI's point of view; the render endpoint picks the right
+ * RenderKind based on the selected avatar.
+ */
+function seriesDefaultRenderMode(mode: SeriesMode): "faceless" | "avatar" {
+  if (mode === "stock-ai-avatar" || mode === "heygen-avatar") return "avatar";
+  return "faceless";
+}
 
 const MAX_REVISIONS_PER_VIDEO = 3;
 const NOTE_MAX = 500;
@@ -40,6 +55,45 @@ export default function VideoDetailPage({ params }: PageProps) {
 
   // Caption style state — Phase 1: local only, will be sent with render job in Phase 2
   const [captionStyle, setCaptionStyle] = useState<CaptionStyle>("minimal");
+
+  // Render mode state. Seeded to "faceless"; if the video was generated as
+  // part of a series, an effect below replaces this with the series' default.
+  const [renderMode, setRenderMode] = useState<"faceless" | "avatar">("faceless");
+  const [userOverrodeMode, setUserOverrodeMode] = useState(false);
+  const [seriesDefault, setSeriesDefault] = useState<Series | null>(null);
+  const [avatars, setAvatars] = useState<HeyGenAvatar[]>([]);
+  const [selectedAvatarId, setSelectedAvatarId] = useState<string>("");
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>("");
+  const [renderSubmitting, setRenderSubmitting] = useState(false);
+  const [renderJobId, setRenderJobId] = useState<string | null>(null);
+  const [renderError, setRenderError] = useState<string | null>(null);
+
+  // If this video is attached to a series, fetch the series so we can default
+  // the render mode to its setting. User can still override — we track that
+  // separately so the default doesn't clobber their choice.
+  useEffect(() => {
+    if (!video?.seriesId) return;
+    let cancelled = false;
+    fetch(`/api/series/${video.seriesId}`)
+      .then((r) => r.json())
+      .then((j) => {
+        if (cancelled || !j?.data) return;
+        const s = j.data as Series;
+        setSeriesDefault(s);
+        if (!userOverrodeMode) {
+          setRenderMode(seriesDefaultRenderMode(s.mode));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [video?.seriesId, userOverrodeMode]);
+
+  function chooseRenderMode(next: "faceless" | "avatar") {
+    setUserOverrodeMode(true);
+    setRenderMode(next);
+  }
 
   const revisionCount = video?.revisionCount ?? 0;
   const revisionsRemaining = Math.max(0, MAX_REVISIONS_PER_VIDEO - revisionCount);
@@ -81,6 +135,77 @@ export default function VideoDetailPage({ params }: PageProps) {
       setRevisionError(APP.VIDEO_DETAIL.revisionError);
     } finally {
       setRevisionSubmitting(false);
+    }
+  }
+
+  // Fetch avatars when avatar mode is selected
+  useEffect(() => {
+    if (renderMode !== "avatar" || avatars.length > 0) return;
+    fetch("/api/heygen/avatars")
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.data) {
+          setAvatars(j.data as HeyGenAvatar[]);
+          if ((j.data as HeyGenAvatar[]).length > 0) {
+            setSelectedAvatarId((j.data as HeyGenAvatar[])[0].avatar_id);
+          }
+        }
+      })
+      .catch(() => {});
+  }, [renderMode, avatars.length]);
+
+  async function submitRender() {
+    if (!video) return;
+    setRenderSubmitting(true);
+    setRenderError(null);
+    try {
+      let res: Response;
+      if (renderMode === "avatar") {
+        // Derive the billing kind from the series config when available.
+        // Stock AI avatars cost 1 credit; HeyGen (licensed or twin) costs 15.
+        // Endpoint defaults to heygen-licensed if renderKind is omitted.
+        const kind =
+          seriesDefault?.mode === "stock-ai-avatar"
+            ? "stock-ai-avatar"
+            : seriesDefault?.mode === "heygen-avatar" &&
+                seriesDefault.heygenAvatarSource === "twin"
+              ? "heygen-twin"
+              : "heygen-licensed";
+        res = await fetch("/api/render/avatar", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            videoId: video.id,
+            avatarId: selectedAvatarId,
+            voiceId: selectedVoiceId,
+            renderKind: kind,
+          }),
+        });
+      } else {
+        res = await fetch("/api/render/faceless", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ videoId: video.id }),
+        });
+      }
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (res.status === 402) {
+          setRenderError(
+            j?.message ??
+              "You've reached your monthly video limit. Upgrade to continue."
+          );
+        } else {
+          setRenderError(j?.error ?? "Build In Social couldn't start the render. Try again.");
+        }
+        return;
+      }
+      if (j?.data?.jobId) setRenderJobId(j.data.jobId);
+      setVideo((prev) => prev ? { ...prev, status: "rendering" } : prev);
+    } catch {
+      setRenderError("Build In Social couldn't start the render. Try again.");
+    } finally {
+      setRenderSubmitting(false);
     }
   }
 
@@ -181,6 +306,27 @@ export default function VideoDetailPage({ params }: PageProps) {
                 <p className="mt-2 text-base text-gray-900 dark:text-gray-50">
                   {video.scriptJson.hook}
                 </p>
+                {video.platformHooks && Object.keys(video.platformHooks).length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Platform-native hooks
+                    </p>
+                    <ul className="mt-1.5 space-y-1.5">
+                      {(["youtube", "instagram", "linkedin", "x"] as const).map((p) => {
+                        const h = video.platformHooks?.[p];
+                        if (!h) return null;
+                        return (
+                          <li key={p} className="text-xs">
+                            <span className="inline-block min-w-[70px] font-medium text-gray-600 dark:text-gray-300 capitalize">
+                              {p}
+                            </span>
+                            <span className="text-gray-700 dark:text-gray-200">{h}</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
                 <Divider />
                 {/* Script section — for X platform with thread data, show ThreadPreview; else plain text */}
                 {video.platform === "x" ? (
@@ -331,6 +477,136 @@ export default function VideoDetailPage({ params }: PageProps) {
                 </div>
               </Card>
 
+              {/* Render mode section — shown when video is draft/approved and not yet rendered */}
+              {(video.status === "draft" || video.status === "approved") && !video.outputUrl && (
+                <Card className="p-6">
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                    <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      {APP.VIDEO_DETAIL.RENDER_MODE.sectionTitle}
+                    </h2>
+                    {seriesDefault && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Series default: <Badge variant="default">{seriesDefault.mode}</Badge>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Mode picker */}
+                  <div className="flex gap-3 mb-4">
+                    <button
+                      type="button"
+                      onClick={() => chooseRenderMode("faceless")}
+                      className={`flex-1 rounded-lg border p-3 text-left transition-colors ${
+                        renderMode === "faceless"
+                          ? "border-brand-500 bg-brand-50 dark:bg-brand-950/20"
+                          : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
+                      }`}
+                    >
+                      <span className="block text-sm font-medium text-gray-900 dark:text-gray-50">
+                        {APP.VIDEO_DETAIL.RENDER_MODE.facelessLabel}
+                      </span>
+                      <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {APP.VIDEO_DETAIL.RENDER_MODE.facelessDescription}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => chooseRenderMode("avatar")}
+                      className={`flex-1 rounded-lg border p-3 text-left transition-colors ${
+                        renderMode === "avatar"
+                          ? "border-brand-500 bg-brand-50 dark:bg-brand-950/20"
+                          : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
+                      }`}
+                    >
+                      <span className="block text-sm font-medium text-gray-900 dark:text-gray-50">
+                        {APP.VIDEO_DETAIL.RENDER_MODE.avatarLabel}
+                        <Badge variant="success" className="ml-2 text-xs">New</Badge>
+                      </span>
+                      <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {APP.VIDEO_DETAIL.RENDER_MODE.avatarDescription}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Avatar / voice selectors — only shown in avatar mode */}
+                  {renderMode === "avatar" && (
+                    <div className="space-y-3 mb-4">
+                      <div>
+                        <label
+                          htmlFor="avatar-select"
+                          className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
+                        >
+                          {APP.VIDEO_DETAIL.RENDER_MODE.selectAvatarLabel}
+                        </label>
+                        <select
+                          id="avatar-select"
+                          value={selectedAvatarId}
+                          onChange={(e) => setSelectedAvatarId(e.target.value)}
+                          className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50"
+                        >
+                          {avatars.length === 0 ? (
+                            <option value="">Loading avatars...</option>
+                          ) : (
+                            avatars.map((a) => (
+                              <option key={a.avatar_id} value={a.avatar_id}>
+                                {a.avatar_name} ({a.gender})
+                              </option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="voice-select"
+                          className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1"
+                        >
+                          {APP.VIDEO_DETAIL.RENDER_MODE.selectVoiceLabel}
+                        </label>
+                        <input
+                          id="voice-select"
+                          type="text"
+                          value={selectedVoiceId}
+                          onChange={(e) => setSelectedVoiceId(e.target.value)}
+                          placeholder="Voice ID (optional)"
+                          className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-50"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {renderError && (
+                    <p role="alert" className="mb-3 text-sm text-red-600 dark:text-red-400">
+                      {renderError}
+                    </p>
+                  )}
+
+                  <Button
+                    onClick={submitRender}
+                    disabled={
+                      renderSubmitting ||
+                      (renderMode === "avatar" && !selectedAvatarId)
+                    }
+                  >
+                    {renderSubmitting
+                      ? renderMode === "avatar"
+                        ? APP.VIDEO_DETAIL.RENDER_MODE.avatarRendering
+                        : APP.VIDEO_DETAIL.RENDER_MODE.renderingStatus
+                      : APP.VIDEO_DETAIL.RENDER_MODE.renderCta}
+                  </Button>
+                </Card>
+              )}
+
+              {/* Rendering status */}
+              {video.status === "rendering" && !video.outputUrl && (
+                <Card className="p-6">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {renderJobId
+                      ? APP.VIDEO_DETAIL.RENDER_MODE.renderingStatus
+                      : APP.VIDEO_DETAIL.renderingHint}
+                  </p>
+                </Card>
+              )}
+
               <Card className="p-6">
                 <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   {APP.VIDEO_DETAIL.playVideo}
@@ -355,7 +631,7 @@ export default function VideoDetailPage({ params }: PageProps) {
                 ) : (
                   <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
                     {video.status === "rendering"
-                      ? "Build In Social is rendering your video..."
+                      ? APP.VIDEO_DETAIL.renderingHint
                       : APP.VIDEO_DETAIL.notRendered}
                   </p>
                 )}

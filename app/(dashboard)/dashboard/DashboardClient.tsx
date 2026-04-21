@@ -22,6 +22,7 @@ interface UsageResponse {
 interface DashboardClientProps {
   profile: User;
   videos: Video[];
+  topPerformer: Video | null;
 }
 
 function greetingFor(now = new Date()): string {
@@ -44,7 +45,7 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
   );
 }
 
-export default function DashboardClient({ profile, videos }: DashboardClientProps) {
+export default function DashboardClient({ profile, videos, topPerformer }: DashboardClientProps) {
   const { mode: weekMode } = useWeek();
   const approved = videos.filter(
     (v) => v.status === "approved" || v.status === "ready" || v.status === "posted"
@@ -239,8 +240,10 @@ export default function DashboardClient({ profile, videos }: DashboardClientProp
           )}
         </motion.div>
 
-        {/* Intelligence panel — spec rule: hidden until 5+ published videos */}
-        {showIntelligencePanel ? (
+        {/* Top-performer card — shown only once the user has 5+ published
+            videos so there's actually signal to surface. Silent intelligence
+            data collection continues regardless. */}
+        {showIntelligencePanel && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -256,31 +259,20 @@ export default function DashboardClient({ profile, videos }: DashboardClientProp
             <p style={{ fontSize: "var(--type-supporting-desktop)", color: "var(--text-tertiary)", marginBottom: 12 }}>
               {APP.DASHBOARD.topPerformer}
             </p>
-            <p style={{ fontSize: "var(--type-body-mobile)", color: "var(--text-tertiary)" }}>
-              {APP.DASHBOARD.topPerformerEmpty}
-            </p>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
-            style={{
-              borderRadius: "var(--radius-lg)",
-              border: "1px solid var(--border-default)",
-              backgroundColor: "var(--bg-surface)",
-              padding: 24,
-              boxShadow: "var(--shadow-sm)",
-              opacity: 0.6,
-            }}
-            aria-hidden="true"
-          >
-            <p style={{ fontSize: "var(--type-supporting-desktop)", color: "var(--text-tertiary)", marginBottom: 12 }}>
-              {APP.DASHBOARD.topPerformer}
-            </p>
-            <p style={{ fontSize: "var(--type-body-mobile)", color: "var(--text-tertiary)" }}>
-              {APP.DASHBOARD.topPerformerSub}
-            </p>
+            {topPerformer ? (
+              <>
+                <p style={{ fontSize: 15, fontWeight: 600, color: "var(--text-primary)", marginBottom: 4 }} className="line-clamp-2">
+                  {topPerformer.title}
+                </p>
+                <p style={{ fontSize: "var(--type-supporting-desktop)", color: "var(--text-tertiary)" }}>
+                  {topPerformer.platform} · {topPerformer.viewCount?.toLocaleString() ?? 0} views
+                </p>
+              </>
+            ) : (
+              <p style={{ fontSize: "var(--type-body-mobile)", color: "var(--text-tertiary)" }}>
+                {APP.DASHBOARD.topPerformerEmpty}
+              </p>
+            )}
           </motion.div>
         )}
       </div>

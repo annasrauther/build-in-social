@@ -341,8 +341,8 @@ export default function BillingSettings() {
                 className="scroll-mt-10 font-medium text-gray-900 dark:text-gray-50"
               >
                 {APP.SETTINGS_BILLING.avatarTitle}
-                <Badge variant="default" className="ml-2">
-                  {APP.SETTINGS_BILLING.avatarComingSoon}
+                <Badge variant="success" className="ml-2">
+                  {APP.SETTINGS_BILLING.avatarBadge}
                 </Badge>
               </h2>
               <p className="mt-1 text-sm leading-6 text-gray-500">
@@ -350,9 +350,9 @@ export default function BillingSettings() {
               </p>
             </div>
             <div className="md:col-span-2">
-              <Button asChild variant="secondary">
-                <Link href="/waitlist">{APP.SETTINGS_BILLING.avatarCta}</Link>
-              </Button>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {APP.SETTINGS_BILLING.avatarDescription}
+              </p>
             </div>
           </div>
         </section>

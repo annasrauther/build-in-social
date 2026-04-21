@@ -110,13 +110,13 @@ export async function generateWeeklyPlan(params: {
   weekNumber: number;
   qualityGateAnswers?: [string, string, string];
   autopilotAngles?: string[];
-}): Promise<(Pick<Video, "title" | "scriptJson" | "platform" | "dayOfWeek" | "facelessStyle" | "durationSeconds" | "contentType"> & { confidenceScore: number })[]> {
+}): Promise<(Pick<Video, "title" | "scriptJson" | "platform" | "dayOfWeek" | "facelessStyle" | "durationSeconds" | "contentType" | "platformHooks"> & { confidenceScore: number })[]> {
   await delay(1800);
 
   const { getPlatformConfig } = await import("@/lib/utils/platform-config");
   const days: Video["dayOfWeek"][] = ["mon", "tue", "wed", "thu", "fri"];
 
-  const result: (Pick<Video, "title" | "scriptJson" | "platform" | "dayOfWeek" | "facelessStyle" | "durationSeconds" | "contentType"> & { confidenceScore: number })[] = [];
+  const result: (Pick<Video, "title" | "scriptJson" | "platform" | "dayOfWeek" | "facelessStyle" | "durationSeconds" | "contentType" | "platformHooks"> & { confidenceScore: number })[] = [];
 
   const isManual = params.mode === "manual";
   const userContext = isManual && params.qualityGateAnswers
@@ -148,6 +148,15 @@ export async function generateWeeklyPlan(params: {
         ? `${hooks[i % hooks.length].split("—")[0].trim()} — ${userContext.slice(0, 60)}.`
         : hooks[i % hooks.length];
 
+      // Per-platform hooks: the primary platform carries its own hook, and
+      // every other surface gets a native-to-platform rewrite of the same
+      // angle. Lets the renderer cross-post a single video body under 4
+      // different opening lines without re-rendering.
+      const platformHooks: Partial<Record<Platform, string>> = {};
+      for (const p of ["youtube", "instagram", "linkedin", "x"] as Platform[]) {
+        platformHooks[p] = PLATFORM_HOOKS[p][i % PLATFORM_HOOKS[p].length];
+      }
+
       result.push({
         title: `${platform.charAt(0).toUpperCase() + platform.slice(1)} — ${angle.slice(0, 55)}`,
         scriptJson: {
@@ -162,6 +171,7 @@ export async function generateWeeklyPlan(params: {
         facelessStyle: facelessStyles[i % facelessStyles.length],
         durationSeconds: cfg.optimalDurationSeconds,
         contentType: isManual ? "founder-story" : "domain-tip",
+        platformHooks,
         confidenceScore: isManual ? 8 : 7,
       });
       dayIndex++;

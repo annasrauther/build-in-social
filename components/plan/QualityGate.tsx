@@ -6,7 +6,7 @@ import { Button } from "@/components/tremor/Button";
 import { APP } from "@/content/app";
 
 interface QualityGateProps {
-  onSubmit: (answers: [string, string, string]) => void;
+  onSubmit: (answers: [string, string, string], sourceContent?: string) => void;
   onAutopilot: () => void;
   loading: boolean;
   /** Optional server-side pushback message when specificityScore < 5. */
@@ -53,6 +53,8 @@ function scoreSpecificity(answers: string[]): number {
 
 export function QualityGate({ onSubmit, onAutopilot, loading, serverPushback }: QualityGateProps) {
   const [answers, setAnswers] = useState<[string, string, string]>(["", "", ""]);
+  const [sourceContent, setSourceContent] = useState("");
+  const [pasteOpen, setPasteOpen] = useState(false);
   const [error, setError] = useState("");
   const [score, setScore] = useState(0);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -82,7 +84,7 @@ export function QualityGate({ onSubmit, onAutopilot, loading, serverPushback }: 
       setError("Each answer needs more detail — specificity is what makes the content great.");
       return;
     }
-    onSubmit(answers);
+    onSubmit(answers, sourceContent.trim() || undefined);
   }
 
   const handleAutoExpand = useCallback((e: React.FormEvent<HTMLTextAreaElement>) => {
@@ -170,6 +172,64 @@ export function QualityGate({ onSubmit, onAutopilot, loading, serverPushback }: 
             </div>
           );
         })}
+      </div>
+
+      {/* Optional source content paste */}
+      <div className="mt-5">
+        <button
+          type="button"
+          onClick={() => setPasteOpen((o) => !o)}
+          className="flex items-center gap-1.5 text-[13px] font-medium bg-transparent border-none p-0 cursor-pointer min-h-[32px]"
+          style={{ color: "var(--text-tertiary)" }}
+        >
+          <motion.svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            animate={{ rotate: pasteOpen ? 45 : 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </motion.svg>
+          {APP.QUALITY_GATE.pasteToggle}
+        </button>
+        <AnimatePresence initial={false}>
+          {pasteOpen && (
+            <motion.div
+              key="paste"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              style={{ overflow: "hidden" }}
+            >
+              <div className="mt-3">
+                <label className="block text-[14px] font-medium mb-2 text-[color:var(--text-primary)]">
+                  {APP.QUALITY_GATE.pasteLabel}
+                </label>
+                <textarea
+                  value={sourceContent}
+                  onChange={(e) => setSourceContent(e.target.value)}
+                  onInput={handleAutoExpand}
+                  placeholder={APP.QUALITY_GATE.pastePlaceholder}
+                  className="w-full px-4 py-3 text-[15px] leading-[1.6] min-h-[100px] rounded-[var(--radius-md)] overflow-hidden resize-none outline-none transition-all duration-[120ms] border border-[color:var(--border-default)] bg-[color:var(--bg-page)] text-[color:var(--text-primary)]"
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = "var(--accent)";
+                    e.currentTarget.style.boxShadow = "0 0 0 3px var(--accent-subtle)";
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "var(--border-default)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                />
+                <p className="mt-1 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
+                  {APP.QUALITY_GATE.pasteHint}
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Specificity indicator */}

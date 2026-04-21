@@ -25,6 +25,10 @@ const generateVideoSchema = z.object({
   }),
   title: z.string().max(500).optional(),
   weekId: z.string().optional(),
+  // Attach the created video to an ongoing series so the video page can
+  // default its render mode from the series config. Optional — ad-hoc videos
+  // (one-off tests, manual creates) can omit it.
+  seriesId: z.string().min(1).max(64).optional(),
 });
 
 /**
@@ -44,7 +48,7 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid input", details: parsed.error.flatten() }, { status: 400 });
     }
-    const { scriptOutput, videoInput, title, weekId } = parsed.data;
+    const { scriptOutput, videoInput, title, weekId, seriesId } = parsed.data;
 
     const platform: Platform =
       videoInput.platform ?? videoInput.platforms?.[0] ?? "youtube";
@@ -79,6 +83,7 @@ export async function POST(req: NextRequest) {
     const video = await createVideo({
       userId,
       weekId: resolvedWeekId,
+      seriesId,
       title: title ?? "Untitled video",
       scriptJson: scriptOutput.script,
       platform,

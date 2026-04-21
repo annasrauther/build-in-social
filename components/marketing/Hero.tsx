@@ -40,7 +40,7 @@ export default function Hero() {
         className="mt-8 flex w-full animate-slide-up-fade [animation-duration:250ms] flex-col justify-center gap-3 px-3 sm:flex-row"
       >
         <Button asChild className="group h-11 md:h-10 font-semibold mt-2">
-          <Link href="/signup" className="flex items-center">
+          <Link href="/onboarding" className="flex items-center">
             {LANDING.HERO.primaryCta}
             <ArrowAnimated />
           </Link>

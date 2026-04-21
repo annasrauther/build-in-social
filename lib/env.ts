@@ -42,6 +42,9 @@ const EnvSchema = z.object({
   // ── Voice / B-roll / Storage ── (required in prod — render pipeline)
   ELEVENLABS_API_KEY: requiredInProd("ELEVENLABS_API_KEY"),
   PEXELS_API_KEY: requiredInProd("PEXELS_API_KEY"),
+
+  // ── Avatar (HeyGen) ── (optional — Avatar Mode mocks without it)
+  HEYGEN_API_KEY: optional(),
   R2_ACCESS_KEY_ID: requiredInProd("R2_ACCESS_KEY_ID"),
   R2_SECRET_ACCESS_KEY: requiredInProd("R2_SECRET_ACCESS_KEY"),
   R2_BUCKET_NAME: requiredInProd("R2_BUCKET_NAME"),
@@ -104,6 +107,7 @@ if (!isProduction && typeof window === "undefined") {
   if (!process.env.R2_ACCESS_KEY_ID) missing.push("R2_ACCESS_KEY_ID (R2 → in-memory)");
   if (!process.env.ELEVENLABS_API_KEY) missing.push("ELEVENLABS_API_KEY (voice → mock)");
   if (!process.env.PEXELS_API_KEY) missing.push("PEXELS_API_KEY (b-roll → mock)");
+  if (!process.env.HEYGEN_API_KEY) missing.push("HEYGEN_API_KEY (avatar → mock)");
   if (missing.length > 0) {
     console.warn(
       "\n[env] Running in dev with mocked services:\n  - " + missing.join("\n  - ") + "\n"
@@ -127,6 +131,8 @@ export const ANTHROPIC_API_KEY = env.ANTHROPIC_API_KEY;
 export const ELEVENLABS_API_KEY = env.ELEVENLABS_API_KEY;
 
 export const PEXELS_API_KEY = env.PEXELS_API_KEY;
+
+export const HEYGEN_API_KEY = env.HEYGEN_API_KEY;
 
 export const R2_ACCESS_KEY_ID = env.R2_ACCESS_KEY_ID;
 export const R2_SECRET_ACCESS_KEY = env.R2_SECRET_ACCESS_KEY;

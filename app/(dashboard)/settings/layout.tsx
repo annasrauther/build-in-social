@@ -10,6 +10,7 @@ const navigationSettings = [
   { name: "Profile", href: "/settings/profile" },
   { name: "Platforms", href: "/settings/platforms" },
   { name: "Voice", href: "/settings/voice" },
+  { name: "Avatar", href: "/settings/avatar" },
   { name: "Brand kit", href: "/settings/brand" },
   { name: "Publishing", href: "/settings/publishing" },
   { name: "Automation", href: "/settings/automation" },

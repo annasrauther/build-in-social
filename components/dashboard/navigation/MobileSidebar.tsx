@@ -20,7 +20,9 @@ import {
   RiSettings5Line,
   RiQuestionLine,
   RiUser3Line,
+  RiStackLine,
 } from "@remixicon/react"
+
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
@@ -28,10 +30,11 @@ import { usePathname } from "next/navigation"
 // "more" menu — help, sign-out-adjacent links, and settings deep links.
 const secondaryLinks = [
   { name: "Dashboard", href: "/dashboard", icon: RiHome2Line },
-  { name: "This week", href: "/plan", icon: RiCalendarLine },
+  { name: "Series", href: "/series", icon: RiStackLine },
+  { name: "Weekly Plan", href: "/plan", icon: RiCalendarLine },
   { name: "Videos", href: "/videos", icon: RiVideoLine },
   { name: "Settings", href: "/settings/profile", icon: RiSettings5Line },
-  { name: "Avatar Mode", href: "/waitlist", icon: RiUser3Line, comingSoon: true },
+  { name: "Avatar Mode", href: "/videos", icon: RiUser3Line },
   { name: "Help", href: "https://buildinsocial.com", icon: RiQuestionLine },
 ] as const
 
@@ -103,11 +106,6 @@ export default function MobileSidebar() {
                           aria-hidden="true"
                         />
                         {item.name}
-                        {"comingSoon" in item && item.comingSoon && (
-                          <span className="ml-auto rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-600 dark:bg-brand-950/60 dark:text-brand-300">
-                            Soon
-                          </span>
-                        )}
                       </Link>
                     </DrawerClose>
                   </li>

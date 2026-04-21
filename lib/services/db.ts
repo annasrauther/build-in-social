@@ -19,6 +19,9 @@ export const updateUser = useReal ? real.updateUser : mock.updateUser;
 export const getVoiceProfile = useReal ? real.getVoiceProfile : mock.getVoiceProfile;
 export const getVoiceProfilesForUser = useReal ? real.getVoiceProfilesForUser : mock.getVoiceProfilesForUser;
 export const createVoiceProfile = useReal ? real.createVoiceProfile : mock.createVoiceProfile;
+export const deleteVoiceProfilesForUser = useReal
+  ? real.deleteVoiceProfilesForUser
+  : mock.deleteVoiceProfilesForUser;
 
 // ── ContentWeek ──
 export const getCurrentWeek = useReal ? real.getCurrentWeek : mock.getCurrentWeek;
@@ -95,6 +98,18 @@ export const addMonthlyVideoRender = useReal
 export const removeMonthlyVideoRender = useReal
   ? real.removeMonthlyVideoRender
   : mock.removeMonthlyVideoRender;
+
+// ── Series (multi-series per account) ──
+export const listSeriesForUser = useReal
+  ? real.listSeriesForUser
+  : mock.listSeriesForUser;
+export const listActiveSeries = useReal
+  ? real.listActiveSeries
+  : mock.listActiveSeries;
+export const getSeriesById = useReal ? real.getSeriesById : mock.getSeriesById;
+export const createSeries = useReal ? real.createSeries : mock.createSeries;
+export const updateSeries = useReal ? real.updateSeries : mock.updateSeries;
+export const deleteSeries = useReal ? real.deleteSeries : mock.deleteSeries;
 
 // ── WordPress publishing connections ──
 export const getWordPressConnection = useReal

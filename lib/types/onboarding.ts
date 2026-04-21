@@ -1,8 +1,9 @@
 import type { Platform } from "./user";
 import type { IngestSourceType, IngestTopicCandidate } from "./ingest";
+import type { AvatarMode } from "./avatar";
 
 export type OnboardingTone = "straight-shooter" | "friendly-expert" | "technical-deep-dive" | "casual-builder";
-export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+export type OnboardingStep = 1 | 2 | 3;
 export type ContentMode = "manual" | "autopilot";
 export type PricingTier = "solo" | "creator" | "studio";
 
@@ -57,6 +58,13 @@ export interface OnboardingData {
   voiceCloneJobId?: string;
   libraryVoiceId?: string;
   voiceConsentAt?: string; // ISO timestamp when user consented to voice synthesis
+
+  // Avatar choice (paired with voice)
+  avatarMode?: AvatarMode;
+  /** Stock avatar id from `content/avatars.ts`. */
+  stockAvatarId?: string;
+  /** HeyGen avatar_id once the twin is trained and ready. */
+  twinAvatarId?: string;
 
   // Step 7 — Plan preview
   generatedPlan?: GeneratedPlanPreview;

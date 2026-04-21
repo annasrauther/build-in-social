@@ -2,23 +2,24 @@
  * Credits service — enforces critical path #1 (HARD cap per tier).
  *
  * Spec rule: deduct credit BEFORE submitting a render job. Refund on render
- * failure. Idempotent per (userId, videoId) so retries never double-deduct.
+ * failure. Idempotent per (userId, videoId, month) so retries never
+ * double-deduct.
+ *
+ * The pricing axis is a credit pool that scales by render kind:
+ *   - faceless + stock-AI avatar → 1 credit per video
+ *   - HeyGen (licensed or twin)  → 15 credits per video
+ * See lib/credits/costs.ts for the authoritative cost table and
+ * lib/credits/tiers.ts for monthly allocations.
  *
  * Caps are HARD — never pay-per-extra, never surprise charges. When a user
- * reaches their cap, we pause (402) and ask them to upgrade.
- *
- *   - Starter: 15 videos/month
- *   - Solo:    40 videos/month
- *   - Creator: 65 videos/month
- *   - Studio:  92 videos/month
- *   - Trial:   23 videos (one full week of Studio)
+ * reaches their budget we return 402 and surface an upgrade CTA.
  *
  * Storage:
  *   - Dev (no NOCODEBACKEND_SECRET_KEY): in-memory mock in nocodebackend.mock.
  *   - Prod: `monthly_video_renders` table via db.real. Atomicity comes from a
  *     unique index on (clerk_user_id, year_month, video_id) + INSERT-IGNORE +
- *     post-count + conditional DELETE rollback when a race pushed us over cap.
- *     See comments in db.real.ts for the full protocol.
+ *     SUM-post-check + conditional DELETE rollback when a race pushed us
+ *     over budget. Full protocol in db.real.ts.
  */
 
 import {
@@ -29,18 +30,42 @@ import {
   removeMonthlyVideoRender,
 } from "@/lib/services/db";
 import type { SubscriptionTier } from "@/lib/types/user";
+import {
+  getCreditCost,
+  getMonthlyAllocation,
+  type RenderKind,
+} from "@/lib/credits";
 
+/**
+ * @deprecated Use `getMonthlyAllocation(tier)` from `@/lib/credits` instead.
+ * Kept as a re-export so any call sites that still read the table continue
+ * to work. The values now mean *credits per month*, not *videos per month*.
+ */
 export const MONTHLY_VIDEO_BUDGET: Record<SubscriptionTier, number> = {
-  trial: 23,
-  starter: 15,
-  solo: 40,
-  creator: 65,
-  studio: 92,
+  trial: getMonthlyAllocation("trial"),
+  starter: getMonthlyAllocation("starter"),
+  solo: getMonthlyAllocation("solo"),
+  creator: getMonthlyAllocation("creator"),
+  studio: getMonthlyAllocation("studio"),
 };
 
 export type DeductionResult =
-  | { ok: true; alreadyDeducted: boolean; remaining: number; budget: number }
-  | { ok: false; reason: "INSUFFICIENT_CREDITS"; remaining: 0; budget: number }
+  | {
+      ok: true;
+      alreadyDeducted: boolean;
+      remaining: number;
+      budget: number;
+      /** Credits this render consumed (0 when alreadyDeducted). */
+      cost: number;
+    }
+  | {
+      ok: false;
+      reason: "INSUFFICIENT_CREDITS";
+      remaining: 0;
+      budget: number;
+      /** Cost that would have been deducted had there been budget. */
+      cost: number;
+    }
   | { ok: false; reason: "USER_NOT_FOUND" };
 
 export type RefundResult =
@@ -52,12 +77,17 @@ function currentYearMonth(now = new Date()): string {
 }
 
 /**
- * Deduct one render credit for `videoId`. Idempotent per (userId, videoId, month).
+ * Deduct credits for a render of `kind`. Idempotent per (userId, videoId, month).
  * MUST be awaited before submitting the render job.
+ *
+ * @param kind Defaults to "faceless" so older callers continue to work; new
+ *             code should pass the actual kind so HeyGen renders bill 15
+ *             credits instead of 1.
  */
 export async function deductCreditForRender(
   userId: string,
-  videoId: string
+  videoId: string,
+  kind: RenderKind = "faceless"
 ): Promise<DeductionResult> {
   if (!userId || !videoId) {
     return { ok: false, reason: "USER_NOT_FOUND" };
@@ -68,10 +98,11 @@ export async function deductCreditForRender(
     return { ok: false, reason: "USER_NOT_FOUND" };
   }
 
-  const budget = MONTHLY_VIDEO_BUDGET[user.subscriptionTier];
+  const budget = getMonthlyAllocation(user.subscriptionTier);
+  const cost = getCreditCost(kind);
   const yearMonth = currentYearMonth();
 
-  const result = await addMonthlyVideoRender(userId, yearMonth, videoId, budget);
+  const result = await addMonthlyVideoRender(userId, yearMonth, videoId, cost, budget);
 
   if (result.atCap) {
     return {
@@ -79,6 +110,7 @@ export async function deductCreditForRender(
       reason: "INSUFFICIENT_CREDITS",
       remaining: 0,
       budget,
+      cost,
     };
   }
 
@@ -87,16 +119,17 @@ export async function deductCreditForRender(
     alreadyDeducted: !result.added,
     remaining: Math.max(0, budget - result.count),
     budget,
+    cost: result.added ? cost : 0,
   };
 }
 
 /**
- * Refund one credit when a render job fails. Idempotent: a second refund for
- * the same videoId is a no-op.
+ * Refund the credits consumed by `videoId` if a render job fails. Idempotent —
+ * a second refund for the same videoId is a no-op.
  *
- * Only refunds within the SAME month the deduction happened. If a render
- * spans a month boundary and fails, the credit stays consumed in the
- * deduction month — we don't try to time-travel.
+ * The persistence layer stores the original cost on the row, so this function
+ * doesn't need to know what kind of render was being billed — deleting the
+ * row restores whatever credits it had consumed.
  */
 export async function refundCreditForRender(
   userId: string,
@@ -111,7 +144,7 @@ export async function refundCreditForRender(
     return { ok: false, reason: "USER_NOT_FOUND" };
   }
 
-  const budget = MONTHLY_VIDEO_BUDGET[user.subscriptionTier];
+  const budget = getMonthlyAllocation(user.subscriptionTier);
   const yearMonth = currentYearMonth();
 
   const result = await removeMonthlyVideoRender(userId, yearMonth, videoId);
@@ -134,7 +167,7 @@ export async function getUsageForUser(
   const user = await getUserByClerkId(clerkUserId).catch(() => null);
   if (!user) return null;
   const tier = user.subscriptionTier;
-  const cap = MONTHLY_VIDEO_BUDGET[tier];
+  const cap = getMonthlyAllocation(tier);
   const yearMonth = currentYearMonth();
   const used = await getMonthlyVideoUsage(clerkUserId, yearMonth).catch(() => 0);
   return { used, cap, tier, resetAt: nextMonthResetIso() };
@@ -157,13 +190,11 @@ export function nextMonthResetIso(now = new Date()): string {
  * so we go through a dynamic import guarded by NODE_ENV.
  */
 export async function _resetCreditsForTests(): Promise<void> {
-  // Imported lazily so production bundles don't pull in the mock.
   if (process.env.NODE_ENV === "production") return;
-  // Silence ts/eslint on the dynamic import — the mock is dev/test-only.
   const m = await import("@/lib/mock/nocodebackend.mock");
   if (typeof m._resetMonthlyVideoRenders === "function") {
     m._resetMonthlyVideoRenders();
   }
-  // Also silence Node's "hasMonthlyVideoRender" by accessing — no-op call not needed.
+  // Silence ts/eslint on the unused import — the guard above is all we need.
   void hasMonthlyVideoRender;
 }

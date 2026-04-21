@@ -6,6 +6,7 @@
 import type { User, VoiceProfile } from "@/lib/types/user";
 import type { Video, RenderJob, ContentWeek } from "@/lib/types/video";
 import type { PseoPage } from "@/lib/types/pseo";
+import type { Series, CreateSeriesInput } from "@/lib/types/series";
 
 const MOCK_DELAY_MS = 200;
 const delay = (ms = MOCK_DELAY_MS) => new Promise((r) => setTimeout(r, ms));
@@ -238,6 +239,19 @@ export async function createVoiceProfile(data: Omit<VoiceProfile, "id" | "create
   const profile: VoiceProfile = { ...data, id: `voice_${Date.now()}`, createdAt: new Date().toISOString() };
   store.voiceProfiles.set(profile.id, profile);
   return profile;
+}
+
+export async function deleteVoiceProfilesForUser(userId: string): Promise<void> {
+  await delay();
+  for (const [id, vp] of store.voiceProfiles) {
+    if (vp.userId === userId) store.voiceProfiles.delete(id);
+  }
+  // Clear pointer on the user row so render pipeline falls back to library.
+  for (const [uid, user] of store.users) {
+    if (user.clerkUserId === userId || uid === userId) {
+      store.users.set(uid, { ...user, voiceProfileId: undefined });
+    }
+  }
 }
 
 // ─── ContentWeek ──────────────────────────────────────────────────────────────
@@ -673,10 +687,21 @@ export async function deleteWordPressConnection(userId: string): Promise<boolean
 // Call shapes align with credits.ts. The mock keeps a Map of Sets keyed by
 // `${clerkUserId}:${yearMonth}`. No cross-process concurrency to worry about.
 
-const monthlyVideoRenders = new Map<string, Set<string>>();
+// Each video render consumes `cost` credits (faceless = 1, HeyGen = 15, etc.
+// See lib/credits/costs.ts). `count` in the return shapes is retained with
+// its semantic widened to "credits consumed this month" (SUM(cost) not
+// COUNT(*)) — call sites don't need to change.
+const monthlyVideoRenders = new Map<string, Map<string, number>>();
 
 function monthKey(clerkUserId: string, yearMonth: string): string {
   return `${clerkUserId}:${yearMonth}`;
+}
+
+function sumCost(map: Map<string, number> | undefined): number {
+  if (!map) return 0;
+  let total = 0;
+  for (const c of map.values()) total += c;
+  return total;
 }
 
 export async function getMonthlyVideoUsage(
@@ -684,7 +709,7 @@ export async function getMonthlyVideoUsage(
   yearMonth: string
 ): Promise<number> {
   await delay(20);
-  return monthlyVideoRenders.get(monthKey(clerkUserId, yearMonth))?.size ?? 0;
+  return sumCost(monthlyVideoRenders.get(monthKey(clerkUserId, yearMonth)));
 }
 
 export async function hasMonthlyVideoRender(
@@ -697,33 +722,36 @@ export async function hasMonthlyVideoRender(
 }
 
 /**
- * Attempt to add a render for (clerkUserId, yearMonth, videoId) under a hard cap.
- * Returns the resulting count after the operation, or `cap + 1` sentinel to
- * indicate the attempt was rejected because the user is at cap. The idempotency
- * contract: if videoId is already present for this month, returns the current
- * count without double-counting.
+ * Attempt to add a render for (clerkUserId, yearMonth, videoId), consuming
+ * `cost` credits, capped at `creditBudget` total credits for the month.
+ *
+ * Idempotency: re-calling with the same videoId doesn't re-charge — returns
+ * the existing credits-used total and does not overwrite the recorded cost.
+ * A deduct+refund+re-deduct cycle will re-insert with the new cost.
  */
 export async function addMonthlyVideoRender(
   clerkUserId: string,
   yearMonth: string,
   videoId: string,
-  cap: number
+  cost: number,
+  creditBudget: number
 ): Promise<{ added: boolean; count: number; atCap: boolean }> {
   await delay(30);
   const k = monthKey(clerkUserId, yearMonth);
-  let set = monthlyVideoRenders.get(k);
-  if (!set) {
-    set = new Set();
-    monthlyVideoRenders.set(k, set);
+  let map = monthlyVideoRenders.get(k);
+  if (!map) {
+    map = new Map();
+    monthlyVideoRenders.set(k, map);
   }
-  if (set.has(videoId)) {
-    return { added: false, count: set.size, atCap: false };
+  if (map.has(videoId)) {
+    return { added: false, count: sumCost(map), atCap: false };
   }
-  if (set.size >= cap) {
-    return { added: false, count: set.size, atCap: true };
+  const currentTotal = sumCost(map);
+  if (currentTotal + cost > creditBudget) {
+    return { added: false, count: currentTotal, atCap: true };
   }
-  set.add(videoId);
-  return { added: true, count: set.size, atCap: false };
+  map.set(videoId, cost);
+  return { added: true, count: sumCost(map), atCap: false };
 }
 
 export async function removeMonthlyVideoRender(
@@ -733,12 +761,12 @@ export async function removeMonthlyVideoRender(
 ): Promise<{ removed: boolean; count: number }> {
   await delay(20);
   const k = monthKey(clerkUserId, yearMonth);
-  const set = monthlyVideoRenders.get(k);
-  if (!set || !set.has(videoId)) {
-    return { removed: false, count: set?.size ?? 0 };
+  const map = monthlyVideoRenders.get(k);
+  if (!map || !map.has(videoId)) {
+    return { removed: false, count: sumCost(map) };
   }
-  set.delete(videoId);
-  return { removed: true, count: set.size };
+  map.delete(videoId);
+  return { removed: true, count: sumCost(map) };
 }
 
 /** Test-only: clear monthly renders across all users. */
@@ -746,3 +774,97 @@ export function _resetMonthlyVideoRenders(): void {
   monthlyVideoRenders.clear();
 }
 
+// ─── Series (multi-series per account) ───────────────────────────────────────
+//
+// Series is the primitive for multi-mode, multi-niche content plans. A user can
+// run many in parallel; each has its own mode (faceless / stock-ai-avatar /
+// heygen-avatar / combo), cadence, voice, and avatar config. Tests hit these
+// directly when `NOCODEBACKEND_SECRET_KEY` is unset. Real impl in db.real.ts
+// mirrors this shape against a `series` table.
+
+const seriesStore = new Map<string, Series>();
+let seriesIdCounter = 1;
+
+function nextSeriesId(): string {
+  return `srs_${Date.now().toString(36)}_${seriesIdCounter++}`;
+}
+
+export async function listSeriesForUser(userId: string): Promise<Series[]> {
+  await delay(30);
+  return Array.from(seriesStore.values())
+    .filter((s) => s.userId === userId)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/** Cron-only: every active series across all users, for the scheduler. */
+export async function listActiveSeries(): Promise<Series[]> {
+  await delay(30);
+  return Array.from(seriesStore.values())
+    .filter((s) => s.status === "active")
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export async function getSeriesById(seriesId: string): Promise<Series | null> {
+  await delay(20);
+  return seriesStore.get(seriesId) ?? null;
+}
+
+export async function createSeries(
+  userId: string,
+  data: CreateSeriesInput,
+): Promise<Series> {
+  await delay(40);
+  const id = nextSeriesId();
+  const record: Series = {
+    id,
+    userId,
+    name: data.name,
+    topic: data.topic,
+    contentType: data.contentType,
+    facelessStyle: data.facelessStyle,
+    frequency: data.frequency,
+    platforms: [...data.platforms],
+    mode: data.mode,
+    heygenAvatarSource: data.heygenAvatarSource,
+    stockAvatarId: data.stockAvatarId,
+    heygenLicensedAvatarId: data.heygenLicensedAvatarId,
+    voiceId: data.voiceId,
+    status: "active",
+    startDate: data.startDate,
+    videos: [],
+    creditsConsumed: 0,
+    createdAt: new Date().toISOString(),
+  };
+  seriesStore.set(id, record);
+  return record;
+}
+
+export async function updateSeries(
+  seriesId: string,
+  patch: Partial<Series>,
+): Promise<Series | null> {
+  await delay(25);
+  const existing = seriesStore.get(seriesId);
+  if (!existing) return null;
+  // Immutable fields stay put.
+  const updated: Series = {
+    ...existing,
+    ...patch,
+    id: existing.id,
+    userId: existing.userId,
+    createdAt: existing.createdAt,
+  };
+  seriesStore.set(seriesId, updated);
+  return updated;
+}
+
+export async function deleteSeries(seriesId: string): Promise<boolean> {
+  await delay(20);
+  return seriesStore.delete(seriesId);
+}
+
+/** Test-only: clear series store. */
+export function _resetSeries(): void {
+  seriesStore.clear();
+  seriesIdCounter = 1;
+}

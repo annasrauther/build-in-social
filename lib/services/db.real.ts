@@ -10,6 +10,14 @@
 import type { User, VoiceProfile } from "@/lib/types/user";
 import type { Video, RenderJob, ContentWeek } from "@/lib/types/video";
 import type { PseoPage } from "@/lib/types/pseo";
+import type {
+  Series,
+  CreateSeriesInput,
+  SeriesMode,
+  SeriesStatus,
+  HeygenAvatarSource,
+  PostingFrequency,
+} from "@/lib/types/series";
 import { NCB_INSTANCE as ENV_NCB_INSTANCE, NOCODEBACKEND_SECRET_KEY } from "@/lib/env";
 
 // ─── Config ───────────────────────────────────────────────────────────────────
@@ -251,8 +259,12 @@ function rowToVideo(row: NcbRow): Video {
     id: str(row.id),
     userId: str(row.user_id),
     weekId: str(row.week_id),
+    seriesId: maybe(row.series_id, str),
     title: str(row.title),
     scriptJson: parseJson(row.script_json, { hook: "", body: "", cta: "" }),
+    platformHooks: row.platform_hooks
+      ? parseJson(row.platform_hooks, {} as Record<string, string>)
+      : undefined,
     platform: (row.platform as Video["platform"]) ?? "youtube",
     dayOfWeek: (row.day_of_week as Video["dayOfWeek"]) ?? "mon",
     facelessStyle: (row.faceless_style as Video["facelessStyle"]) ?? "dev-log",
@@ -436,6 +448,22 @@ export async function createVoiceProfile(
   return { ...data, id: String(id), createdAt: new Date().toISOString() };
 }
 
+/**
+ * Delete every voice profile belonging to a user — used by the "Delete my
+ * clone" button in settings. Also clears `users.voice_profile_id` so the
+ * render pipeline falls back to the library voice on the next job.
+ */
+export async function deleteVoiceProfilesForUser(userId: string): Promise<void> {
+  try {
+    await sql(`DELETE FROM voice_profiles WHERE user_id = ${esc(userId)}`);
+    await sql(
+      `UPDATE users SET voice_profile_id = NULL WHERE clerk_user_id = ${esc(userId)}`,
+    );
+  } catch (err) {
+    console.warn("[voice] deleteVoiceProfilesForUser failed:", err);
+  }
+}
+
 // ─── ContentWeek ──────────────────────────────────────────────────────────────
 
 export async function getCurrentWeek(userId: string): Promise<ContentWeek | null> {
@@ -494,13 +522,15 @@ export async function getVideos(userId: string): Promise<Video[]> {
 
 export async function createVideo(data: Omit<Video, "id" | "createdAt">): Promise<Video> {
   const id = await sqlInsert(
-    `INSERT INTO videos (user_id, week_id, title, script_json, platform, day_of_week,
-      faceless_style, duration_seconds, content_type, status, output_url, thumbnail_url,
-      render_job_id, topic_label, hook_type, sentiment, specificity_score,
-      watch_time_avg, view_count, engagement_rate, ctr, traffic_from_pseo,
-      visibility_score, platform_video_id, created_at, published_at)
-     VALUES (${esc(data.userId)}, ${esc(data.weekId)}, ${esc(data.title)},
-             ${esc(JSON.stringify(data.scriptJson))}, ${esc(data.platform)},
+    `INSERT INTO videos (user_id, week_id, series_id, title, script_json, platform_hooks,
+      platform, day_of_week, faceless_style, duration_seconds, content_type, status,
+      output_url, thumbnail_url, render_job_id, topic_label, hook_type, sentiment,
+      specificity_score, watch_time_avg, view_count, engagement_rate, ctr,
+      traffic_from_pseo, visibility_score, platform_video_id, created_at, published_at)
+     VALUES (${esc(data.userId)}, ${esc(data.weekId)}, ${esc(data.seriesId ?? null)},
+             ${esc(data.title)}, ${esc(JSON.stringify(data.scriptJson))},
+             ${esc(data.platformHooks ? JSON.stringify(data.platformHooks) : null)},
+             ${esc(data.platform)},
              ${esc(data.dayOfWeek)}, ${esc(data.facelessStyle)}, ${esc(data.durationSeconds)},
              ${esc(data.contentType)}, ${esc(data.status)}, ${esc(data.outputUrl ?? null)},
              ${esc(data.thumbnailUrl ?? null)}, ${esc(data.renderJobId ?? null)},
@@ -564,6 +594,7 @@ export async function updateVideoScript(videoId: string, script: string): Promis
 export async function approveVideo(videoId: string): Promise<Video> {
   return updateVideo(videoId, { status: "approved" });
 }
+
 
 export async function approveAllForWeek(weekId: string): Promise<void> {
   await sql(
@@ -1129,25 +1160,29 @@ export async function deleteWordPressConnection(userId: string): Promise<boolean
 
 // ─── Monthly video renders (credits / hard-cap enforcement) ──────────────────
 //
-// Schema (operator must create once):
+// Schema (created by the NCB migration, see scripts/migrations):
 //
 //   CREATE TABLE monthly_video_renders (
 //     id             INT AUTO_INCREMENT PRIMARY KEY,
 //     clerk_user_id  VARCHAR(64)  NOT NULL,
-//     year_month     CHAR(7)      NOT NULL,  -- "2026-04"
+//     `year_month`   VARCHAR(7)   NOT NULL,  -- "2026-04" (backticks: reserved word)
 //     video_id       VARCHAR(64)  NOT NULL,
+//     cost           INT          NOT NULL DEFAULT 1,  -- per-render credit cost
 //     created_at     DATETIME     NOT NULL,
-//     UNIQUE KEY uniq_user_month_video (clerk_user_id, year_month, video_id),
-//     KEY idx_user_month (clerk_user_id, year_month)
+//     UNIQUE KEY uniq_user_month_video (clerk_user_id, `year_month`, video_id),
+//     KEY idx_user_month (clerk_user_id, `year_month`)
 //   );
 //
-// Atomicity contract: INSERT IGNORE relies on the unique index to make
-// idempotent writes a no-op when the same (user, month, video) already
-// exists. For the hard-cap check we rely on an INSERT-then-COUNT-then-
-// conditional-DELETE pattern. Under concurrent requests at cap-1 multiple
-// inserts may land, one or more will over-commit, and each racing request
-// independently sees count > cap and rolls back its own row. Worst case we
-// under-allow by a small number of races, never over-allow (hard cap safety).
+// Usage is `SUM(cost)`, not `COUNT(*)`, so HeyGen renders (15 credits) count
+// 15× a faceless render (1 credit) toward the monthly tier allocation. See
+// lib/credits/costs.ts for the cost table.
+//
+// Atomicity contract: unique index + INSERT IGNORE give idempotent writes.
+// For the hard-cap check we rely on INSERT-then-SUM-then-conditional-DELETE.
+// Under concurrent requests at budget-1 multiple inserts may land, one or
+// more over-commit, and each racing request independently sees
+// creditsUsed > budget and rolls back its own row. Worst case we under-allow
+// a small number of races, never over-allow (hard cap safety).
 
 function escYearMonth(val: unknown): string {
   const s = String(val ?? "");
@@ -1162,9 +1197,9 @@ export async function getMonthlyVideoUsage(
   yearMonth: string
 ): Promise<number> {
   const rows = await sql(
-    `SELECT COUNT(*) AS c FROM monthly_video_renders ` +
+    "SELECT COALESCE(SUM(cost), 0) AS c FROM monthly_video_renders " +
       `WHERE clerk_user_id = ${escUuid(clerkUserId)} ` +
-      `AND year_month = ${escYearMonth(yearMonth)}`
+      `AND \`year_month\` = ${escYearMonth(yearMonth)}`
   );
   const n = Number(rows[0]?.c ?? 0);
   return Number.isFinite(n) ? n : 0;
@@ -1176,56 +1211,59 @@ export async function hasMonthlyVideoRender(
   videoId: string
 ): Promise<boolean> {
   const rows = await sql(
-    `SELECT 1 FROM monthly_video_renders ` +
+    "SELECT 1 FROM monthly_video_renders " +
       `WHERE clerk_user_id = ${escUuid(clerkUserId)} ` +
-      `AND year_month = ${escYearMonth(yearMonth)} ` +
+      `AND \`year_month\` = ${escYearMonth(yearMonth)} ` +
       `AND video_id = ${escUuid(videoId)} LIMIT 1`
   );
   return rows.length > 0;
 }
 
 /**
- * Attempt to add a render row under a hard cap.
+ * Attempt to add a render row consuming `cost` credits, capped at
+ * `creditBudget` total credits for (user, month).
  * - INSERT IGNORE handles idempotency: duplicate (user, month, video) is a no-op.
- * - After insert, COUNT rows in the month. If over cap, DELETE the row we just
- *   inserted and return atCap=true.
- * - Races under concurrency can cause transient over-count that each racing
- *   request corrects by deleting its own row. This is safer than the opposite
- *   failure mode (over-allowing renders past the hard cap).
+ * - After insert, SUM(cost) across the month. If over budget, DELETE the row
+ *   we just inserted and return atCap=true.
+ * - Races under concurrency: every racing request sees creditsUsed > budget
+ *   after its own insert and deletes its own row. Under-allows under
+ *   contention, never over-allows — preserves the hard-cap guarantee.
  */
 export async function addMonthlyVideoRender(
   clerkUserId: string,
   yearMonth: string,
   videoId: string,
-  cap: number
+  cost: number,
+  creditBudget: number
 ): Promise<{ added: boolean; count: number; atCap: boolean }> {
+  if (!Number.isFinite(cost) || cost < 0) {
+    throw new Error("Invalid render cost");
+  }
+
   const existed = await hasMonthlyVideoRender(clerkUserId, yearMonth, videoId);
 
   if (!existed) {
-    // Attempt insert; unique index serializes concurrent duplicate writes.
     await sqlInsert(
-      `INSERT IGNORE INTO monthly_video_renders ` +
-        `(clerk_user_id, year_month, video_id, created_at) VALUES (` +
+      "INSERT IGNORE INTO monthly_video_renders " +
+        "(clerk_user_id, `year_month`, video_id, cost, created_at) VALUES (" +
         `${escUuid(clerkUserId)}, ${escYearMonth(yearMonth)}, ` +
-        `${escUuid(videoId)}, ${escString(nowSql())})`
+        `${escUuid(videoId)}, ${escInt(cost)}, ${escString(nowSql())})`
     );
   }
 
-  const count = await getMonthlyVideoUsage(clerkUserId, yearMonth);
+  const creditsUsed = await getMonthlyVideoUsage(clerkUserId, yearMonth);
 
-  if (!existed && count > cap) {
-    // Over-cap: roll back our own write. Use narrow WHERE so we don't nuke
-    // anyone else's row.
+  if (!existed && creditsUsed > creditBudget) {
     await sql(
-      `DELETE FROM monthly_video_renders ` +
+      "DELETE FROM monthly_video_renders " +
         `WHERE clerk_user_id = ${escUuid(clerkUserId)} ` +
-        `AND year_month = ${escYearMonth(yearMonth)} ` +
+        `AND \`year_month\` = ${escYearMonth(yearMonth)} ` +
         `AND video_id = ${escUuid(videoId)}`
     );
-    return { added: false, count: count - 1, atCap: true };
+    return { added: false, count: creditsUsed - cost, atCap: true };
   }
 
-  return { added: !existed, count, atCap: false };
+  return { added: !existed, count: creditsUsed, atCap: false };
 }
 
 export async function removeMonthlyVideoRender(
@@ -1235,15 +1273,231 @@ export async function removeMonthlyVideoRender(
 ): Promise<{ removed: boolean; count: number }> {
   const existed = await hasMonthlyVideoRender(clerkUserId, yearMonth, videoId);
   if (!existed) {
-    const count = await getMonthlyVideoUsage(clerkUserId, yearMonth);
-    return { removed: false, count };
+    const creditsUsed = await getMonthlyVideoUsage(clerkUserId, yearMonth);
+    return { removed: false, count: creditsUsed };
   }
   await sql(
-    `DELETE FROM monthly_video_renders ` +
+    "DELETE FROM monthly_video_renders " +
       `WHERE clerk_user_id = ${escUuid(clerkUserId)} ` +
-      `AND year_month = ${escYearMonth(yearMonth)} ` +
+      `AND \`year_month\` = ${escYearMonth(yearMonth)} ` +
       `AND video_id = ${escUuid(videoId)}`
   );
   const count = await getMonthlyVideoUsage(clerkUserId, yearMonth);
   return { removed: true, count };
+}
+
+// ─── Series ───────────────────────────────────────────────────────────────────
+//
+// Stored in table `series` with columns matching the Series type. Collection
+// fields (`platforms`, `videos`) live as JSON strings. On a missing-table
+// failure (migration pending), each function logs and returns a safe empty
+// fallback — mirrors the webhooks pattern above. New sites should assume
+// graceful degradation, not hard failure.
+
+const SERIES_MODES: readonly SeriesMode[] = [
+  "faceless",
+  "stock-ai-avatar",
+  "heygen-avatar",
+  "combo",
+];
+const SERIES_STATUSES: readonly SeriesStatus[] = ["active", "paused", "completed"];
+const HEYGEN_SOURCES: readonly HeygenAvatarSource[] = ["licensed", "twin"];
+const POSTING_FREQUENCIES: readonly PostingFrequency[] = [
+  "daily",
+  "3x-week",
+  "5x-week",
+  "custom",
+];
+
+function rowToSeries(row: NcbRow): Series {
+  const parseJson = <T>(val: unknown, fallback: T): T => {
+    if (typeof val !== "string") return fallback;
+    try {
+      return JSON.parse(val) as T;
+    } catch {
+      return fallback;
+    }
+  };
+  return {
+    id: String(row.id),
+    userId: String(row.user_id),
+    name: String(row.name),
+    topic: String(row.topic),
+    contentType: row.content_type as Series["contentType"],
+    facelessStyle: row.faceless_style as Series["facelessStyle"],
+    tone: (row.tone as Series["tone"]) ?? undefined,
+    frequency: row.frequency as PostingFrequency,
+    platforms: parseJson<Series["platforms"]>(row.platforms, []),
+    mode: row.mode as SeriesMode,
+    heygenAvatarSource:
+      (row.heygen_avatar_source as HeygenAvatarSource | null) ?? undefined,
+    stockAvatarId: (row.stock_avatar_id as string | null) ?? undefined,
+    heygenLicensedAvatarId:
+      (row.heygen_licensed_avatar_id as string | null) ?? undefined,
+    voiceId: (row.voice_id as string | null) ?? undefined,
+    status: row.status as SeriesStatus,
+    startDate: String(row.start_date),
+    nextVideoAt: (row.next_video_at as string | null) ?? undefined,
+    videos: parseJson<Series["videos"]>(row.videos, []),
+    creditsConsumed:
+      row.credits_consumed === null || row.credits_consumed === undefined
+        ? 0
+        : Number(row.credits_consumed),
+    createdAt: String(row.created_at),
+  };
+}
+
+export async function listSeriesForUser(userId: string): Promise<Series[]> {
+  try {
+    const rows = await sql(
+      `SELECT * FROM series WHERE user_id = ${escUuid(userId)} ORDER BY created_at DESC`
+    );
+    return rows.map(rowToSeries);
+  } catch (err) {
+    console.warn("[series] listSeriesForUser failed (migration pending?):", err);
+    return [];
+  }
+}
+
+/** Cron-only: every active series across all users, for the scheduler. */
+export async function listActiveSeries(): Promise<Series[]> {
+  try {
+    const rows = await sql(
+      `SELECT * FROM series WHERE status = ${escString("active")} ORDER BY created_at ASC`
+    );
+    return rows.map(rowToSeries);
+  } catch (err) {
+    console.warn("[series] listActiveSeries failed:", err);
+    return [];
+  }
+}
+
+export async function getSeriesById(seriesId: string): Promise<Series | null> {
+  try {
+    const rows = await sql(
+      `SELECT * FROM series WHERE id = ${escUuid(seriesId)} LIMIT 1`
+    );
+    return rows.length > 0 ? rowToSeries(rows[0]) : null;
+  } catch (err) {
+    console.warn("[series] getSeriesById failed:", err);
+    return null;
+  }
+}
+
+export async function createSeries(
+  userId: string,
+  data: CreateSeriesInput
+): Promise<Series> {
+  const id = `srs_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+  const createdAt = new Date().toISOString();
+  const record: Series = {
+    id,
+    userId,
+    name: data.name,
+    topic: data.topic,
+    contentType: data.contentType,
+    facelessStyle: data.facelessStyle,
+    frequency: data.frequency,
+    platforms: [...data.platforms],
+    mode: data.mode,
+    heygenAvatarSource: data.heygenAvatarSource,
+    stockAvatarId: data.stockAvatarId,
+    heygenLicensedAvatarId: data.heygenLicensedAvatarId,
+    voiceId: data.voiceId,
+    status: "active",
+    startDate: data.startDate,
+    videos: [],
+    creditsConsumed: 0,
+    createdAt,
+  };
+  try {
+    await sqlInsert(
+      `INSERT INTO series (
+        id, user_id, name, topic, content_type, faceless_style, frequency,
+        platforms, mode, heygen_avatar_source, stock_avatar_id,
+        heygen_licensed_avatar_id, voice_id, status, start_date, videos,
+        credits_consumed, created_at
+       ) VALUES (
+        ${escUuid(id)},
+        ${escUuid(userId)},
+        ${escString(data.name)},
+        ${escString(data.topic)},
+        ${escString(data.contentType)},
+        ${escString(data.facelessStyle)},
+        ${escEnum(data.frequency, POSTING_FREQUENCIES)},
+        ${escString(JSON.stringify(data.platforms))},
+        ${escEnum(data.mode, SERIES_MODES)},
+        ${data.heygenAvatarSource ? escEnum(data.heygenAvatarSource, HEYGEN_SOURCES) : "NULL"},
+        ${data.stockAvatarId ? escString(data.stockAvatarId) : "NULL"},
+        ${data.heygenLicensedAvatarId ? escString(data.heygenLicensedAvatarId) : "NULL"},
+        ${data.voiceId ? escString(data.voiceId) : "NULL"},
+        ${escEnum("active", SERIES_STATUSES)},
+        ${escString(data.startDate)},
+        ${escString("[]")},
+        0,
+        ${escString(nowSql())}
+       )`
+    );
+  } catch (err) {
+    console.warn("[series] createSeries insert failed:", err);
+  }
+  return record;
+}
+
+export async function updateSeries(
+  seriesId: string,
+  patch: Partial<Series>
+): Promise<Series | null> {
+  const existing = await getSeriesById(seriesId);
+  if (!existing) return null;
+
+  const set: string[] = [];
+  if (patch.name !== undefined) set.push(`name = ${escString(patch.name)}`);
+  if (patch.topic !== undefined) set.push(`topic = ${escString(patch.topic)}`);
+  if (patch.mode !== undefined) set.push(`mode = ${escEnum(patch.mode, SERIES_MODES)}`);
+  if (patch.status !== undefined)
+    set.push(`status = ${escEnum(patch.status, SERIES_STATUSES)}`);
+  if (patch.frequency !== undefined)
+    set.push(`frequency = ${escEnum(patch.frequency, POSTING_FREQUENCIES)}`);
+  if (patch.platforms !== undefined)
+    set.push(`platforms = ${escString(JSON.stringify(patch.platforms))}`);
+  if (patch.videos !== undefined)
+    set.push(`videos = ${escString(JSON.stringify(patch.videos))}`);
+  if (patch.heygenAvatarSource !== undefined)
+    set.push(
+      `heygen_avatar_source = ${patch.heygenAvatarSource ? escEnum(patch.heygenAvatarSource, HEYGEN_SOURCES) : "NULL"}`
+    );
+  if (patch.stockAvatarId !== undefined)
+    set.push(
+      `stock_avatar_id = ${patch.stockAvatarId ? escString(patch.stockAvatarId) : "NULL"}`
+    );
+  if (patch.heygenLicensedAvatarId !== undefined)
+    set.push(
+      `heygen_licensed_avatar_id = ${patch.heygenLicensedAvatarId ? escString(patch.heygenLicensedAvatarId) : "NULL"}`
+    );
+  if (patch.voiceId !== undefined)
+    set.push(`voice_id = ${patch.voiceId ? escString(patch.voiceId) : "NULL"}`);
+  if (patch.nextVideoAt !== undefined)
+    set.push(`next_video_at = ${patch.nextVideoAt ? escString(patch.nextVideoAt) : "NULL"}`);
+  if (patch.creditsConsumed !== undefined)
+    set.push(`credits_consumed = ${escInt(patch.creditsConsumed)}`);
+
+  if (set.length === 0) return existing;
+
+  try {
+    await sql(`UPDATE series SET ${set.join(", ")} WHERE id = ${escUuid(seriesId)}`);
+  } catch (err) {
+    console.warn("[series] updateSeries failed:", err);
+  }
+  return getSeriesById(seriesId);
+}
+
+export async function deleteSeries(seriesId: string): Promise<boolean> {
+  try {
+    await sql(`DELETE FROM series WHERE id = ${escUuid(seriesId)}`);
+    return true;
+  } catch (err) {
+    console.warn("[series] deleteSeries failed:", err);
+    return false;
+  }
 }

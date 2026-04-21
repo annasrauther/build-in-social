@@ -90,21 +90,13 @@ function computeCanProceed(data: OnboardingData): boolean {
     case 1:
       return data.productInput.length > 0 && data.productDescription.length > 0;
 
-    // Platforms — at least 2
-    case 2:
-      return data.platforms.length >= 2;
-
     // Voice — voice selected
-    case 3:
+    case 2:
       return !!data.libraryVoiceId;
 
-    // Plan preview — mode choice made
-    case 4:
+    // Plan preview — mode choice made; this is the final step
+    case 3:
       return !!data.contentMode;
-
-    // Activation — always reachable once plan preview is complete
-    case 5:
-      return true;
 
     default:
       return false;

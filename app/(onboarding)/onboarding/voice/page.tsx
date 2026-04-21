@@ -4,10 +4,12 @@ import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { OnboardingHeading } from "@/components/onboarding/OnboardingHeading";
+import { AvatarPicker } from "@/components/onboarding/AvatarPicker";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import { useInteractionFeedback } from "@/lib/hooks/useInteractionFeedback";
 import { LIBRARY_VOICES, STAGGER_CARDS } from "@/lib/constants/onboarding";
 import { APP } from "@/content/app";
+import type { AvatarMode } from "@/lib/types/avatar";
 
 /* ─── Waveform bars animation ─────────────────────────────────────────────── */
 
@@ -332,6 +334,14 @@ export default function VoicePage() {
   const [cloneInfoOpen, setCloneInfoOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Avatar selection — defaults to first stock avatar. Tier is null during
+  // onboarding (user hasn't picked a plan yet), so only free-tier stock
+  // avatars are selectable and twin is shown as locked.
+  const [avatarMode, setAvatarMode] = useState<AvatarMode>(data.avatarMode ?? "stock");
+  const [stockAvatarId, setStockAvatarId] = useState<string | undefined>(
+    data.stockAvatarId ?? "stock-founder-01",
+  );
+
   const stopAudio = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -407,17 +417,19 @@ export default function VoicePage() {
       libraryVoiceId: selected,
       voiceChoice: "library",
       voiceConsentAt: new Date().toISOString(),
-      currentStep: 4,
+      avatarMode,
+      stockAvatarId,
+      currentStep: 3,
     });
     playNavigation();
     vibrate(15);
-    goToStep(4); // → /onboarding/plan-preview
+    goToStep(3); // → /onboarding/plan-preview
   }
 
   function handleBack() {
     stopAudio();
     update({ libraryVoiceId: selected });
-    goToStep(2);
+    goToStep(1); // → /onboarding/start
   }
 
   // A6: derive a human-readable status string for the aria-live region
@@ -435,7 +447,7 @@ export default function VoicePage() {
 
   return (
     <OnboardingShell
-      step={3}
+      step={2}
       continueLabel="Continue"
       continueDisabled={!selected || !consentChecked}
       onContinue={handleContinue}
@@ -452,9 +464,29 @@ export default function VoicePage() {
       </div>
 
       <OnboardingHeading
-        title="Choose a narration voice"
-        subtitle="Pick the voice that narrates your videos. Click Preview to hear it first."
+        title="Your on-screen presence"
+        subtitle="Pick who narrates your videos — a stock AI avatar now, or train a digital twin later."
       />
+
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.28, delay: 0.04 }}
+        className="mb-6"
+      >
+        <AvatarPicker
+          tier={null}
+          mode={avatarMode}
+          stockAvatarId={stockAvatarId}
+          onModeChange={(m) => setAvatarMode(m)}
+          onStockSelect={(id) => {
+            setStockAvatarId(id);
+            playSelect();
+            vibrate(8);
+          }}
+          compact
+        />
+      </motion.div>
 
       <motion.p
         initial={{ opacity: 0, y: 6 }}
@@ -464,7 +496,7 @@ export default function VoicePage() {
           fontSize: "var(--type-supporting-mobile)",
           color: "var(--text-tertiary)",
           lineHeight: 1.55,
-          marginTop: -8,
+          marginTop: 0,
           marginBottom: 20,
           padding: "10px 14px",
           borderRadius: "var(--radius-md)",

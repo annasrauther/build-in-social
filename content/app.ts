@@ -9,7 +9,7 @@ export const APP = {
     greetingMorning: "Good morning.",
     greetingAfternoon: "Good afternoon.",
     greetingEvening: "Good evening.",
-    subtitle: "Here\u2019s what Build In Social is doing this week.",
+    subtitle: "Your domain presence at a glance.",
     weekSummary: "This week",
     reviewCta: "Review this week",
     modeAutopilot: "Autopilot active",
@@ -18,7 +18,7 @@ export const APP = {
     noApproved: "No videos approved yet",
     nextScheduled: "Next scheduled",
     nextScheduledEmpty:
-      "Your upcoming posts will appear here once Build In Social has built your plan and you\u2019ve approved it.",
+      "Your next posts will appear here once this week\u2019s plan is ready.",
     buildPlanCta: "Build this week\u2019s plan",
     buildPlanCtaAutopilot: "See this week\u2019s plan",
     nextPostPrefix: "Next post:",
@@ -27,9 +27,11 @@ export const APP = {
     topPerformerEmpty:
       "Performance data will appear after your first published week.",
     topPerformerSub: "Views, watch time, and click-through per platform.",
+    topPerformerProgress: (posted: number, threshold: number) =>
+      `Post ${threshold - posted} more video${threshold - posted === 1 ? "" : "s"} to unlock performance insights`,
     emptyTitle: "Your first week is ready to build",
     emptyDescription:
-      "Hit autopilot and Build In Social runs the week. Or tell us what you shipped and we\u2019ll build around it.",
+      "Hit autopilot and Build In Social runs the week. Or share something you worked on and we\u2019ll build around it.",
     emptyCta: "Start this week",
   },
 
@@ -37,11 +39,12 @@ export const APP = {
     weeklyPlanLabel: "Weekly plan",
     manualTitle: "I have something to share this week",
     manualDescription:
-      "Answer 3 quick questions. Build In Social builds the week around your specific work.",
+      "Answer 3 quick questions. Build In Social builds the week around your specific work \u2014 a launch, a lesson, a decision, or anything worth sharing.",
     autopilotTitle: "Hand it to autopilot",
     autopilotBadge: "Recommended",
+    autopilotCta: "Hand it to autopilot",
     autopilotDescription:
-      "Build In Social picks the best angles for your niche and builds the full week. No input needed.",
+      "Build In Social draws on your niche, your tone, and what\u2019s resonating in your domain. Builds the full week. Publishes automatically.",
     approveAll: "Approve all",
     startFresh: "Rebuild this week",
     startFreshTitle: "Rebuild this week\u2019s content?",
@@ -51,21 +54,117 @@ export const APP = {
   },
 
   QUALITY_GATE: {
-    title: "What happened this week?",
-    subtitle: "Three specific questions. The more detail, the better the content.",
-    q1: "What did you learn, ship, or decide?",
+    title: "What did you work on this week?",
+    subtitle: "Three quick questions. The more specific, the better the content.",
+    q1: "What did you learn, build, ship, or figure out?",
     q1Placeholder:
-      'Be specific. "Launched Stripe billing," "Finally understood useEffect," or "Delivered a client audit" \u2014 all work.',
+      'Be specific. "Traced a re-render bug to a missing memo," "Launched Stripe billing," "Finally got TypeScript generics to click," or "Closed a pilot deal" \u2014 all work.',
     q2: "What surprised you about it?",
-    q2Placeholder: "The unexpected detail makes content 10\u00d7 better.",
+    q2Placeholder: "The unexpected detail makes content worth sharing.",
     q3: "Who needs to hear this, and why does it matter to them?",
     q3Placeholder: "Your audience and their specific pain point.",
     submitCta: "Continue",
     switchToAutopilot: "Let Build In Social run this week instead",
     pushback:
-      "This is a bit general \u2014 one specific detail makes the content 10\u00d7 better. What exactly did you launch? What number surprised you? Even one sentence changes everything.",
+      "Can you give me one more specific detail? A number, a name, a decision, a tool \u2014 even one concrete thing makes the content sound like you and nobody else.",
     specificityLabels: ["Too vague", "Getting there", "Specific enough"],
     stickyLabel: "Specific answers = better content",
+    pasteToggle: "Have something written already? Paste it in",
+    pasteLabel: "Your notes, draft, or content",
+    pastePlaceholder:
+      "Paste a rough draft, bullet points, tweet thread, or anything you\u2019ve already written \u2014 Build In Social will use it as the foundation.",
+    pasteHint: "Optional \u00b7 the AI will draw from this alongside your answers above.",
+  },
+
+  SERIES: {
+    title: "Series",
+    subtitle: (n: number) =>
+      n === 0
+        ? "Run as many parallel content shows as you want."
+        : `${n} series running — each with its own mode, cadence, and niche.`,
+    createCta: "Create a series",
+    emptyTitle: "No series yet",
+    emptyDescription:
+      "A series runs your content on autopilot — pick a niche, a mode, and a cadence. Build In Social does the rest.",
+    emptyCta: "Create your first series",
+    list: {
+      columns: {
+        name: "Name",
+        mode: "Mode",
+        cadence: "Cadence",
+        status: "Status",
+        credits: "Credits",
+      },
+      rowOpen: "Open series",
+    },
+    statusLabels: {
+      active: "Active",
+      paused: "Paused",
+      completed: "Completed",
+    },
+    modeLabels: {
+      faceless: "Faceless",
+      "stock-ai-avatar": "Stock AI avatar",
+      "heygen-avatar": "HeyGen avatar",
+      combo: "Combo",
+    },
+    frequencyLabels: {
+      daily: "Daily",
+      "3x-week": "3× per week",
+      "5x-week": "5× per week",
+      custom: "Custom",
+    },
+    create: {
+      title: "Create a series",
+      subtitle:
+        "Pick a niche, a rendering mode, and a cadence. Build In Social takes it from there.",
+      steps: {
+        basics: "Basics",
+        mode: "Rendering mode",
+        cadence: "Posting cadence",
+        voice: "Narration",
+        review: "Review",
+      },
+      modeOptions: {
+        faceless: {
+          label: "Faceless",
+          helper: "B-roll + voice. Cheapest. Ideal for tip-style and list content.",
+        },
+        "stock-ai-avatar": {
+          label: "Stock AI avatar",
+          helper:
+            "A curated AI persona narrates the video. Same cost as faceless.",
+        },
+        "heygen-avatar": {
+          label: "HeyGen avatar",
+          helper:
+            "A real licensed face or your own twin. Higher credit cost per render.",
+        },
+        combo: {
+          label: "Combo",
+          helper:
+            "Build In Social picks faceless vs avatar per video, biased by your credit budget and content type.",
+        },
+      },
+      submit: "Create series",
+      cancel: "Cancel",
+    },
+    detail: {
+      backToList: "\u2190 Back to series",
+      notFound: "Series not found.",
+      pause: "Pause",
+      resume: "Resume",
+      delete: "Delete series",
+      deleteConfirm: "Delete this series? Past videos stay, but nothing new will be queued.",
+      fields: {
+        mode: "Mode",
+        cadence: "Cadence",
+        platforms: "Platforms",
+        nextVideo: "Next video",
+        creditsConsumed: "Credits consumed",
+      },
+      neverScheduled: "Ready to run",
+    },
   },
 
   VIDEOS: {
@@ -132,6 +231,20 @@ export const APP = {
     editScriptSaved: "Saved",
     editScriptCharCount: (n: number) => `${n}/2000`,
     editScriptPlaceholder: "Edit your script directly\u2026",
+
+    // Render mode section
+    RENDER_MODE: {
+      sectionTitle: "Render mode",
+      facelessLabel: "Faceless",
+      facelessDescription: "Stock footage, text overlays, and your voice.",
+      avatarLabel: "Avatar",
+      avatarDescription: "Your AI avatar presents on screen.",
+      selectAvatarLabel: "Select avatar",
+      selectVoiceLabel: "Avatar voice",
+      renderCta: "Start render",
+      renderingStatus: "Build In Social is rendering your video...",
+      avatarRendering: "Build In Social is creating your avatar video...",
+    },
   },
 
   INTELLIGENCE: {
@@ -340,6 +453,8 @@ export const APP = {
     audienceLabel: "Who you build for",
     toneLabel: "Tone",
     toneDescription: "Controls how Build In Social writes scripts.",
+    contentLanguageLabel: "Content language",
+    contentLanguageDescription: "The language Build In Social writes content in.",
     voicePrefsLabel: "Voice preferences",
     voicePrefsOptional: "Optional",
     voicePrefsPlaceholder:
@@ -421,10 +536,10 @@ export const APP = {
       "Update payment method, download invoices, cancel subscription.",
     billingPortalCta: "Billing portal \u2192",
     avatarTitle: "Avatar Mode",
-    avatarComingSoon: "Coming soon",
+    avatarBadge: "New",
     avatarDescription:
       "Your AI clone. Record once. Post your face on every platform, every week, without filming.",
-    avatarCta: "Join waitlist",
+    avatarCta: "Choose render mode",
     usageTitle: "This month",
     usageVideos: (count: number, limit: number) =>
       `${count} of ${limit} videos this month`,
@@ -442,19 +557,19 @@ export const APP = {
   },
 
   QUOTA: {
-    dialogTitle: (cap: number) => `You\u2019ve used this month\u2019s ${cap} videos`,
+    dialogTitle: (cap: number) => `Monthly cap reached \u2014 ${cap} videos published`,
     dialogBody: (nextTier: string | null, resetDate: string) =>
       nextTier
-        ? `Upgrade to ${nextTier} for more, or wait until ${resetDate}. You\u2019ll keep access to previous videos.`
-        : `You\u2019re on our top plan. Wait until ${resetDate} for your next videos. You\u2019ll keep access to previous videos.`,
-    upgradeCta: (nextTier: string) => `Upgrade to ${nextTier}`,
-    waitCta: "Wait until reset",
+        ? `Every video you publish becomes a permanent pSEO page that compounds in search. Upgrading to ${nextTier} keeps that compounding going this month instead of pausing until ${resetDate}.`
+        : `Every video you\u2019ve published is a permanent pSEO page compounding in search. You\u2019re on the top plan \u2014 your cap resets ${resetDate} and all previous pages stay live.`,
+    upgradeCta: (nextTier: string) => `Keep compounding \u2014 upgrade to ${nextTier}`,
+    waitCta: `Wait for reset`,
     headerUsage: (used: number, cap: number) => `${used} of ${cap} videos this month`,
     headerNearCap: (used: number, cap: number) =>
       `${used} of ${cap} videos \u2014 near your cap`,
     headerAtCap: (cap: number) =>
-      `${cap} of ${cap} videos \u2014 cap reached. Upgrade or wait until reset.`,
-    noSurpriseCharges: "Hard cap. No surprise charges.",
+      `${cap} of ${cap} videos \u2014 cap reached. Upgrade to keep publishing.`,
+    noSurpriseCharges: "Hard cap \u00b7 no surprise charges \u00b7 all published pages stay live.",
   },
 
   WAITLIST: {
@@ -609,6 +724,22 @@ export const APP = {
     unscheduled: "Unscheduled",
     dropToSchedule: "Drop to schedule",
     scheduledDay: (day: string) => `Scheduled for ${day}`,
+    switchToAutopilot: "Switch to autopilot instead",
+    switchToManual: "Switch to manual instead",
+    showScript: "Show script",
+    hideScript: "Hide script",
+    approve: "Approve",
+    approved: "Approved",
+  },
+
+  NAV: {
+    dashboard: "Dashboard",
+    weeklyPlan: "Weekly Plan",
+    videos: "Videos",
+    settings: "Settings",
+    avatarMode: "Avatar Mode",
+    help: "Help",
+    planSubtitle: "Build In Social is building this week\u2019s content.",
   },
 
   DASHBOARD_UI: {
@@ -700,7 +831,7 @@ export const APP = {
 
   DASHBOARD_NAV: {
     dashboardLabel: "Dashboard",
-    planLabel: "Plan",
+    planLabel: "Weekly Plan",
     videosLabel: "Videos",
     settingsLabel: "Settings",
   },

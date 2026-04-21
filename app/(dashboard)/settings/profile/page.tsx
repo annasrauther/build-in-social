@@ -8,7 +8,7 @@ import { StatusCard } from "@/components/ui/StatusCard";
 import { Input } from "@/components/tremor/Input";
 import { Label } from "@/components/tremor/Label";
 import { APP } from "@/content/app";
-import type { ContentTone, Platform } from "@/lib/types/user";
+import type { ContentLanguage, ContentTone, Platform } from "@/lib/types/user";
 
 interface Profile {
   id: string;
@@ -16,6 +16,7 @@ interface Profile {
   brandName: string;
   niche?: string;
   tone: ContentTone;
+  contentLanguage?: ContentLanguage;
   platforms: Platform[];
   voiceNotes?: string;
 }
@@ -25,6 +26,12 @@ const TONE_OPTIONS: { id: ContentTone; label: string }[] = [
   { id: "casual", label: "Casual" },
   { id: "nerdy-warm", label: "Nerdy & warm" },
   { id: "fun-energetic", label: "Fun & energetic" },
+];
+
+const LANGUAGE_OPTIONS: { id: ContentLanguage; label: string }[] = [
+  { id: "english", label: "English" },
+  { id: "spanish", label: "Spanish" },
+  { id: "bilingual", label: "Bilingual (English + Spanish)" },
 ];
 
 export default function ProfileSettings() {
@@ -76,6 +83,7 @@ export default function ProfileSettings() {
           brandName: profile.brandName,
           niche: profile.niche,
           tone: profile.tone,
+          contentLanguage: profile.contentLanguage,
           voiceNotes: profile.voiceNotes,
         }),
       });
@@ -228,6 +236,33 @@ export default function ProfileSettings() {
                         }
                         className={`rounded-md px-3 py-1.5 text-sm transition ${
                           profile.tone === opt.id
+                            ? "bg-brand-500 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="font-medium">
+                    {APP.SETTINGS_PROFILE.contentLanguageLabel}
+                  </Label>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {APP.SETTINGS_PROFILE.contentLanguageDescription}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {LANGUAGE_OPTIONS.map((opt) => (
+                      <button
+                        type="button"
+                        key={opt.id}
+                        onClick={() =>
+                          setProfile({ ...profile, contentLanguage: opt.id })
+                        }
+                        className={`rounded-md px-3 py-1.5 text-sm transition ${
+                          (profile.contentLanguage ?? "english") === opt.id
                             ? "bg-brand-500 text-white"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
                         }`}

@@ -17,20 +17,22 @@ import { z } from "zod";
 import { getAuthUserId, getOrCreateUser } from "@/lib/auth";
 import { canUseFeature } from "@/lib/billing/capabilities";
 import { checkRateLimit } from "@/lib/services/rate-limit";
-import { getPseoPage } from "@/lib/services/db";
-import { publishPseoToWordPress } from "@/lib/services/wordpress";
+import { getPseoPage, getVideo } from "@/lib/services/db";
+import {
+  publishPseoToWordPress,
+  publishVideoToWordPress,
+} from "@/lib/services/wordpress";
 import { INTERNAL_SECRET } from "@/lib/env";
 import { timingSafeStringEquals } from "@/lib/security/compare";
 
 const BodySchema = z
   .object({
     pseoPageId: z.string().min(1).max(120).optional(),
-    // TODO: video post support — accept videoId once the adapter ships.
     videoId: z.string().min(1).max(120).optional(),
   })
   .strict()
   .refine((v) => v.pseoPageId || v.videoId, {
-    message: "pseoPageId is required (videoId not yet supported)",
+    message: "pseoPageId or videoId is required",
   });
 
 function err(status: number, error: string) {
@@ -66,15 +68,20 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Internal calls must carry pseoPageId and we resolve the owning userId
-  // from the page record itself.
+  // Internal calls must carry a pseoPageId OR videoId and we resolve the
+  // owning userId from the record itself.
   if (isInternal) {
-    if (!parsed.data.pseoPageId) {
-      return err(400, "pseoPageId is required for internal publish");
+    if (parsed.data.pseoPageId) {
+      const page = await getPseoPage(parsed.data.pseoPageId);
+      if (!page) return err(404, "pSEO page not found");
+      userId = page.userId;
+    } else if (parsed.data.videoId) {
+      const video = await getVideo(parsed.data.videoId);
+      if (!video) return err(404, "Video not found");
+      userId = video.userId;
+    } else {
+      return err(400, "pseoPageId or videoId is required for internal publish");
     }
-    const page = await getPseoPage(parsed.data.pseoPageId);
-    if (!page) return err(404, "pSEO page not found");
-    userId = page.userId;
   }
 
   if (!userId) return err(401, "Unauthorized");
@@ -103,10 +110,41 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Branch on the type of content being published. Video posts embed the
+  // rendered MP4 from R2; pSEO posts publish the Haiku-generated article.
   if (parsed.data.videoId && !parsed.data.pseoPageId) {
-    // TODO: video post support — wire `publishVideoPost` once the adapter
-    // lands in lib/services/wordpress.real.ts. For now we reject cleanly.
-    return err(501, "Video post publishing is not yet supported");
+    const video = await getVideo(parsed.data.videoId);
+    if (!video) return err(404, "Video not found");
+    if (video.userId !== userId) return err(403, "Forbidden");
+    if (!video.outputUrl) {
+      return err(400, "Video has not finished rendering yet");
+    }
+
+    const videoResult = await publishVideoToWordPress({
+      userId,
+      videoId: parsed.data.videoId,
+    });
+
+    if (!videoResult.ok) {
+      return NextResponse.json({
+        data: {
+          ok: false,
+          error: videoResult.error ?? "Publish failed",
+          connection: videoResult.connection ?? null,
+        },
+        error: null,
+      });
+    }
+
+    return NextResponse.json({
+      data: {
+        ok: true,
+        wpPostId: videoResult.wpPostId ?? null,
+        postUrl: videoResult.postUrl ?? null,
+        connection: videoResult.connection ?? null,
+      },
+      error: null,
+    });
   }
 
   if (!parsed.data.pseoPageId) {

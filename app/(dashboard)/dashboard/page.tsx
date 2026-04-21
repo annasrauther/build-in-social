@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getOrCreateUser } from "@/lib/auth";
-import { getVideos } from "@/lib/services/db";
+import { getVideos, getTopPerformingVideos } from "@/lib/services/db";
 import { StatusCard } from "@/components/ui/StatusCard";
 import { APP } from "@/content/app";
 import DashboardClient from "./DashboardClient";
@@ -38,9 +38,12 @@ export default async function DashboardPage() {
     );
   }
 
-  // Fetch videos in parallel with no extra round-trip — profile was already
-  // resolved above; this fetch runs immediately after auth succeeds.
-  const videos = await getVideos(profile.id).catch(() => []);
+  // Fetch videos and top performer in parallel.
+  const [videos, topPerformerList] = await Promise.all([
+    getVideos(profile.id).catch(() => []),
+    getTopPerformingVideos(profile.id, 1).catch(() => []),
+  ]);
+  const topPerformer = topPerformerList[0] ?? null;
 
-  return <DashboardClient profile={profile} videos={videos} />;
+  return <DashboardClient profile={profile} videos={videos} topPerformer={topPerformer} />;
 }

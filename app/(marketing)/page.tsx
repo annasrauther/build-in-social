@@ -1,5 +1,8 @@
 import Hero from "@/components/marketing/Hero"
+import Audience from "@/components/marketing/Audience"
+import Modes from "@/components/marketing/Modes"
 import LogoCloud from "@/components/marketing/LogoCloud"
+import SampleVideoGrid from "@/components/marketing/SampleVideoGrid"
 import GlobalDatabaseClient from "@/components/marketing/GlobalDatabaseClient"
 import CodeExample from "@/components/marketing/CodeExample"
 import Features from "@/components/marketing/Features"
@@ -14,7 +17,10 @@ export default function Home() {
   return (
     <main id="main-content" className="flex flex-col overflow-hidden">
       <Hero />
+      <Audience />
+      <Modes />
       <LogoCloud />
+      <SampleVideoGrid />
       <GlobalDatabaseClient />
       <CodeExample />
       <Features />

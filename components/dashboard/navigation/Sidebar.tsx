@@ -7,6 +7,8 @@ import {
   RiSettings5Line,
   RiQuestionLine,
   RiUser3Line,
+  RiBookOpenLine,
+  RiStackLine,
 } from "@remixicon/react"
 import { Wordmark } from "@/components/ui/Wordmark"
 import Link from "next/link"
@@ -16,8 +18,10 @@ import { UserProfileDesktop, UserProfileMobile } from "./UserProfile"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: RiHome2Line },
-  { name: "This week", href: "/plan", icon: RiCalendarLine },
+  { name: "Series", href: "/series", icon: RiStackLine },
+  { name: "Weekly Plan", href: "/plan", icon: RiCalendarLine },
   { name: "Videos", href: "/videos", icon: RiVideoLine },
+  { name: "Guides", href: "/guides", icon: RiBookOpenLine },
   { name: "Settings", href: "/settings/profile", icon: RiSettings5Line },
 ] as const
 
@@ -29,6 +33,9 @@ export function Sidebar() {
     }
     if (itemHref === "/plan") {
       return pathname.startsWith("/plan")
+    }
+    if (itemHref === "/series") {
+      return pathname.startsWith("/series")
     }
     return pathname === itemHref || pathname.startsWith(itemHref)
   }
@@ -68,21 +75,22 @@ export function Sidebar() {
                 Quick links
               </span>
               <ul aria-label="quick links" role="list" className="space-y-0.5">
-                {/* Avatar Mode — Phase 1 waitlist. No HeyGen code. */}
+                {/* Avatar Mode — now enabled (HeyGen live). Link jumps to
+                    the video library so users can open any video and flip
+                    its render mode inline. */}
                 <li>
                   <Link
-                    href="/waitlist"
+                    href="/videos"
                     className={cx(
-                      "text-gray-700 hover:text-gray-900 dark:text-gray-400 hover:dark:text-gray-50",
+                      isActive("/videos")
+                        ? "text-brand-500 dark:text-brand-400"
+                        : "text-gray-700 hover:text-gray-900 dark:text-gray-400 hover:dark:text-gray-50",
                       "flex items-center gap-x-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition hover:bg-gray-100 hover:dark:bg-gray-900",
                       focusRing,
                     )}
                   >
                     <RiUser3Line className="size-4 shrink-0" aria-hidden="true" />
                     Avatar Mode
-                    <span className="ml-auto rounded-full bg-brand-100 px-2 py-0.5 text-[10px] font-semibold text-brand-600 dark:bg-brand-950/60 dark:text-brand-300">
-                      Soon
-                    </span>
                   </Link>
                 </li>
                 <li>

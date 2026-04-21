@@ -36,6 +36,7 @@ interface UserProfile {
   id: string;
   niche?: string;
   tone: string;
+  contentLanguage?: string;
   platforms: Platform[];
   brandName: string;
   displayName: string;
@@ -50,8 +51,16 @@ const PLATFORM_META: Record<Platform, { label: string; pillClass: string }> = {
 
 const SPRING = [0.16, 1, 0.3, 1] as const;
 
+const LAST_MODE_KEY = "bis_last_mode";
+
+function getInitialMode(): Mode {
+  if (typeof window === "undefined") return "choose";
+  const saved = window.localStorage.getItem(LAST_MODE_KEY);
+  return saved === "manual" || saved === "autopilot" ? saved : "choose";
+}
+
 export default function CurrentPlanPage() {
-  const [mode, setMode] = useState<Mode>("choose");
+  const [mode, setMode] = useState<Mode>(getInitialMode);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [videos, setVideos] = useState<PlanVideo[] | null>(null);
@@ -109,14 +118,24 @@ export default function CurrentPlanPage() {
 
   const niche = profile?.niche?.trim() ?? "";
   const tone = profile?.tone ?? "casual";
+  const contentLanguage = profile?.contentLanguage ?? "english";
   const platforms = useMemo<Platform[]>(
     () => (profile?.platforms?.length ? profile.platforms : []),
     [profile],
   );
 
+  // Returning autopilot users skip the choose screen — auto-generate on profile load.
+  useEffect(() => {
+    if (mode === "autopilot" && profile && niche && platforms.length > 0 && !videos && !loading) {
+      generate({ mode: "autopilot" });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile]);
+
   async function generate(opts: {
     mode: "manual" | "autopilot";
     qualityGateAnswers?: [string, string, string];
+    sourceContent?: string;
   }) {
     setLoading(true);
     setGenError(null);
@@ -125,7 +144,7 @@ export default function CurrentPlanPage() {
       const res = await fetch("/api/plan/generate", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ mode: opts.mode, platforms, niche, tone, qualityGateAnswers: opts.qualityGateAnswers }),
+        body: JSON.stringify({ mode: opts.mode, platforms, niche, tone, contentLanguage, qualityGateAnswers: opts.qualityGateAnswers, sourceContent: opts.sourceContent }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -135,6 +154,7 @@ export default function CurrentPlanPage() {
       }
       setVideos(json.data.videos as PlanVideo[]);
       setMode(opts.mode);
+      window.localStorage.setItem(LAST_MODE_KEY, opts.mode);
     } catch {
       setGenError(APP.COMMON.errorGenerate);
     } finally {
@@ -183,7 +203,15 @@ export default function CurrentPlanPage() {
   }
   function startFresh() {
     setVideos(null);
-    setMode("choose");
+    setMode(getInitialMode());
+    setGenError(null);
+    setPushback(null);
+  }
+
+  function switchMode() {
+    const next: Mode = mode === "autopilot" ? "manual" : mode === "manual" ? "autopilot" : "choose";
+    setMode(next);
+    setVideos(null);
     setGenError(null);
     setPushback(null);
   }
@@ -329,64 +357,14 @@ export default function CurrentPlanPage() {
               {videos.map((v, i) => {
                 const meta = PLATFORM_META[v.platform];
                 return (
-                  <motion.li
+                  <VideoCard
                     key={v.id}
-                    layout
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.22, ease: SPRING, delay: i * 0.04 }}
-                  >
-                    <div
-                      className={cx(
-                        "rounded-[var(--radius-lg)] px-5 py-4 shadow-[var(--shadow-sm)] border transition-[border-color,background-color] duration-200",
-                        v.status === "approved"
-                          ? "border-[rgba(120,140,93,0.35)] bg-[rgba(120,140,93,0.04)]"
-                          : "border-[color:var(--border-default)] bg-[color:var(--bg-surface)]",
-                      )}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                          {/* Meta row */}
-                          <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <span
-                              className={cx(
-                                "text-[11px] font-semibold uppercase tracking-[0.04em] px-2 py-0.5 rounded-full",
-                                meta.pillClass,
-                              )}
-                            >
-                              {meta.label}
-                            </span>
-                            <span className="text-[12px] text-[color:var(--text-tertiary)]">
-                              {v.dayOfWeek} · {v.durationSeconds}s
-                            </span>
-                            {v.status === "approved" && (
-                              <span className="text-[11px] font-semibold text-[color:var(--accent-green)]">
-                                ✓ {APP.PLAN_UI.approvedStatus}
-                              </span>
-                            )}
-                          </div>
-                          <p className="truncate text-[15px] font-semibold leading-[1.4] text-[color:var(--text-primary)]">
-                            {v.title}
-                          </p>
-                          <p className="mt-1 line-clamp-2 text-[13px] leading-[1.6] text-[color:var(--text-secondary)]">
-                            {v.hook}
-                          </p>
-                        </div>
-                        {/* P1-16: hide per-video approve in autopilot mode — videos publish automatically. */}
-                        {mode === "autopilot" ? null : (
-                          <Button
-                            variant={v.status === "approved" ? "secondary" : "primary"}
-                            onClick={() => approveVideo(v.id)}
-                            disabled={v.status === "approved"}
-                            className="shrink-0"
-                          >
-                            {v.status === "approved" ? APP.PLAN_UI.approvedStatus : "Approve"}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </motion.li>
+                    video={v}
+                    meta={meta}
+                    mode={mode}
+                    index={i}
+                    onApprove={approveVideo}
+                  />
                 );
               })}
             </AnimatePresence>
@@ -426,7 +404,7 @@ export default function CurrentPlanPage() {
           <ModeCard
             title={APP.PLAN.autopilotTitle}
             description={APP.PLAN.autopilotDescription}
-            cta={loading ? "Building…" : "Hand it to autopilot"}
+            cta={loading ? "Building…" : APP.PLAN.autopilotCta}
             badge={APP.PLAN.autopilotBadge}
             highlighted
             icon={
@@ -444,7 +422,7 @@ export default function CurrentPlanPage() {
 
   return (
     <PlanShell>
-      <div className="mb-5">
+      <div className="mb-5 flex items-center justify-between">
         <button
           onClick={() => setMode("choose")}
           className="flex items-center gap-1.5 min-h-[44px] text-[13px] cursor-pointer bg-transparent border-none p-0 text-[color:var(--text-tertiary)]"
@@ -452,11 +430,17 @@ export default function CurrentPlanPage() {
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 12L4 7l5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
           {APP.PLAN_UI.back}
         </button>
+        <button
+          onClick={switchMode}
+          className="text-[13px] cursor-pointer bg-transparent border-none p-0 text-[color:var(--text-tertiary)] underline underline-offset-2 min-h-[44px]"
+        >
+          {APP.PLAN_UI.switchToAutopilot}
+        </button>
       </div>
       <QualityGate
         loading={loading}
         serverPushback={pushback ?? undefined}
-        onSubmit={(answers) => generate({ mode: "manual", qualityGateAnswers: answers })}
+        onSubmit={(answers, sourceContent) => generate({ mode: "manual", qualityGateAnswers: answers, sourceContent })}
         onAutopilot={() => generate({ mode: "autopilot" })}
       />
     </PlanShell>
@@ -470,10 +454,10 @@ function PlanShell({ children }: { children: React.ReactNode }) {
     <div className="px-6 pt-8 pb-12 sm:px-8">
       <header className="mb-8">
         <h1 className="text-gradient-brand font-serif text-[26px] font-extrabold tracking-tight leading-tight mb-1.5">
-          This week
+          Weekly Plan
         </h1>
         <p className="text-[14px] text-[color:var(--text-tertiary)]">
-          {APP.DASHBOARD.subtitle}
+          {APP.NAV.planSubtitle}
         </p>
       </header>
       {children}
@@ -498,6 +482,144 @@ function PlanShellSkeleton() {
   );
 }
 
+
+/* ── VideoCard ────────────────────────────────────────────────────────────── */
+
+function VideoCard({
+  video,
+  meta,
+  mode,
+  index,
+  onApprove,
+}: {
+  video: PlanVideo;
+  meta: { label: string; pillClass: string };
+  mode: Mode;
+  index: number;
+  onApprove: (id: string) => void;
+}) {
+  const [scriptOpen, setScriptOpen] = useState(false);
+  const approved = video.status === "approved";
+
+  return (
+    <motion.li
+      layout
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
+      transition={{ duration: 0.18, ease: SPRING, delay: index * 0.04 }}
+      style={{
+        borderRadius: "var(--radius-lg)",
+        border: approved
+          ? "1.5px solid var(--accent)"
+          : "1px solid var(--border-default)",
+        backgroundColor: approved
+          ? "var(--accent-subtle)"
+          : "var(--bg-surface)",
+        padding: 20,
+        boxShadow: "var(--shadow-sm)",
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          {/* Platform + day row */}
+          <div className="flex items-center gap-2 mb-2">
+            <span className={cx("text-[11px] font-semibold px-2 py-0.5 rounded-full", meta.pillClass)}>
+              {meta.label}
+            </span>
+            <span style={{ fontSize: "var(--type-micro)", color: "var(--text-tertiary)" }}>
+              {video.dayOfWeek}
+            </span>
+            {approved && (
+              <span
+                className="ml-auto text-[11px] font-semibold"
+                style={{ color: "var(--accent)" }}
+              >
+                {APP.PLAN_UI.approved}
+              </span>
+            )}
+          </div>
+
+          {/* Title */}
+          <p
+            className="font-semibold leading-snug mb-1 line-clamp-2"
+            style={{ fontSize: 15, color: "var(--text-primary)" }}
+          >
+            {video.title}
+          </p>
+
+          {/* Hook */}
+          <p
+            className="line-clamp-2"
+            style={{ fontSize: "var(--type-supporting-desktop)", color: "var(--text-secondary)" }}
+          >
+            {video.hook}
+          </p>
+        </div>
+
+        {/* Approve button */}
+        {mode !== "autopilot" && (
+          <Button
+            variant={approved ? "secondary" : "primary"}
+            onClick={() => onApprove(video.id)}
+            disabled={approved}
+            className="shrink-0 self-start"
+          >
+            {approved ? APP.PLAN_UI.approved : APP.PLAN_UI.approve}
+          </Button>
+        )}
+      </div>
+
+      {/* Script toggle */}
+      {video.script && (
+        <div className="mt-3">
+          <button
+            onClick={() => setScriptOpen((o) => !o)}
+            className="flex items-center gap-1 text-[12px] font-medium bg-transparent border-none p-0 cursor-pointer min-h-[32px]"
+            style={{ color: "var(--text-tertiary)" }}
+            aria-expanded={scriptOpen}
+          >
+            <motion.svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              animate={{ rotate: scriptOpen ? 90 : 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              <path d="M4 2l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </motion.svg>
+            {scriptOpen ? APP.PLAN_UI.hideScript : APP.PLAN_UI.showScript}
+          </button>
+
+          <AnimatePresence initial={false}>
+            {scriptOpen && (
+              <motion.div
+                key="script"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.22, ease: SPRING }}
+                style={{ overflow: "hidden" }}
+              >
+                <pre
+                  className="mt-3 text-[12px] leading-relaxed whitespace-pre-wrap font-sans rounded-[var(--radius-md)] p-3"
+                  style={{
+                    color: "var(--text-secondary)",
+                    backgroundColor: "var(--bg-elevated)",
+                    border: "1px solid var(--border-default)",
+                  }}
+                >
+                  {video.script}
+                </pre>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+    </motion.li>
+  );
+}
 
 function ModeCard({
   title,

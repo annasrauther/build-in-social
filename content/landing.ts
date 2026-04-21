@@ -126,9 +126,37 @@ interface FeaturesContent {
   features: Feature[];
 }
 
+interface AudiencePersona {
+  title: string;
+  body: string;
+}
+
+interface AudienceContent {
+  headline: string;
+  subhead: string;
+  personas: AudiencePersona[];
+}
+
+interface ModeCard {
+  name: string;
+  title: string;
+  body: string;
+  bestFor: string;
+  creditCost: string;
+}
+
+interface ModesContent {
+  eyebrow: string;
+  headline: string;
+  subhead: string;
+  cards: ModeCard[];
+}
+
 export interface LandingContent {
   NAV: NavContent;
   HERO: HeroContent;
+  AUDIENCE: AudienceContent;
+  MODES: ModesContent;
   SOCIAL_PROOF: SocialProofContent;
   GLOBAL_DATABASE: GlobalDatabaseContent;
   FEATURES: FeaturesContent;
@@ -154,17 +182,76 @@ export const LANDING: LandingContent = {
       { label: "What's new", href: "/changelog" },
     ],
     signInLabel: "Sign in",
-    ctaLabel: "Join the waitlist",
+    ctaLabel: "Preview your content free",
   },
 
   HERO: {
-    headline:
-      "Every week, up to 20 platform-native videos per month go out. You don\u2019t film one.",
+    headline: "You built it. Let the world see it.",
     subhead:
-      "You ship. You learn. You forget to post. Build In Social scripts, renders, and posts to 4 platforms \u2014 every week.",
-    primaryCta: "Join the waitlist",
-    secondaryCta: "See how it works",
-    reassurance: "No credit card required. Cancel any time.",
+      "Distribution for developers, creators, and founders. Build In Social scripts, renders, and posts platform-native videos to YouTube Shorts, Reels, LinkedIn, and X \u2014 plus an indexable article per video. First preview in under 2 minutes, free.",
+    primaryCta: "Preview your content free",
+    secondaryCta: "See pricing",
+    reassurance: "No credit card to preview. Pay only when you ship.",
+  },
+
+  AUDIENCE: {
+    headline: "Built for people who build or sell",
+    subhead: "Four canonical stories. If any of these is you, Build In Social is for you.",
+    personas: [
+      {
+        title: "Indie developer or SaaS founder",
+        body: "You shipped a product. Nobody knows it exists. Build In Social runs weekly content around your domain so your app gets seen.",
+      },
+      {
+        title: "Course creator or educator",
+        body: "You sell courses or services. Build In Social builds authority content around your expertise, week over week, while you teach.",
+      },
+      {
+        title: "Agency or consultant",
+        body: "Your pipeline is inbound-starved. Build In Social runs domain-presence content around your niche to keep leads warm.",
+      },
+      {
+        title: "Solopreneur or knowledge worker",
+        body: "You have expertise, no distribution. Turn your niche into platform-native content you don\u2019t have to film.",
+      },
+    ],
+  },
+
+  MODES: {
+    eyebrow: "Four modes. One credit pool.",
+    headline: "Your face or no face \u2014 your choice, per series.",
+    subhead:
+      "Pick a rendering mode when you create a series. Build In Social handles the rest. Switch any week from Settings, or override per video.",
+    cards: [
+      {
+        name: "Faceless",
+        title: "B-roll + voice",
+        body: "Our renderer stitches stock footage to your script with your chosen voice. Cheapest option, unlimited reuse.",
+        bestFor: "List-style posts, tip breakdowns, data-heavy angles.",
+        creditCost: "1 credit / video",
+      },
+      {
+        name: "Stock AI avatar",
+        title: "A curated AI persona narrates",
+        body: "A pre-rendered AI influencer-style character with your text overlay and hook. No setup, no training.",
+        bestFor: "Quick hook videos where a face helps but consistency doesn\u2019t matter.",
+        creditCost: "1 credit / video",
+      },
+      {
+        name: "HeyGen avatar",
+        title: "A real face \u2014 theirs or yours",
+        body: "Pick a licensed HeyGen marketplace avatar, or train your own digital twin from a 60-second clip.",
+        bestFor: "Hero content, founder stories, category leadership posts.",
+        creditCost: "15 credits / video",
+      },
+      {
+        name: "Combo",
+        title: "AI picks per video",
+        body: "You pick \u201ccombo\u201d once; Build In Social decides faceless vs avatar per video based on the angle and your budget.",
+        bestFor: "Running a mixed-format weekly show without deciding every time.",
+        creditCost: "1\u201315 credits / video",
+      },
+    ],
   },
 
   SOCIAL_PROOF: {
@@ -258,44 +345,47 @@ export const LANDING: LandingContent = {
         name: "Starter",
         price: 19,
         annualPrice: 15,
-        description: "1 platform. 15 videos/month. Hard cap \u2014 no surprise charges.",
+        description: "30 credits/month. Unlimited series. Hard cap \u2014 no surprise charges.",
         bullets: [
-          "15 videos/month (hard cap)",
-          "One platform of your choice",
+          "30 credits/month (30 faceless videos OR 2 HeyGen videos, or any mix)",
+          "Unlimited series \u2014 run as many parallel shows as you want",
+          "One posting platform of your choice",
           "Professional library voice",
+          "Stock AI avatars (starter set)",
           "Manual + autopilot modes",
         ],
-        ctaLabel: "Join the waitlist",
+        ctaLabel: "Preview your content free",
       },
       {
         id: "solo",
         name: "Solo",
         price: 39,
         annualPrice: 31,
-        description: "2 platforms. 40 videos/month (hard cap).",
+        description: "75 credits/month. 2 platforms. pSEO included.",
         bullets: [
-          "40 videos/month (hard cap)",
+          "75 credits/month (75 faceless, 5 HeyGen, or any mix)",
+          "Unlimited series",
           "YouTube Shorts + one other platform",
           "Google-indexed search article per video",
-          "Professional library voice",
+          "Full stock AI avatar library",
         ],
-        ctaLabel: "Join the waitlist",
+        ctaLabel: "Preview your content free",
       },
       {
         id: "creator",
         name: "Creator",
         price: 79,
         annualPrice: 63,
-        description: "3 platforms. 65 videos/month (hard cap).",
+        description: "160 credits/month. 3 platforms. Clone your voice + train a twin.",
         bullets: [
-          "65 videos/month (hard cap)",
+          "160 credits/month (160 faceless, 10 HeyGen, or any mix)",
+          "Unlimited series",
           "Three platforms of your choice",
-          "Scheduled posting on your 3 platforms",
           "Your cloned voice from a 60-second recording",
-          "Publish pSEO articles to your own WordPress site",
-          "Performance breakdowns from week 4",
+          "HeyGen digital twin \u2014 your face narrates every video",
+          "Publish pSEO articles + video embeds to your own WordPress site",
         ],
-        ctaLabel: "Join the waitlist",
+        ctaLabel: "Preview your content free",
         popular: true,
       },
       {
@@ -303,15 +393,16 @@ export const LANDING: LandingContent = {
         name: "Studio",
         price: 149,
         annualPrice: 119,
-        description: "All 4 platforms. 92 videos/month (hard cap).",
+        description: "300 credits/month. All 4 platforms. Priority rendering.",
         bullets: [
-          "92 videos/month (hard cap)",
-          "All four platforms",
-          "Full autopilot scheduling",
-          "Publish pSEO articles to your own WordPress site",
-          "Deeper performance insights + content recommendations (week 4+)",
+          "300 credits/month (300 faceless, 20 HeyGen, or any mix)",
+          "Unlimited series",
+          "All four platforms with full autopilot scheduling",
+          "Priority rendering lane",
+          "Publish pSEO + video to your own WordPress site",
+          "Deeper performance insights (unlocks after 5 published videos)",
         ],
-        ctaLabel: "Join the waitlist",
+        ctaLabel: "Preview your content free",
       },
     ],
     faqs: [
@@ -325,7 +416,23 @@ export const LANDING: LandingContent = {
       },
       {
         q: "Why not TikTok?",
-        a: "TikTok\u2019s content API requires a lengthy app review + is restricted per post. We\u2019re working on it \u2014 join the waitlist on the waitlist page. For now, YouTube Shorts + Reels cover the short-form faceless-video audience and post reliably.",
+        a: "TikTok\u2019s content API requires a lengthy app review + is restricted per post. We\u2019re working on it. For now, YouTube Shorts + Reels cover the short-form faceless-video audience and post reliably.",
+      },
+      {
+        q: "How is this different from autoshorts.ai?",
+        a: "Autoshorts runs faceless-only content series with generic topics like Scary Stories. Build In Social runs domain-presence content tied to what you actually build or sell, with four render modes (faceless, stock avatar, HeyGen licensed, your trained twin). You get unlimited series; autoshorts caps at one. Pricing is credit-based, not cadence-based \u2014 a HeyGen render costs the same whether you post once a week or daily.",
+      },
+      {
+        q: "What counts as a credit?",
+        a: "One credit = one faceless render, or one stock-AI-avatar render. One HeyGen render (licensed marketplace avatar or your own trained twin) = 15 credits, because the upstream cost is ~15\u00d7 higher. Starter gets 30 credits/month, Solo 75, Creator 160, Studio 300. Mix and match freely \u2014 the system deducts the right amount at render time.",
+      },
+      {
+        q: "Can I use my own face?",
+        a: "Yes, on Creator ($79) and Studio ($149). Record a 60-second clip once; HeyGen trains a digital twin; every video can narrate as you. Or pick a licensed face from HeyGen\u2019s marketplace instead. Both bill 15 credits per render.",
+      },
+      {
+        q: "Does it work for course creators / indie devs / agencies?",
+        a: "That\u2019s exactly who it\u2019s for. Anyone who builds or sells and needs distribution. Drop your niche; Build In Social writes around your expertise, not generic short-form templates.",
       },
       {
         q: "Do I lose control over what gets posted?",
@@ -386,7 +493,7 @@ export const LANDING: LandingContent = {
     headline: "You\u2019ll never run another Sunday-night scripting session.",
     subhead:
       "Or never got started? Autopilot runs without you. Your first video batch is ready in under three minutes.",
-    ctaLabel: "Join the waitlist",
+    ctaLabel: "Preview your content free",
     reassurance: "No credit card required. Cancel any time. Takes 3 minutes.",
   },
 

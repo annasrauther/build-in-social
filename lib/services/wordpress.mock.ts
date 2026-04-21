@@ -78,3 +78,42 @@ export async function publishPost(params: {
     postUrl: `${base}/${slug}-${postId}`,
   };
 }
+
+/**
+ * Fake video publish — same deterministic-slug pattern as the pSEO mock so UI
+ * flows look real. Never reaches a network.
+ */
+export async function publishVideoPost(params: {
+  siteUrl: string;
+  username: string;
+  appPassword: string;
+  input: {
+    title: string;
+    videoUrl: string;
+    hook: string;
+    body: string;
+    platform: string;
+    status?: "publish" | "draft" | "pending";
+  };
+}): Promise<WordPressPublishResult> {
+  await delay();
+
+  if (!params.input.title || !params.input.videoUrl) {
+    return { ok: false, error: "Missing title or video URL" };
+  }
+
+  const slug =
+    params.input.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60) || "video";
+  const base = params.siteUrl.replace(/\/+$/, "");
+  const postId = Math.floor(1000 + Math.random() * 9000);
+
+  return {
+    ok: true,
+    wpPostId: postId,
+    postUrl: `${base}/${slug}-${postId}`,
+  };
+}

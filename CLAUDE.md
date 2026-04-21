@@ -62,10 +62,13 @@ Key rules:
 - `app/api/` — all API routes (untouched)
 
 ## Product rules (never break these)
-1. Avatar Mode is DISABLED in Phase 1.
-   Show everywhere with "Coming soon" badge + waitlist CTA.
-   No HeyGen API code whatsoever in Phase 1. Not even installed.
-2. Faceless Mode is the entire product in Phase 1.
+1. **Avatar Mode is NOW ENABLED.** Build the full HeyGen pipeline — mocked by default,
+   real when `HEYGEN_API_KEY` is set in `.env.local` (follows the same mock/real service
+   pattern as ElevenLabs, Pexels, R2, etc.).
+   - Remove all "Coming soon" badges and waitlist CTAs from Avatar Mode UI.
+   - Avatar Mode and Faceless Mode are equal first-class render options.
+   - Never ship real HeyGen API calls without the mock fallback in place first.
+2. Both **Faceless Mode** and **Avatar Mode** are the product.
 3. **Content model is domain-presence, not ship-announcements.**
    The product is about establishing the user's authority in their domain, week over week.
    Users set their niche/domain once during onboarding.
@@ -151,12 +154,10 @@ Production builds force the flag off — `DEV_AUTH` (in `lib/env.ts`) gates on `
 13. Settings pages (profile, voice, platforms, billing)
 14. Clerk auth integration (LAST — after all pages reviewed)
 
-## Never build in Phase 1
-- HeyGen / Avatar Mode (any code at all)
+## Never build
 - Ayrshare auto-publishing
-- Intelligence panel UI
+- Intelligence panel UI (until 5+ published videos with metrics)
 - A/B hook testing
-- Any feature not in the list above
 
 ## v1.1 backlog (after first 10 paying customers)
 - **Per-platform hook scaffolding.** Each video currently ships a single body that the platform-durationed render wraps. v1.1 generates distinct hooks/CTAs per platform: `hooks: { youtube, instagram, linkedin, x }`. Requires schema change on `videos`, new Claude prompt shape, and an editor UI that lets users tweak per-platform copy. Deliberately deferred — shared body is workable for MVP.

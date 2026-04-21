@@ -12,7 +12,9 @@ const isProtectedRoute = createRouteMatcher([
   "/settings(.*)",
   "/api/user/(.*)",
   "/api/videos(.*)",
-  "/api/plan/(.*)",
+  // /api/plan/generate is auth'd; /api/plan/preview is public (onboarding +
+  // /tools/content-plan-preview call it without a session).
+  "/api/plan/generate",
   "/api/generate/(.*)",
   "/api/script/(.*)",
   "/api/render-jobs/(.*)",

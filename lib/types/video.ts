@@ -92,6 +92,12 @@ export interface Video {
   id: string;
   userId: string;
   weekId: string;
+  /**
+   * Series this video belongs to, when it was generated as part of one.
+   * Null for ad-hoc / weekly-plan-only videos. Used to resolve the default
+   * render mode when the video page loads.
+   */
+  seriesId?: string;
   title: string;
   scriptJson: ScriptSection;
   platform: Platform;
@@ -124,8 +130,21 @@ export interface Video {
   /** Number of AI rewrites applied to this video's script. Capped at 3. */
   revisionCount?: number;
 
+  /** Render mode used for this video. Defaults to "faceless" if not set. */
+  renderMode?: "faceless" | "avatar";
+
   /** X (Twitter) thread split — only present when platform = "x" and thread mode is active. */
   thread?: Array<{ index: number; text: string }>;
+
+  /**
+   * Per-platform hook overrides. If set, the renderer uses
+   * `platformHooks[platform]` as the stitched opening line instead of the
+   * shared `scriptJson.hook`. The platform the video is primarily for still
+   * drives formatting; these are secondary hooks used when the same script
+   * body is reshared to a different surface. Populated by the Haiku plan
+   * generator when the "per-platform hooks" feature is enabled on the series.
+   */
+  platformHooks?: Partial<Record<Platform, string>>;
 
   createdAt: string;
   publishedAt?: string;
