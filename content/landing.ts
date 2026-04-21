@@ -182,14 +182,14 @@ export const LANDING: LandingContent = {
       { label: "What's new", href: "/changelog" },
     ],
     signInLabel: "Sign in",
-    ctaLabel: "Preview your content free",
+    ctaLabel: "Preview my week",
   },
 
   HERO: {
     headline: "You built it. Let the world see it.",
     subhead:
       "Distribution for developers, creators, and founders. Build In Social scripts, renders, and posts platform-native videos to YouTube Shorts, Reels, LinkedIn, and X \u2014 plus an indexable article per video. First preview in under 2 minutes, free.",
-    primaryCta: "Preview your content free",
+    primaryCta: "Preview my week",
     secondaryCta: "See pricing",
     reassurance: "No credit card to preview. Pay only when you ship.",
   },
@@ -354,7 +354,7 @@ export const LANDING: LandingContent = {
           "Stock AI avatars (starter set)",
           "Manual + autopilot modes",
         ],
-        ctaLabel: "Preview your content free",
+        ctaLabel: "Preview my week",
       },
       {
         id: "solo",
@@ -369,7 +369,7 @@ export const LANDING: LandingContent = {
           "Google-indexed search article per video",
           "Full stock AI avatar library",
         ],
-        ctaLabel: "Preview your content free",
+        ctaLabel: "Preview my week",
       },
       {
         id: "creator",
@@ -385,7 +385,7 @@ export const LANDING: LandingContent = {
           "HeyGen digital twin \u2014 your face narrates every video",
           "Publish pSEO articles + video embeds to your own WordPress site",
         ],
-        ctaLabel: "Preview your content free",
+        ctaLabel: "Preview my week",
         popular: true,
       },
       {
@@ -402,7 +402,7 @@ export const LANDING: LandingContent = {
           "Publish pSEO + video to your own WordPress site",
           "Deeper performance insights (unlocks after 5 published videos)",
         ],
-        ctaLabel: "Preview your content free",
+        ctaLabel: "Preview my week",
       },
     ],
     faqs: [
@@ -493,7 +493,7 @@ export const LANDING: LandingContent = {
     headline: "You\u2019ll never run another Sunday-night scripting session.",
     subhead:
       "Or never got started? Autopilot runs without you. Your first video batch is ready in under three minutes.",
-    ctaLabel: "Preview your content free",
+    ctaLabel: "Preview my week",
     reassurance: "No credit card required. Cancel any time. Takes 3 minutes.",
   },
 

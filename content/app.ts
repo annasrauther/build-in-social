@@ -19,8 +19,8 @@ export const APP = {
     nextScheduled: "Next scheduled",
     nextScheduledEmpty:
       "Your next posts will appear here once this week\u2019s plan is ready.",
-    buildPlanCta: "Build this week\u2019s plan",
-    buildPlanCtaAutopilot: "See this week\u2019s plan",
+    buildPlanCta: "Build plan",
+    buildPlanCtaAutopilot: "See plan",
     nextPostPrefix: "Next post:",
     autopilotStatusActive: "Autopilot is running. ",
     topPerformer: "Last week\u2019s top performer",
@@ -42,7 +42,7 @@ export const APP = {
       "Answer 3 quick questions. Build In Social builds the week around your specific work \u2014 a launch, a lesson, a decision, or anything worth sharing.",
     autopilotTitle: "Hand it to autopilot",
     autopilotBadge: "Recommended",
-    autopilotCta: "Hand it to autopilot",
+    autopilotCta: "Use autopilot",
     autopilotDescription:
       "Build In Social draws on your niche, your tone, and what\u2019s resonating in your domain. Builds the full week. Publishes automatically.",
     approveAll: "Approve all",
@@ -86,7 +86,7 @@ export const APP = {
     emptyTitle: "No series yet",
     emptyDescription:
       "A series runs your content on autopilot — pick a niche, a mode, and a cadence. Build In Social does the rest.",
-    emptyCta: "Create your first series",
+    emptyCta: "Create series",
     list: {
       columns: {
         name: "Name",
@@ -175,7 +175,7 @@ export const APP = {
     emptyDescription:
       "Build your first weekly plan to see videos here.",
     emptyCta: "Build this week",
-    emptyFirstWeekCta: "Build In Social will create your first week of content",
+    emptyFirstWeekCta: "Build In Social creates your first week.",
     noFilter: (filter: string) => `No videos with status \u201c${filter}\u201d.`,
     filterAll: "All",
     filterDraft: "Draft",
@@ -252,7 +252,7 @@ export const APP = {
     lockedDescription:
       "Publish 5 videos to unlock: views and watch time by platform, hook strength scores for your first 3 seconds, best posting day, and weekly content recommendations tuned to your audience.",
     videosPublished: "Videos published",
-    lockCta: "Build this week\u2019s plan",
+    lockCta: "Build plan",
     metricBestPlatform: "Best platform",
     metricTopContent: "Top content type",
     metricBestDay: "Best posting day",
@@ -338,7 +338,7 @@ export const APP = {
     lockedCta: "Upgrade \u2192",
     loadError: "Couldn\u2019t load your WordPress connection.",
     saveError: "Build In Social couldn\u2019t save your connection.",
-    retestCta: "Re-test connection",
+    retestCta: "Re-test",
     retestSuccess: "Connection is still healthy.",
     retestFailure: (reason: string) => `Connection failed \u2014 ${reason}`,
     roadmapNote:
@@ -407,7 +407,7 @@ export const APP = {
       "This is the only time we\u2019ll show this secret. Store it somewhere safe \u2014 you\u2019ll need it to verify every delivery.",
     secretCopy: "Copy",
     secretCopied: "Copied",
-    secretDoneCta: "I\u2019ve saved my secret",
+    secretDoneCta: "Saved",
     columnUrl: "Endpoint",
     columnEvents: "Events",
     columnStatus: "Status",
@@ -475,7 +475,7 @@ export const APP = {
       "This permanently deletes your account and all associated data \u2014 videos, scripts, voice clone, and settings. This action cannot be undone.",
     deleteAccountConfirm: "Delete account",
     deleteAccountConfirmPrompt: "Type DELETE to confirm.",
-    deleteAccountConfirmCta: "Delete my account",
+    deleteAccountConfirmCta: "Delete account",
     deleteAccountProcessing: "Build In Social is deleting your account...",
     deleteAccountError:
       "Build In Social couldn\u2019t delete your account. Please try again or contact support.",
@@ -509,7 +509,7 @@ export const APP = {
     libraryTitle: "Library voice",
     libraryFallback: "(fallback when clone is unavailable)",
     previewComingSoon: "Audio previews coming soon",
-    previewCloneCta: "Preview your clone",
+    previewCloneCta: "Preview clone",
     previewRendering: "Build In Social is rendering your preview...",
     previewPlaying: "Now playing",
     previewStop: "Stop",
@@ -534,12 +534,12 @@ export const APP = {
     manageBilling: "Manage billing",
     manageBillingDescription:
       "Update payment method, download invoices, cancel subscription.",
-    billingPortalCta: "Billing portal \u2192",
+    billingPortalCta: "Billing portal",
     avatarTitle: "Avatar Mode",
     avatarBadge: "New",
     avatarDescription:
       "Your AI clone. Record once. Post your face on every platform, every week, without filming.",
-    avatarCta: "Choose render mode",
+    avatarCta: "Choose mode",
     usageTitle: "This month",
     usageVideos: (count: number, limit: number) =>
       `${count} of ${limit} videos this month`,
@@ -618,7 +618,7 @@ export const APP = {
       headline: "Show us your product. We\u2019ll show you next week.",
       subheading:
         "Drop your site. In 60 seconds, see the videos Build In Social would post for you across YouTube Shorts, Reels, LinkedIn, and X. No site? Describe what you build \u2014 autopilot works from your niche alone.",
-      cta: "See my content plan \u2192",
+      cta: "See plan →",
       socialProof: "For anyone who ships, writes, or builds faster than they can market.",
       productSectionLabel: "Your website",
       websitePlaceholder: "yourproduct.com",

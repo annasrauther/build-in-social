@@ -27,8 +27,7 @@ import type { Series, SeriesStatus } from "@/lib/types/series";
 const STATUS_DOT: Record<SeriesStatus, string> = {
   active: "bg-accent",
   paused: "bg-[color:var(--warning)]",
-  draft: "bg-text-tertiary",
-  archived: "bg-[color:var(--border)]",
+  completed: "bg-[color:var(--border)]",
 };
 
 export default function SeriesListPage() {
@@ -97,7 +96,7 @@ export default function SeriesListPage() {
           description={error}
           onRetry={() => window.location.reload()}
         />
-      ) : series.length === 0 ? (
+      ) : !series || series.length === 0 ? (
         <EmptyState
           icon={Compass}
           title={APP.SERIES.emptyTitle}

@@ -150,12 +150,12 @@ export function MiniPlanner({
           ) : sample ? (
             <>
               <Sparkles size={14} strokeWidth={1.5} aria-hidden="true" />
-              Refresh sample
+              Refresh
             </>
           ) : (
             <>
               <Sparkles size={14} strokeWidth={1.5} aria-hidden="true" />
-              Plan my week
+              Plan week
             </>
           )}
         </Button>
@@ -197,7 +197,7 @@ export function MiniPlanner({
         <div className="flex flex-col gap-1 mt-2">
           <Button asChild variant="primary" size="md">
             <Link href={signupHref}>
-              Unlock the full week
+              Unlock full week
               <ArrowRight size={14} strokeWidth={1.5} aria-hidden="true" />
             </Link>
           </Button>
