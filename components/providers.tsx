@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ClerkProvider } from "@clerk/nextjs";
 import { useState } from "react";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { TooltipProvider } from "@/components/ui/shadcn/tooltip";
 import { CommandPalette } from "@/components/ui/CommandPalette";
 import { Toaster } from "@/components/providers/Toaster";
@@ -25,16 +26,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   const inner = (
-    <TooltipProvider delayDuration={300} skipDelayDuration={200}>
-      <QueryClientProvider client={queryClient}>
-        {children}
-        <CommandPalette />
-        <Toaster />
-        {process.env.NODE_ENV === "development" && (
-          <ReactQueryDevtools initialIsOpen={false} />
-        )}
-      </QueryClientProvider>
-    </TooltipProvider>
+    <NuqsAdapter>
+      <TooltipProvider delayDuration={300} skipDelayDuration={200}>
+        <QueryClientProvider client={queryClient}>
+          {children}
+          <CommandPalette />
+          <Toaster />
+          {process.env.NODE_ENV === "development" && (
+            <ReactQueryDevtools initialIsOpen={false} />
+          )}
+        </QueryClientProvider>
+      </TooltipProvider>
+    </NuqsAdapter>
   );
 
   // Wrap with ClerkProvider only when keys are configured AND dev-auth bypass

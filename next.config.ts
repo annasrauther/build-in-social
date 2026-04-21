@@ -24,6 +24,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
+  // View Transitions API — Next.js 16 native route transitions.
+  // The CSS customization for bespoke transitions lives in globals.css.
+  experimental: {
+    viewTransition: true,
+  },
   async redirects() {
     return [
       { source: "/waitlist", destination: "/videos", permanent: true },
