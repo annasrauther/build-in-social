@@ -1,9 +1,36 @@
 import type { Metadata } from "next";
-import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
+import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { SmoothScroll } from "@/components/providers/SmoothScroll";
+
+/**
+ * Typography — IBM Plex Sans + IBM Plex Mono.
+ *
+ * Plex has the engineered feel Linear's Inter-ish stack aims for but with
+ * more character. Weights 400 / 500 carry hierarchy; we keep 600 for rare
+ * emphatic labels. Mono carries numerics, IDs, timestamps, and shortcuts.
+ *
+ * CSS variables:
+ *   --font-sans   → IBM Plex Sans  (body, headings, UI)
+ *   --font-mono   → IBM Plex Mono  (tabular numerics, kbd, code)
+ * Legacy `--font-serif` and `--font-heading` are aliased to `--font-sans`
+ * in globals.css so no component-level rename is required.
+ */
+const plexSans = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -58,7 +85,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`dark ${GeistSans.variable} ${GeistMono.variable}`}
+      className={`dark ${plexSans.variable} ${plexMono.variable}`}
       style={{ colorScheme: "dark" }}
       suppressHydrationWarning
     >

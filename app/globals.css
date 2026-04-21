@@ -95,10 +95,10 @@
   --transition-fast: var(--duration-fast) var(--ease-out);
   --transition-state: 100ms var(--ease-out);
 
-  /* ---- Fonts (Geist) ---- */
-  --font-body: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-mono), ui-monospace, "Geist Mono", monospace;
+  /* ---- Fonts (IBM Plex Sans + IBM Plex Mono) ---- */
+  --font-body: var(--font-sans), "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans), "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
 
   /* ---- Legacy token aliases (migrated away screen-by-screen) ---- */
   --bg-page: var(--bg);
@@ -160,8 +160,11 @@
     font-size: 14px;
     line-height: 1.5;
     font-family: var(--font-body);
-    /* Geist OpenType features */
-    font-feature-settings: "cv11", "ss01", "ss03", "tnum";
+    /* IBM Plex OpenType features:
+       ss02 — slashed zero (disambiguates 0 / O for numerics/IDs)
+       calt — contextual alternates
+       tnum — tabular numerics (also enforced via font-variant-numeric below) */
+    font-feature-settings: "ss02", "calt", "tnum";
     font-variant-numeric: tabular-nums;
   }
 
