@@ -2,8 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Registered custom properties for the focus-beam animation.
-   Must live at top level (outside @layer) for browser support. */
+/* Registered custom properties for the focus-beam animation. */
 @property --beam-x {
   syntax: '<length-percentage>';
   inherits: false;
@@ -16,48 +15,107 @@
   initial-value: 0deg;
 }
 
-/* =============================================
-   BUILD IN SOCIAL DESIGN TOKENS
-   Palette: Anthropic warm
-   Cream/dark surfaces, Anthropic Orange accent.
-   ============================================= */
+/* =============================================================
+   BUILD IN SOCIAL DESIGN TOKENS (dark only, Radix grayDark + iris)
+   One scale, one accent. No light-mode branch.
+   Legacy `--bg-*`, `--text-*`, `--accent*` names are aliased to
+   the new Radix scale for screen-by-screen migration.
+   ============================================================= */
 
 :root {
-  /* Surfaces */
-  --bg-page: #FAF9F5;
-  --bg-surface: #FFFFFF;
-  --bg-elevated: #F5F2E8;
-  --bg-overlay: #E8E6DC;
+  /* ---- Radix grayDark scale (1 = deepest bg, 12 = brightest text) ---- */
+  --gray-1: #111111;
+  --gray-2: #191919;
+  --gray-3: #222222;
+  --gray-4: #2a2a2a;
+  --gray-5: #313131;
+  --gray-6: #3a3a3a;
+  --gray-7: #484848;
+  --gray-8: #606060;
+  --gray-9: #6e6e6e;
+  --gray-10: #7b7b7b;
+  --gray-11: #b4b4b4;
+  --gray-12: #eeeeee;
 
-  /* Borders */
-  --border-subtle: rgba(20, 20, 19, 0.04);
-  --border-default: rgba(20, 20, 19, 0.08);
-  --border-strong: rgba(20, 20, 19, 0.12);
+  /* ---- Radix irisDark scale (iris = 9/10 are the solid hues) ---- */
+  --iris-1: #13131e;
+  --iris-2: #171627;
+  --iris-3: #202248;
+  --iris-4: #262a65;
+  --iris-5: #303374;
+  --iris-6: #3d3e82;
+  --iris-7: #4a4a95;
+  --iris-8: #5958b1;
+  --iris-9: #5b5bd6;
+  --iris-10: #6e6ade;
+  --iris-11: #b1a9ff;
+  --iris-12: #e0dffe;
 
-  /* Text */
-  --text-primary: #141413;
-  --text-secondary: #54514D;
-  --text-tertiary: #B0AEA5;
-  --text-disabled: rgba(20, 20, 19, 0.2);
-  --text-inverse: #FAF9F5;
+  /* ---- Semantic (dark-only) ---- */
+  --bg: var(--gray-1);
+  --surface: var(--gray-2);
+  --elevated: var(--gray-3);
+  --border: var(--gray-6);
+  --border-interactive: var(--gray-7);
+  --divider: color-mix(in srgb, var(--gray-12) 6%, transparent);
 
-  /* Anthropic Orange accent */
-  --accent: #D97757;
-  --accent-dim: #DF8F70;
-  --accent-subtle: rgba(217, 119, 87, 0.08);
-  --accent-hover: #C76544;
+  --text: var(--gray-12);
+  --text-secondary: var(--gray-11);
+  --text-tertiary: var(--gray-10);
+  --text-disabled: var(--gray-9);
 
-  /* Semantic */
-  --accent-green: #788C5D;
-  --accent-green-subtle: rgba(120, 140, 93, 0.10);
-  --success: #788C5D;
-  --success-subtle: rgba(120, 140, 93, 0.10);
-  --warning: #F59E0B;
-  --warning-subtle: rgba(245, 158, 11, 0.08);
-  --danger: #EF4444;
-  --danger-subtle: rgba(239, 68, 68, 0.08);
+  --accent: var(--iris-9);
+  --accent-hover: var(--iris-10);
+  --accent-fg: white;
+  --accent-subtle: color-mix(in srgb, var(--iris-9) 15%, transparent);
+  --focus-ring: color-mix(in srgb, var(--iris-9) 40%, transparent);
 
-  /* Type scale */
+  /* ---- Status hues (tuned for dark) ---- */
+  --success: #6ab273;
+  --success-subtle: color-mix(in srgb, #6ab273 15%, transparent);
+  --warning: #d69e5f;
+  --warning-subtle: color-mix(in srgb, #d69e5f 15%, transparent);
+  --danger: #e5484d;
+  --danger-subtle: color-mix(in srgb, #e5484d 15%, transparent);
+
+  /* ---- Radius (nested = parent − padding) ---- */
+  --radius-input: 6px;
+  --radius-card: 8px;
+  --radius-modal: 12px;
+  /* Legacy aliases */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* ---- Motion ---- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-fast: 120ms;
+  --duration-default: 180ms;
+  --transition-fast: var(--duration-fast) var(--ease-out);
+  --transition-state: 100ms var(--ease-out);
+
+  /* ---- Fonts (Geist) ---- */
+  --font-body: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, "Geist Mono", monospace;
+
+  /* ---- Legacy token aliases (migrated away screen-by-screen) ---- */
+  --bg-page: var(--bg);
+  --bg-surface: var(--surface);
+  --bg-elevated: var(--elevated);
+  --bg-overlay: var(--elevated);
+  --bg-dark-cta: var(--surface);
+  --border-subtle: var(--divider);
+  --border-default: var(--border);
+  --border-strong: var(--border-interactive);
+  --text-primary: var(--text);
+  --text-inverse: var(--gray-1);
+  --accent-dim: var(--iris-8);
+  --accent-green: var(--success);
+  --accent-green-subtle: var(--success-subtle);
+
+  /* ---- Type scale (retained for legacy; target is weight+color hierarchy) ---- */
   --type-display-mobile: 20px;
   --type-display-desktop: 24px;
   --type-section-mobile: 15px;
@@ -68,49 +126,21 @@
   --type-supporting-desktop: 13px;
   --type-micro: 11px;
 
-  /* Transitions */
-  --transition-fast: 120ms ease;
-  --transition-state: 100ms ease;
+  /* ---- Shadows: DO NOT USE in dark mode. Use hairline borders. ----
+     Retained as near-zero no-ops for legacy code paths. */
+  --shadow-sm: 0 0 0 1px var(--divider);
+  --shadow-md: 0 0 0 1px var(--divider);
+  --shadow-lg: 0 0 0 1px var(--border);
+  --shadow-card-landing: 0 0 0 1px var(--divider);
+  --shadow-mockup: 0 0 0 1px var(--border);
 
-  /* Radius */
-  --radius-xs: 3px;
-  --radius-sm: 5px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
-  --shadow-card-landing: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06);
-  --shadow-mockup: 0 24px 64px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
-
-  /* Fonts — Montserrat (headings, font-serif) + Poppins (body, font-sans) */
-  --font-heading: var(--font-serif), Montserrat, system-ui, -apple-system, sans-serif;
-  --font-body: var(--font-sans), Poppins, system-ui, sans-serif;
-  --font-mono: ui-monospace, "Fira Code", monospace;
-
-  --bg-dark-cta: #141413;
+  color-scheme: dark;
 }
 
-/* Dark mode — class-based (next-themes) */
+/* `.dark` selector kept as an alias of `:root` so legacy `dark:` Tailwind
+   variants continue to apply while screens migrate off them. Same values. */
 .dark {
-  --bg-page: #141413;
-  --bg-surface: #1C1B1A;
-  --bg-elevated: #252422;
-  --bg-overlay: #2F2D2A;
-  --border-subtle: rgba(250, 249, 245, 0.06);
-  --border-default: rgba(250, 249, 245, 0.10);
-  --border-strong: rgba(250, 249, 245, 0.16);
-  --text-primary: #FAF9F5;
-  --text-secondary: #E8E6DC;
-  --text-tertiary: #B0AEA5;
-  --text-disabled: #54514D;
-  --text-inverse: #141413;
-  --accent: #DF8F70;
-  --accent-dim: #D97757;
-  --accent-subtle: rgba(223, 143, 112, 0.18);
-  --accent-hover: #E5A689;
+  color-scheme: dark;
 }
 
 /* ============================================================
@@ -121,53 +151,62 @@
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    scroll-behavior: smooth;
+    background-color: var(--bg);
   }
 
   body {
-    background-color: var(--bg-page);
-    color: var(--text-primary);
-    font-size: 15px;
-    line-height: 1.6;
+    background-color: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
     font-family: var(--font-body);
+    /* Geist OpenType features */
+    font-feature-settings: "cv11", "ss01", "ss03", "tnum";
+    font-variant-numeric: tabular-nums;
   }
 
-  /* Montserrat for all headings (font-serif) */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  /* Numerics everywhere — IDs, timestamps, counts */
+  .tabular,
+  time,
+  code,
+  kbd,
+  samp,
+  pre,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
+    color: var(--text);
     letter-spacing: -0.02em;
-    font-weight: 700;
     line-height: 1.15;
-    color: var(--text-primary);
+    font-weight: 500;
   }
 
-  h3,
-  h4,
-  h5,
-  h6 {
+  h4, h5, h6 {
     letter-spacing: -0.01em;
-    font-weight: 600;
     line-height: 1.3;
   }
 
   p {
-    line-height: 1.6;
+    line-height: 1.5;
     color: var(--text-secondary);
   }
 
-  ::selection {
-    background-color: rgba(217, 119, 87, 0.18);
-    color: #141413;
+  /* Focus-visible only — no rings on mouse click */
+  :focus {
+    outline: none;
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: inherit;
   }
 
-  .dark ::selection {
-    background-color: rgba(223, 143, 112, 0.30);
-    color: #FAF9F5;
+  ::selection {
+    background-color: var(--accent-subtle);
+    color: var(--text);
   }
 }
 
@@ -176,64 +215,29 @@
    ============================================================ */
 @layer utilities {
   @keyframes bis-shimmer {
-    0% {
-      background-position: -600px 0;
-    }
-
-    100% {
-      background-position: 600px 0;
-    }
+    0% { background-position: -600px 0; }
+    100% { background-position: 600px 0; }
   }
 
   @keyframes shimmer {
-    0% {
-      transform: translateX(-100%) skewX(-12deg);
-    }
-
-    100% {
-      transform: translateX(200%) skewX(-12deg);
-    }
+    0% { transform: translateX(-100%) skewX(-12deg); }
+    100% { transform: translateX(200%) skewX(-12deg); }
   }
 
   @keyframes fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(4px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes platform-pulse {
-
-    0%,
-    100% {
-      transform: scale(1);
-    }
-
-    50% {
-      transform: scale(1.3);
-    }
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
   }
 
-  .animate-shimmer {
-    animation: shimmer 600ms ease-out;
-  }
+  .animate-shimmer { animation: shimmer 600ms var(--ease-out); }
+  .animate-fade-in { animation: fade-in 180ms var(--ease-out); }
+  .platform-dot-connected { animation: platform-pulse 2s ease-in-out infinite; }
 
-  .animate-fade-in {
-    animation: fade-in 300ms ease-out;
-  }
-
-  .platform-dot-connected {
-    animation: platform-pulse 2s ease-in-out infinite;
-  }
-
-  /* Focus beam — a bright point traveling along the long edges and rotating
-     around the rounded ends. Apply to an absolute inset-0 layer inside a
-     padded, overflow-hidden, rounded parent to produce a gradient border. */
   .focus-beam-layer {
     position: absolute;
     inset: 0;
@@ -264,7 +268,6 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-
     *,
     *::before,
     *::after {
@@ -279,6 +282,17 @@
    COMPONENT UTILITIES
    ============================================================ */
 @layer components {
+  /* Selection treatment (clicked row) — iris@15% bg + 2px left accent bar */
+  .is-selected {
+    background-color: var(--accent-subtle);
+    box-shadow: inset 2px 0 0 0 var(--accent);
+  }
+
+  /* Hairline divider utility */
+  .hairline {
+    border-color: var(--divider);
+  }
+
   .btn-shimmer {
     position: relative;
     overflow: hidden;
@@ -289,38 +303,31 @@
     position: absolute;
     inset: 0;
     transform: translateX(-100%) skewX(-12deg);
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gray-12) 10%, transparent), transparent);
   }
 
   .btn-shimmer:hover::after {
-    animation: shimmer 600ms ease-out;
+    animation: shimmer 600ms var(--ease-out);
   }
 
+  /* Kept for marketing hero accent; iris-based not orange. */
   .text-gradient-brand {
-    background: linear-gradient(120deg, #F0A875 0%, #D97757 45%, #A65235 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .dark .text-gradient-brand {
-    background: linear-gradient(120deg, #F5C4A0 0%, #DF8F70 45%, #D97757 100%);
+    background: linear-gradient(120deg, var(--iris-11) 0%, var(--iris-9) 55%, var(--iris-8) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .bg-radial-glow {
-    background: radial-gradient(circle at center, rgba(217, 119, 87, 0.10) 0%, transparent 70%);
+    background: radial-gradient(circle at center, var(--accent-subtle) 0%, transparent 70%);
   }
 
   .backdrop-blur-nav {
     backdrop-filter: blur(12px);
   }
 
-  /* Skeleton loading */
   .skeleton-line {
-    background: linear-gradient(90deg, var(--bg-elevated) 0%, var(--bg-overlay) 40%, var(--bg-elevated) 80%);
+    background: linear-gradient(90deg, var(--surface) 0%, var(--elevated) 40%, var(--surface) 80%);
     background-size: 1200px 100%;
     animation: bis-shimmer 1.6s ease-in-out infinite;
     border-radius: var(--radius-xs);
@@ -330,71 +337,43 @@
   .pseo-content h1,
   .pseo-content h2,
   .pseo-content h3 {
-    color: var(--text-primary);
-    font-weight: 700;
+    color: var(--text);
+    font-weight: 500;
     letter-spacing: -0.02em;
     margin-top: 2em;
     margin-bottom: 0.5em;
     line-height: 1.2;
   }
-
-  .pseo-content h1 {
-    font-size: 32px;
-  }
-
-  .pseo-content h2 {
-    font-size: 24px;
-  }
-
-  .pseo-content h3 {
-    font-size: 18px;
-  }
-
-  .pseo-content p {
-    color: var(--text-secondary);
-    margin-bottom: 1.25em;
-  }
-
+  .pseo-content h1 { font-size: 32px; }
+  .pseo-content h2 { font-size: 24px; }
+  .pseo-content h3 { font-size: 18px; }
+  .pseo-content p { color: var(--text-secondary); margin-bottom: 1.25em; }
   .pseo-content ul,
   .pseo-content ol {
     color: var(--text-secondary);
     padding-left: 1.5em;
     margin-bottom: 1.25em;
   }
-
-  .pseo-content li {
-    margin-bottom: 0.4em;
-  }
-
-  .pseo-content strong {
-    color: var(--text-primary);
-    font-weight: 600;
-  }
-
-  .pseo-content a {
-    color: var(--accent);
-    text-decoration: underline;
-  }
-
+  .pseo-content li { margin-bottom: 0.4em; }
+  .pseo-content strong { color: var(--text); font-weight: 500; }
+  .pseo-content a { color: var(--accent); text-decoration: underline; }
   .pseo-content blockquote {
-    border-left: 3px solid var(--accent);
+    border-left: 2px solid var(--accent);
     padding-left: 1em;
     color: var(--text-tertiary);
     font-style: italic;
     margin: 1.5em 0;
   }
-
   .pseo-content code {
     font-family: var(--font-mono);
     font-size: 0.9em;
-    background: var(--bg-elevated);
+    background: var(--elevated);
     padding: 0.15em 0.35em;
     border-radius: 3px;
-    color: var(--text-primary);
+    color: var(--text);
   }
 
   @media (prefers-reduced-motion: reduce) {
-
     .animate-float,
     .animate-border-glow {
       animation: none !important;
