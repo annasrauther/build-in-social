@@ -25,10 +25,18 @@ Forward-looking work after the Linear-clone v2 pass. Snapshot as of
 | **redesign/v2-marketing** | Cta rebuilt on hairline-edged elevated panel (iris dot texture, no gradients); Footer restyled to tokens + tabular-nums copyright. |
 | **redesign/v2-propagation** | DashboardClient + loading retired (route redirected since v1 Phase 3); Button asChild fixed for Radix Slot single-child contract. |
 
-### v3 — Keyboard-shortcut removal (one branch on top of v2)
+### v3 — Keyboard-shortcut removal + uniform buttons (two branches on v2)
 | Branch | Summary |
 |---|---|
 | **redesign/v3-no-shortcuts** | Removed `⌘K` command palette, `?` overlay, `/` slash-menu key binding, per-row `E` / `⌘↵` bindings, all `Kbd` chip usage. Deleted `components/ui/CommandPalette.tsx`, `ShortcutOverlay.tsx`, `shadcn/command.tsx`, `shadcn/kbd.tsx`, `lib/actions-registry.ts`. Uninstalled `cmdk`. Simplified `Button` / `Tooltip` / `DropdownMenuItem` / `RowCommandMenu` to drop their `shortcut` prop. Double-click rename and visible `MoreHorizontal` button stay; a11y baseline (Tab order, focus rings, Enter/Space, Escape) unchanged. |
+| **redesign/v3-raycast-buttons** | Uniform Raycast-style buttons everywhere. Five CSS utility classes in `app/globals.css @layer components` (`.btn-raycast-primary/secondary/outline/ghost/danger`) carry the full plate treatment: gradient + inset top highlight + hairline border + 1px bottom shadow + 0.5px active press. `components/ui/shadcn/button.tsx` rewired to use them. `components/tremor/Button.tsx` **replaced with a compat shim** that maps Tremor variants (primary/secondary/light/ghost/destructive) to shadcn variants and forwards — the 40+ legacy callers across settings/series/auth/marketing/dashboard inherit the Raycast look without a file-level migration. |
+
+### v4 — Three parallel paths (three branches on v3)
+| Branch | Summary |
+|---|---|
+| **redesign/v4-cleanup** | Codemod'd `from "framer-motion"` → `from "motion/react"` across 33 app/component files + 3 lib files (identical API, same version — motion@12 is the rebrand). `pnpm remove framer-motion`. Tailwind v4 `@theme` migration and `@remixicon/react` retirement remain blocked on per-file Lucide mapping / Tremor primitive retirement respectively — moved to the Medium roadmap bucket. |
+| **redesign/v4-f4-streaming** | Client-side streaming illusion over the existing `/api/plan/generate` endpoint (the API backend is untouched per the ground rules). New `components/plan/ThemeInput.tsx` carries the F4 theme prompt — single line + primary button, 140-char cap matching the API. `/plan/current` now holds `lockedIds: Set<string>` + `lastTheme: string` state; `generate()` accepts `autopilotHint` and `preserveLocks`. When regenerating with locks, locked cards stay in their day slot and the fresh response backfills the unlocked ones in day order. Toast summarizes the split. `DayCard` gets `locked={...}` + `onToggleLock` wired through from the plan page's state. |
+| **redesign/v4-f6-publish** | Real per-platform publish calls via `/api/videos/[id]/publish` replacing the 400ms fake-success stub. New `lib/publish.ts` returns a discriminated union `{ success \| not-implemented \| failed }`. The 501 the backend currently returns (platform OAuth is Sprint 9) is surfaced as a distinct `"not-implemented"` state on `PublishPlatformState` — iris-7 dot + "Soon" label — so users don't think publishing broke. `publishDrawer` is now async + parallel per platform; `retryPlatform` same. When real OAuth + publishing ship, deleting the 501 branch in `lib/publish.ts` makes the UI work end-to-end with no other changes. |
 
 Every branch typechecks and builds cleanly.
 
