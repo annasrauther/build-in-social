@@ -96,7 +96,7 @@ export function MiniPlanner({
     >
       {!compact ? (
         <div className="flex flex-col gap-1">
-          <p className="text-[11px] uppercase tracking-wider text-text-tertiary">
+          <p className="text-[11px] uppercase tracking-wider text-accent">
             Plan my week
           </p>
           <p className="text-[13px] leading-snug text-text-secondary">
@@ -201,7 +201,7 @@ export function MiniPlanner({
               <ArrowRight size={14} strokeWidth={1.5} aria-hidden="true" />
             </Link>
           </Button>
-          <span className="text-[11px] text-text-tertiary">
+          <span className="text-[12px] text-text-secondary">
             Signup picks up exactly where you left off.
           </span>
         </div>

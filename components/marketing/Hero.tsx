@@ -59,7 +59,7 @@ export default function Hero() {
             {LANDING.HERO.subhead}
           </p>
           {LANDING.HERO.subCallout ? (
-            <p className="animate-slide-up-fade max-w-xl text-[13px] leading-snug text-text-tertiary">
+            <p className="animate-slide-up-fade max-w-xl text-[13px] leading-snug text-text-secondary">
               {LANDING.HERO.subCallout}
             </p>
           ) : null}
